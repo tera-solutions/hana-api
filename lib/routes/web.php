@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    // dd(public_path());
     return view('welcome');
 });
+
+// Route::get('/docs', function () {
+//     return response()->file(base_path('../assets/docs/index.html'));
+// });

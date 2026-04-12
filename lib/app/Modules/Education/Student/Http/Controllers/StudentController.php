@@ -26,7 +26,7 @@ class StudentController extends Controller
         return $action->handle($request->validated());
     }
 
-    public function show($id, GetStudentAction $action)
+    public function detail($id, GetStudentAction $action)
     {
         return $action->handle($id);
     }
@@ -36,7 +36,7 @@ class StudentController extends Controller
         return $action->handle($id, $request->validated());
     }
 
-    public function destroy($id, DeleteStudentAction $action)
+    public function delete($id, DeleteStudentAction $action)
     {
         return $action->handle($id);
     }

@@ -219,7 +219,7 @@ class {$feature}Controller extends Controller
         return \$action->handle(\$request->validated());
     }
 
-    public function show(\$id, Get{$feature}Action \$action)
+    public function detail(\$id, Get{$feature}Action \$action)
     {
         return \$action->handle(\$id);
     }
@@ -229,7 +229,7 @@ class {$feature}Controller extends Controller
         return \$action->handle(\$id, \$request->validated());
     }
 
-    public function destroy(\$id, Delete{$feature}Action \$action)
+    public function delete(\$id, Delete{$feature}Action \$action)
     {
         return \$action->handle(\$id);
     }
