@@ -1,0 +1,10 @@
+{
+    "name": "Portal",
+    "author": "Tera",
+    "description": "https://terasolutions.vn",
+    "download_count": 0,
+    "tags" : "tera, portal",
+    "version" : "0.0.0.beta",
+    "require" : "7.2",
+    "avatar": "avatar.jpg"
+}

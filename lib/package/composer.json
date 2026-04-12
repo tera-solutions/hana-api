@@ -1,0 +1,14 @@
+{
+    "name": "tera/package",
+    "description": "Tera package",
+    "type": "library",
+    "license": "1.0.0",
+    "authors": [
+        {
+            "name": "Nguyen Quoc Truong",
+            "email": "truong.nq@terasolutions.vn"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
