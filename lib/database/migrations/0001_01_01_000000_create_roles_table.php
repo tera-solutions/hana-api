@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
+        Schema::create('sys_roles', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('business_id')
@@ -30,6 +30,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('sys_roles');
     }
 };

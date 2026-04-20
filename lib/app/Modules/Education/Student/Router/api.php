@@ -11,5 +11,6 @@ Route::prefix('student')->group(function () {
     Route::post('/create', [StudentController::class, 'create']);
     Route::put('/update/{id}', [StudentController::class, 'update']);
     Route::delete('/delete/{id}', [StudentController::class, 'delete']);
+    Route::post('/export', [StudentController::class, 'export']);
 
 });

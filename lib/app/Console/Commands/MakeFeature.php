@@ -97,12 +97,9 @@ class MakeFeature extends Command
 namespace App\Modules\\{$module}\\{$feature}\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class {$feature} extends Model
 {
-    use SoftDeletes;
-
     protected \$table = '{$tableName}';
 
     protected \$guarded = [];
@@ -211,27 +208,32 @@ class {$feature}Controller extends Controller
 {
     public function list(List{$feature}Action \$action)
     {
-        return \$action->handle();
+        \$data = \$action->handle();
+        return \$this->respondSuccess(\$data);
     }
 
     public function create(Create{$feature}Request \$request, Create{$feature}Action \$action)
     {
-        return \$action->handle(\$request->validated());
+        \$data = \$action->handle(\$request->validated());
+        return \$this->respondSuccess(\$data);
     }
 
     public function detail(\$id, Get{$feature}Action \$action)
     {
-        return \$action->handle(\$id);
+        \$data = \$action->handle(\$id);
+        return \$this->respondSuccess(\$data);
     }
 
     public function update(Update{$feature}Request \$request, \$id, Update{$feature}Action \$action)
     {
-        return \$action->handle(\$id, \$request->validated());
+        \$data = \$action->handle(\$id, \$request->validated());
+        return \$this->respondSuccess(\$data);
     }
 
     public function delete(\$id, Delete{$feature}Action \$action)
     {
-        return \$action->handle(\$id);
+        \$data = \$action->handle(\$id);
+        return \$this->respondSuccess(\$data);
     }
 }
 PHP);
@@ -250,10 +252,8 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\\$module\\$feature\Http\Controllers\\{$feature}Controller;
 
 Route::prefix('$featureUri')->group(function () {
-
     Route::get('/list', [{$feature}Controller::class, 'list']);
     Route::get('/detail/{id}', [{$feature}Controller::class, 'detail']);
-
     Route::post('/create', [{$feature}Controller::class, 'create']);
     Route::put('/update/{id}', [{$feature}Controller::class, 'update']);
     Route::delete('/delete/{id}', [{$feature}Controller::class, 'delete']);

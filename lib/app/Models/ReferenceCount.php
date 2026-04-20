@@ -11,5 +11,8 @@ class ReferenceCount extends Model
      *
      * @var array
      */
+
+    protected $table = 'sys_reference_counts';
+
     protected $guarded = ['id'];
 }

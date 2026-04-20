@@ -20,7 +20,7 @@ class Role extends Model
      * @var array
      */
     
-    protected $table = 'roles';
+    protected $table = 'sys_roles';
     protected $guarded = ['id'];
 
     public function created_by()

@@ -32,4 +32,16 @@ class StudentService
     {
         return $this->find($id)->delete();
     }
+
+    public function export(array $data)
+    {
+        $now = now()->getTimestamp();
+        $filename = "export_student_$now.xlsx";
+        $result = [
+            "file_name" => $filename,
+            "created_at" => now(),
+            "link" => asset("/assets/export/student/export_student_1776351343.xlsx")
+        ];
+        return $result;
+    }
 }

@@ -8,8 +8,10 @@ use App\Modules\Education\Student\Actions\UpdateStudentAction;
 use App\Modules\Education\Student\Actions\DeleteStudentAction;
 use App\Modules\Education\Student\Actions\GetStudentAction;
 use App\Modules\Education\Student\Actions\ListStudentAction;
+use App\Modules\Education\Student\Actions\ExportStudentAction;
 use App\Modules\Education\Student\Http\Requests\CreateStudentRequest;
 use App\Modules\Education\Student\Http\Requests\UpdateStudentRequest;
+use App\Modules\Education\Student\Http\Requests\ExportStudentRequest;
 
 /**
  * @group Education - Student
@@ -18,26 +20,39 @@ class StudentController extends Controller
 {
     public function list(ListStudentAction $action)
     {
-        return $action->handle();
+        $data = $action->handle();
+        return $this->respondSuccess($data);
     }
 
     public function create(CreateStudentRequest $request, CreateStudentAction $action)
     {
-        return $action->handle($request->validated());
+        $data = $action->handle($request->validated());
+
+        return $this->respondSuccess($data);
     }
 
     public function detail($id, GetStudentAction $action)
     {
-        return $action->handle($id);
+        $data = $action->handle($id);
+        return $this->respondSuccess($data);
     }
 
     public function update(UpdateStudentRequest $request, $id, UpdateStudentAction $action)
     {
-        return $action->handle($id, $request->validated());
+        $data = $action->handle($id, $request->validated());
+        return $this->respondSuccess($data);
     }
 
     public function delete($id, DeleteStudentAction $action)
     {
-        return $action->handle($id);
+        $data = $action->handle($id);
+        return $this->respondSuccess($data);
+    }
+
+    public function export(ExportStudentRequest $request, ExportStudentAction $action)
+    {
+        $data = $action->handle($request->validated());
+
+        return $this->respondSuccess($data);
     }
 }

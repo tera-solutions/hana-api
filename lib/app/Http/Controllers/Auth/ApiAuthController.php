@@ -9,7 +9,7 @@ use App\Jobs\SendMailAccountActivation;
 use App\Jobs\SendMailInformationAccount;
 use App\Jobs\SendMailResetPassword;
 use App\Jobs\SendMailVerifyOTP;
-use App\Models\BusinessPortal;
+use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Session;
@@ -83,48 +83,17 @@ class ApiAuthController extends Controller
                         "avatar",
                         'status',
                         'code',
-                        'is_admin',
-                        'reps_login'
+                        'is_admin'
                     ])
                         ->find($user->id);
 
-                    if ($user->type === 'member') {
-                        $businessStatus = BusinessPortal::where('id', $user->business_id)->pluck('status')->first();
-                        if ($businessStatus === 'cancelled') {
-                            throw new HttpException("Thành viên không thể đăng nhập vào doanh nghiệp bị hủy kích hoạt !");
-                        }
-                    }
-                    if ($user->time_block) {
-                        if (now() <= $user->time_block) {
-                            return $this->respondWithError("Tài khoản đã bị khóa, hãy đăng nhập sau " . Carbon::parse($user->time_block)->format('d/m/Y H:i'), [], 501);
-                        } else {
-                            $user->time_block = null;
-                            $user->save();
-                            DB::commit();
-                        }
-                    }
-
-                    if ($user->is_active != 1) {
+                    if (!$user->is_active) {
                         return $this->respondWithError("Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !", [], 501);
-                    }
-                    $data = [];
-                    $openModeVerify = env('VERIFY_AUTH');
-                    if (!$openModeVerify) {
-                        $user->verify_auth = 0;
                     }
 
                     $response = $this->createToken($user);
                     DB::commit();
                     return $this->respondSuccess($response, "Đăng nhập thành công !");
-                    // if ($user->verify_auth == 1) {
-                    //     $data = $this->sendOTP($data, $dataUser, $user);
-                    //     DB::commit();
-                    //     return $this->respondSuccess($data, "Mã OTP đã được gửi đến địa chỉ " . $dataUser->email ?? null);
-                    // } else {
-                    //     $response = $this->createToken($user);
-                    //     DB::commit();
-                    //     return $this->respondSuccess($response, "Đăng nhập thành công !");
-                    // }
                 } else {
                     $message = "Mật khẩu không hợp lệ";
                     DB::rollBack();
@@ -170,7 +139,6 @@ class ApiAuthController extends Controller
     private function createToken($user)
     {
         $token = $user->createToken('Tera Auth Private key');
-        $user->reps_login++;
         $user->save();
         return [
             'verify_auth' => $user->verify_auth,
@@ -217,7 +185,6 @@ class ApiAuthController extends Controller
                         } else {
                             if ($user->is_active == 1) {
                                 $token = $user->createToken('Tera Auth Private key');
-                                $user->reps_login++;
                                 $user->save();
                                 $response = [
                                     'verify_auth' => $user->verify_auth,
@@ -304,7 +271,7 @@ class ApiAuthController extends Controller
 
     public function getBusinessById($id)
     {
-        return BusinessPortal::find($id);
+        return Business::find($id);
     }
 
     private function createEmployee($data)
@@ -380,7 +347,7 @@ class ApiAuthController extends Controller
                     }
                     // $urlCreateBusiness = env('PORTAL_URL') . '/api/portal/business/create';
 
-                    $businessResult = BusinessPortal::create($dataBusiness);
+                    $businessResult = Business::create($dataBusiness);
                     DB::commit();
                     $id = null;
                     if (!empty($businessResult)) {

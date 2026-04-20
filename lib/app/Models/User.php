@@ -34,47 +34,6 @@ class User extends Authenticatable
 
     protected $appends = ['avatar_url'];
 
-    protected $fillable = [
-        'department_id',
-        'position_id',
-        'status',
-        'full_name',
-        'username',
-        'password',
-        'email',
-        'is_admin',
-        'allow_chat',
-        'remember_token',
-        'avatar',
-        'code',
-        'role_id',
-        'status_work',
-        'business_id',
-        'created_by',
-        'created_at',
-        'updated_at',
-        'deleted_at',
-        'ip',
-        'is_login',
-        'phone',
-        'is_active',
-        'business_name',
-        'verify_auth',
-        'time_block',
-        'type',
-        'register_time',
-        'expiration_time',
-        'trial_time',
-        'status_account',
-        'department',
-        'job_title',
-        'is_first',
-        '_url',
-        'reps_login',
-        'updated_by',
-    ];
-
-
     public  function getBearerToken()
     {
         if (!request()->header('Authorization')) {
@@ -97,11 +56,6 @@ class User extends Authenticatable
 
         return $avatar_url;
     }
-
-    // public function employee()
-    // {
-    //     return $this->hasOne(\App\Module\HRM\Model\Employee::class);
-    // }
 
     public function created_by()
     {

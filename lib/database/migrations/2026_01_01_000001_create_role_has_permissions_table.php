@@ -19,12 +19,12 @@ return new class extends Migration
             // foreign keys
             $table->foreign('role_id')
                 ->references('id')
-                ->on('roles')
+                ->on('sys_roles')
                 ->cascadeOnDelete();
 
             $table->foreign('permission_id')
                 ->references('id')
-                ->on('permissions')
+                ->on('sys_permissions')
                 ->cascadeOnDelete();
         });
     }

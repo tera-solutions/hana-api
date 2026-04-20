@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('reference_counts', function (Blueprint $table) {
+        Schema::create('sys_reference_counts', function (Blueprint $table) {
             $table->unsignedInteger('id')->autoIncrement();
 
             $table->string('ref_type');     // type entity (student, course...)

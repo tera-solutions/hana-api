@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use App\Models\BusinessPortal;
+use App\Models\Business;
 use App\Models\BusinessService;
 use App\Models\RolePermission;
 use App\Models\Role as AppModelRole;
@@ -351,7 +351,7 @@ class SyncPermissionRole
 
   public function syncPermissionsBusiness($business_id, $roleAddition = [], $atMidnight = true)
   {
-    $business = BusinessPortal::with(['roles'])
+    $business = Business::with(['roles'])
       ->where('id', $business_id)
       ->first();
     if ($business) {

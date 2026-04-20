@@ -35,14 +35,13 @@ class UserController extends Controller
         }
 
         $user = User::where('users.id', $user_id)
-            ->leftJoin("roles", "roles.id",  "users.role_id")
-            ->leftJoin('oauth_access_tokens','users.id','=','oauth_access_tokens.user_id')
-            ->where("users.status", "1")
+            ->leftJoin("sys_roles", "sys_roles.id", "users.role_id")
+            ->leftJoin('oauth_access_tokens', 'users.id', '=', 'oauth_access_tokens.user_id')
+            ->where("users.status", "active")
             ->select([
                 "users.*",
-                'users.reps_login',
-                'roles.code as role',
-                'roles.title as role_name',
+                'sys_roles.code as role',
+                'sys_roles.title as role_name',
                 'oauth_access_tokens.id as access_id'
             ]);
 

@@ -3,17 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class System extends Model
+class Option extends Model
 {
+    use SoftDeletes;
     /**
-     * The table associated with the model.
+     * The attributes that should be mutated to dates.
      *
-     * @var string
+     * @var array
      */
-    protected $table = 'system';
-    
+
+
     /**
+     * The attributes that aren't mass assignable.
+     *
+     * @var array
+     */
+    protected $table = 'sys_settings';
+  /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
@@ -61,17 +69,6 @@ class System extends Model
                 ->get()
                 ->toArray();
         }
-    }
-
-    /**
-     * Return the system default currency details
-     *
-     * @param void
-     * @return object
-     */
-    public static function getCurrency()
-    {
-        return null;
     }
 
     /**
