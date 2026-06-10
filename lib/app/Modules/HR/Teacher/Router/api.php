@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Education\Teacher\Http\Controllers\TeacherController;
+use App\Modules\HR\Teacher\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('teacher')->group(function () {

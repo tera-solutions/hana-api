@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Modules\Education\Teacher\Http\Controllers;
+namespace App\Modules\HR\Teacher\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Education\Teacher\Actions\CreateTeacherAction;
-use App\Modules\Education\Teacher\Actions\DeleteTeacherAction;
-use App\Modules\Education\Teacher\Actions\GetTeacherAction;
-use App\Modules\Education\Teacher\Actions\ListTeacherAction;
-use App\Modules\Education\Teacher\Actions\UpdateTeacherAction;
-use App\Modules\Education\Teacher\Http\Requests\CreateTeacherRequest;
-use App\Modules\Education\Teacher\Http\Requests\UpdateTeacherRequest;
+use App\Modules\HR\Teacher\Actions\CreateTeacherAction;
+use App\Modules\HR\Teacher\Actions\DeleteTeacherAction;
+use App\Modules\HR\Teacher\Actions\GetTeacherAction;
+use App\Modules\HR\Teacher\Actions\ListTeacherAction;
+use App\Modules\HR\Teacher\Actions\UpdateTeacherAction;
+use App\Modules\HR\Teacher\Http\Requests\CreateTeacherRequest;
+use App\Modules\HR\Teacher\Http\Requests\UpdateTeacherRequest;
 
 /**
  * @group Education - Teacher

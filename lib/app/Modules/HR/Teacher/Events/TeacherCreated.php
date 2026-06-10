@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Education\Teacher\Events;
+namespace App\Modules\HR\Teacher\Events;
 
 class TeacherCreated
 {

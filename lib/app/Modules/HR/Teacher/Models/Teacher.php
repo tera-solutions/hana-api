@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Education\Teacher\Models;
+namespace App\Modules\HR\Teacher\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

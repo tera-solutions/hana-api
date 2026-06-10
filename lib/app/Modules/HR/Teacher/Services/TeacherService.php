@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Education\Teacher\Services;
+namespace App\Modules\HR\Teacher\Services;
 
-use App\Modules\Education\Teacher\Models\Teacher;
+use App\Modules\HR\Teacher\Models\Teacher;
 
 class TeacherService
 {
