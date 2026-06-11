@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Modules\System\Branch\Models\Branch;
+use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Passport\HasApiTokens;
+use Package\Database\Concerns\HasAuditFields;
 
 class User extends Authenticatable
 {
+    use HasAuditFields;
     use Notifiable;
     use SoftDeletes;
     use HasRoles;
@@ -65,6 +69,16 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(\App\Models\Role::class, 'role_id');
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(Business::class, 'business_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function has_roles()

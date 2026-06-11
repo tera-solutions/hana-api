@@ -8,6 +8,7 @@ return [
             'Role',
             'Permission',
             'Business',
+            'Branch',
             'Setting',
         ]
     ],
