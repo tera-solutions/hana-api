@@ -18,18 +18,17 @@ class Authentication
      */
     public function handle($request, Closure $next)
     {
-        if (!Auth::guard('api')->user()) {
+        $user = Auth::guard('api')->user();
+
+        if (!$user) {
             throw new AuthenticationException();
         }
 
-        $role_id = Auth::guard('api')->user()->role_id;
-        $status = Auth::guard('api')->user()->status;
-
-        if ($status != 1) {
+        if (!$user->is_active) {
             throw new AuthorizationException("Tài khoản của bạn hiện tạm thời bị khoá, vui lòng liên hệ admin");
         }
 
-        if (!$role_id) {
+        if (!$user->role_id) {
             throw new AuthorizationException();
         }
 

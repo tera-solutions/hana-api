@@ -2,6 +2,7 @@
 
 namespace Package;
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +21,8 @@ class PackageServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->registerBlueprintMacros();
+
         try {
             DB::connection()->getPdo();
 
@@ -33,6 +36,31 @@ class PackageServiceProvider extends ServiceProvider
             $this->registerDynamicModule();
         } catch (\Exception $exception) {
             Log::info($exception->getMessage());
+        }
+    }
+
+    /**
+     * Schema helpers, the actor counterpart to $table->softDeletes().
+     *
+     *   $table->auditColumns();      // adds created_by / updated_by / deleted_by
+     *   $table->dropAuditColumns();  // drops them (use in migration down())
+     */
+    private function registerBlueprintMacros(): void
+    {
+        if (! Blueprint::hasMacro('auditColumns')) {
+            Blueprint::macro('auditColumns', function () {
+                /** @var Blueprint $this */
+                $this->unsignedBigInteger('created_by')->nullable()->index();
+                $this->unsignedBigInteger('updated_by')->nullable();
+                $this->unsignedBigInteger('deleted_by')->nullable();
+            });
+        }
+
+        if (! Blueprint::hasMacro('dropAuditColumns')) {
+            Blueprint::macro('dropAuditColumns', function () {
+                /** @var Blueprint $this */
+                $this->dropColumn(['created_by', 'updated_by', 'deleted_by']);
+            });
         }
     }
 
