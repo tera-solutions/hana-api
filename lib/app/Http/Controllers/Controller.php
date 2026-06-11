@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
 
 class Controller extends BaseController
@@ -103,6 +105,25 @@ class Controller extends BaseController
         }
 
         return $this->respond($data);
+    }
+
+    /**
+     * Returns a 200 response wrapping a paginator as { items, pagination }.
+     *
+     * @param  LengthAwarePaginator  $paginator
+     * @param  class-string<JsonResource>  $resourceClass
+     */
+    public function respondPaginated($paginator, string $resourceClass, $message = null)
+    {
+        return $this->respondSuccess([
+            'items' => $resourceClass::collection($paginator->items()),
+            'pagination' => [
+                'total' => $paginator->total(),
+                'per_page' => $paginator->perPage(),
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ], $message);
     }
 
     /**

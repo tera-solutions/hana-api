@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cors' => \App\Http\Middleware\Cors::class,
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
             'auth.tera' => \Package\Middleware\Authentication::class,
+            'permission' => \Package\Middleware\Authorization::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

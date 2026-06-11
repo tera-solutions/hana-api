@@ -61,4 +61,16 @@ class ClientToken extends Client
     {
         return $this->personal_access_client || $this->password_client;
     }
+
+    /**
+     * Determine if the client has the given grant type.
+     */
+    public function hasGrantType(string $grantType): bool
+    {
+        if ($grantType === 'client_credentials' && $this->personal_access_client) {
+            return false;
+        }
+
+        return parent::hasGrantType($grantType);
+    }
 }
