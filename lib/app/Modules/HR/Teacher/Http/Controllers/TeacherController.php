@@ -10,44 +10,53 @@ use App\Modules\HR\Teacher\Actions\ListTeacherAction;
 use App\Modules\HR\Teacher\Actions\UpdateTeacherAction;
 use App\Modules\HR\Teacher\Http\Requests\CreateTeacherRequest;
 use App\Modules\HR\Teacher\Http\Requests\UpdateTeacherRequest;
+use App\Modules\HR\Teacher\Http\Resources\TeacherResource;
+use Illuminate\Http\Request;
 
 /**
- * @group Education - Teacher
+ * @group HR - Teacher
  */
 class TeacherController extends Controller
 {
-    public function list(ListTeacherAction $action)
+    public function list(Request $request, ListTeacherAction $action)
     {
-        $data = $action->handle();
+        return $this->respondPaginated($action->handle($request->all()), TeacherResource::class);
+    }
+
+    public function detail($id, GetTeacherAction $action)
+    {
+        $result = $action->handle($id);
+
+        $data = [
+            'teacher' => new TeacherResource($result['teacher']),
+            'statistics' => $result['statistics'],
+        ];
 
         return $this->respondSuccess($data);
     }
 
     public function create(CreateTeacherRequest $request, CreateTeacherAction $action)
     {
-        $data = $action->handle($request->validated());
+        $teacher = $action->handle($request->validated());
 
-        return $this->respondSuccess($data);
-    }
-
-    public function detail($id, GetTeacherAction $action)
-    {
-        $data = $action->handle($id);
-
-        return $this->respondSuccess($data);
+        return $this->respondSuccess(new TeacherResource($teacher), 'Tạo Teacher thành công.');
     }
 
     public function update(UpdateTeacherRequest $request, $id, UpdateTeacherAction $action)
     {
-        $data = $action->handle($id, $request->validated());
+        $teacher = $action->handle($id, $request->validated());
 
-        return $this->respondSuccess($data);
+        return $this->respondSuccess(new TeacherResource($teacher), 'Cập nhật Teacher thành công.');
     }
 
     public function delete($id, DeleteTeacherAction $action)
     {
-        $data = $action->handle($id);
+        try {
+            $action->handle($id);
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
 
-        return $this->respondSuccess($data);
+        return $this->respondSuccess(null, 'Xóa Teacher thành công.');
     }
 }
