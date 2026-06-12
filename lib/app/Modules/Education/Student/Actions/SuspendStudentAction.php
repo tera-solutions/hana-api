@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Modules\Education\Student\Actions;
+
+use App\Modules\Education\Student\Services\StudentService;
+
+class SuspendStudentAction
+{
+    public function handle(...$params)
+    {
+        return app(StudentService::class)->suspend(...$params);
+    }
+}

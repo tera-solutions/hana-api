@@ -8,6 +8,6 @@ class GetStudentAction
 {
     public function handle(...$params)
     {
-        return app(StudentService::class)->find(...$params);
+        return app(StudentService::class)->detail(...$params);
     }
 }
