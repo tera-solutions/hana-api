@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Student\Models;
 
 use App\Models\User;
+use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -69,7 +70,7 @@ class Student extends Model
 
     public function parents(): BelongsToMany
     {
-        return $this->belongsToMany(StudentParent::class, 'crm_parent_student', 'student_id', 'parent_id')
+        return $this->belongsToMany(ParentModel::class, 'crm_parent_student', 'student_id', 'parent_id')
             ->withPivot('relation')
             ->withTimestamps();
     }

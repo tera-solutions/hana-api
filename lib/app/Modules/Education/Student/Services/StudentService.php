@@ -3,10 +3,10 @@
 namespace App\Modules\Education\Student\Services;
 
 use App\Helpers\Task;
+use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\Education\Student\Events\StudentCreated;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\Student\Models\StudentHistory;
-use App\Modules\Education\Student\Models\StudentParent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -271,7 +271,7 @@ class StudentService
             $parentId = $parent['parent_id'] ?? null;
 
             if (! $parentId) {
-                $parentId = StudentParent::create([
+                $parentId = ParentModel::create([
                     'business_id' => $student->business_id,
                     'name' => $parent['name'] ?? null,
                     'phone' => $parent['phone'] ?? null,
