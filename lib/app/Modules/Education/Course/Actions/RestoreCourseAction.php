@@ -4,10 +4,10 @@ namespace App\Modules\Education\Course\Actions;
 
 use App\Modules\Education\Course\Services\CourseService;
 
-class ListCourseAction
+class RestoreCourseAction
 {
     public function handle(...$params)
     {
-        return app(CourseService::class)->paginate(...$params);
+        return app(CourseService::class)->restore(...$params);
     }
 }
