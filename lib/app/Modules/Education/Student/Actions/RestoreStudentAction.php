@@ -4,10 +4,10 @@ namespace App\Modules\Education\Student\Actions;
 
 use App\Modules\Education\Student\Services\StudentService;
 
-class CreateStudentAction
+class RestoreStudentAction
 {
     public function handle(...$params)
     {
-        return app(StudentService::class)->create(...$params);
+        return app(StudentService::class)->restore(...$params);
     }
 }
