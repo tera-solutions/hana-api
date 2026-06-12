@@ -19,6 +19,7 @@ return [
         'features' => [
             'Lead',
             'Parent',
+            'ParentStudent',
             'Enrollment',
         ]
     ],
