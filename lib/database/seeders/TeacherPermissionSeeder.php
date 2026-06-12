@@ -14,7 +14,9 @@ class TeacherPermissionSeeder extends PermissionSeeder
             'teacher.view' => 'Xem chi tiết',
             'teacher.create' => 'Tạo mới',
             'teacher.update' => 'Cập nhật',
-            'teacher.delete' => 'Xóa',
+            'teacher.suspend' => 'Tạm ngừng',
+            'teacher.restore' => 'Khôi phục',
+            'teacher.resign' => 'Nghỉ việc',
         ]);
     }
 }
