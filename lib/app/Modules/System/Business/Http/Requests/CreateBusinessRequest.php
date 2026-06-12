@@ -4,23 +4,6 @@ namespace App\Modules\System\Business\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * @bodyParam business_code string required Unique business code. Example: HCM001
- * @bodyParam name string required Business name. Example: Hana English HCM
- * @bodyParam short_name string Short name. Example: Hana HCM
- * @bodyParam prefix string required Uppercase code prefix. Example: HCM
- * @bodyParam tax_code string Tax code. Example: 0312345678
- * @bodyParam website string Website. Example: https://hana.edu.vn
- * @bodyParam phone string required Hotline. Example: 0901234567
- * @bodyParam email string required Contact email. Example: hcm@hana.edu.vn
- * @bodyParam address string required Address. Example: 123 Le Loi
- * @bodyParam province string required Province. Example: Ho Chi Minh
- * @bodyParam district string required District. Example: District 1
- * @bodyParam ward string Ward. Example: Ben Nghe
- * @bodyParam zip_code string Zip code. Example: 700000
- * @bodyParam manager_id integer Manager user id. Example: 1
- * @bodyParam status string required active|inactive. Example: active
- */
 class CreateBusinessRequest extends FormRequest
 {
     public function authorize(): bool
@@ -58,6 +41,72 @@ class CreateBusinessRequest extends FormRequest
             'email.unique' => 'Email đã tồn tại.',
             'prefix.regex' => 'Prefix chỉ gồm chữ hoa và số.',
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'business_code' => [
+                'description' => 'Unique business code.',
+                'example' => 'HCM001',
+            ],
+            'name' => [
+                'description' => 'Business name.',
+                'example' => 'Hana English HCM',
+            ],
+            'short_name' => [
+                'description' => 'Short name.',
+                'example' => 'Hana HCM',
+            ],
+            'prefix' => [
+                'description' => 'Uppercase code prefix.',
+                'example' => 'HCM',
+            ],
+            'tax_code' => [
+                'description' => 'Tax code.',
+                'example' => '0312345678',
+            ],
+            'website' => [
+                'description' => 'Website.',
+                'example' => 'https://hana.edu.vn',
+            ],
+            'phone' => [
+                'description' => 'Hotline.',
+                'example' => '0901234567',
+            ],
+            'email' => [
+                'description' => 'Contact email.',
+                'example' => 'hcm@hana.edu.vn',
+            ],
+            'address' => [
+                'description' => 'Address.',
+                'example' => '123 Le Loi',
+            ],
+            'province' => [
+                'description' => 'Province.',
+                'example' => 'Ho Chi Minh',
+            ],
+            'district' => [
+                'description' => 'District.',
+                'example' => 'District 1',
+            ],
+            'ward' => [
+                'description' => 'Ward.',
+                'example' => 'Ben Nghe',
+            ],
+            'zip_code' => [
+                'description' => 'Zip code.',
+                'example' => '700000',
+            ],
+            'manager_id' => [
+                'description' => 'Manager user id.',
+                'example' => 1,
+            ],
+            'status' => [
+                'description' => 'active|inactive.',
+                'example' => 'active',
+            ],
         ];
     }
 }

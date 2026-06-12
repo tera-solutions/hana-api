@@ -15,9 +15,37 @@ use Illuminate\Support\Facades\File;
 use Excel;
 use Package\Exception\HttpException;
 
+/**
+ * @group Core - File
+ *
+ * Upload / download / import files. Requires a bearer token and a `device-code` header.
+ *
+ * @authenticated
+ */
 class AjaxController extends Controller
 {
 
+    /**
+     * Upload a file
+     *
+     * Stores an uploaded file (max 10MB) and registers it as media.
+     *
+     * @header Device-code {your-device-code}
+     *
+     * @bodyParam file file required The file to upload (max 10MB). No-example
+     * @bodyParam app_id integer required Application id (must be 2). Example: 2
+     * @bodyParam secure_code string required Security code. Example: abc123
+     * @bodyParam title string The file title. Example: Invoice
+     * @bodyParam description string Optional description. Example: March invoice
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"message": "Tải file lên hệ thống thành công", "image": "http://localhost/hana-api/storage/uploads/invoice.pdf", "id": 10},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function upload(Request $request)
     {
         DB::beginTransaction();
@@ -144,6 +172,22 @@ class AjaxController extends Controller
         }
     }
 
+    /**
+     * CKEditor upload
+     *
+     * Upload endpoint compatible with the CKEditor image plugin.
+     *
+     * @bodyParam upload file required The file to upload. No-example
+     * @bodyParam ckCsrfToken string required CKEditor CSRF token. Example: token123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"default": "http://localhost/hana-api/storage/uploads/image.png"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function ckeditorUpload(Request $request)
     {
         DB::beginTransaction();
@@ -229,6 +273,25 @@ class AjaxController extends Controller
         }
     }
 
+    /**
+     * Import a spreadsheet
+     *
+     * Parses an uploaded xlsx/csv/xls file and returns its rows (header row removed).
+     *
+     * @header Device-code {your-device-code}
+     *
+     * @bodyParam file file required The spreadsheet to import (xlsx/csv/xls). No-example
+     * @bodyParam app_id integer required Application id (must be 2). Example: 2
+     * @bodyParam secure_code string required Security code. Example: abc123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": [["Nguyễn Văn A", "a@example.com", "0900000000"]],
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function importFile(Request $request)
     {
         try {
@@ -271,6 +334,18 @@ class AjaxController extends Controller
         }
     }
 
+    /**
+     * Download a file
+     *
+     * Returns the media record together with a base64 data URI of the file contents.
+     *
+     * @urlParam id integer required The media ID. Example: 10
+     *
+     * @response 200 {
+     *   "detail": {"id": 10, "file_name": "invoice.pdf", "file_path": "storage/uploads/invoice.pdf", "file_type": "application/pdf"},
+     *   "src": "data: application/pdf;base64,JVBERi0xLjQK..."
+     * }
+     */
     public function download(Request $request, $id)
     {
         DB::beginTransaction();

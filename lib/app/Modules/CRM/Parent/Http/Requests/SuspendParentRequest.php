@@ -4,11 +4,6 @@ namespace App\Modules\CRM\Parent\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * @bodyParam suspend_date date required Suspension date. Example: 2026-06-12
- * @bodyParam reason string required Reason for suspension. Example: Ngừng liên hệ
- * @bodyParam note string Additional note.
- */
 class SuspendParentRequest extends FormRequest
 {
     public function authorize(): bool
@@ -22,6 +17,23 @@ class SuspendParentRequest extends FormRequest
             'suspend_date' => ['required', 'date'],
             'reason' => ['required', 'string', 'max:1000'],
             'note' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'suspend_date' => [
+                'description' => 'Suspension date.',
+                'example' => '2026-06-12',
+            ],
+            'reason' => [
+                'description' => 'Reason for suspension.',
+                'example' => 'Ngừng liên hệ',
+            ],
+            'note' => [
+                'description' => 'Additional note.',
+            ],
         ];
     }
 }

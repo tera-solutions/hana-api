@@ -36,6 +36,12 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Package\Exception\HttpException;
 
+/**
+ * @group Core - Authentication
+ *
+ * Login, registration, OTP, password reset and related account flows.
+ * Most endpoints are public; ones marked @authenticated require a bearer token.
+ */
 class ApiAuthController extends Controller
 {
     public $syncRolePermission;
@@ -45,6 +51,37 @@ class ApiAuthController extends Controller
         $this->syncRolePermission = $syncRolePermissionHelper;
     }
 
+    /**
+     * Login
+     *
+     * Authenticates a user and returns an access token. Requires a `device-code` header
+     * (obtain one from `POST /api/auth/device/init`).
+     *
+     * @header Device-code {your-device-code}
+     *
+     * @bodyParam username string required The username. Example: jdoe
+     * @bodyParam password string required The password. Example: secret123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đăng nhập thành công !",
+     *   "data": {
+     *     "verify_auth": 0,
+     *     "user": {"id": 1, "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com"},
+     *     "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+     *     "access_id": "a1b2c3"
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Wrong credentials" {
+     *   "success": false,
+     *   "msg": {"field": "password", "message": "Mật khẩu không hợp lệ"},
+     *   "data": null,
+     *   "code": 500,
+     *   "errors": []
+     * }
+     */
     public function login(Request $request)
     {
         DB::beginTransaction();
@@ -153,6 +190,27 @@ class ApiAuthController extends Controller
         return bin2hex(openssl_random_pseudo_bytes($length));
     }
 
+    /**
+     * Verify OTP
+     *
+     * Verifies a one-time code and issues an access token. Locks the account after 5 wrong attempts.
+     *
+     * @bodyParam user_id integer required The user ID. Example: 1
+     * @bodyParam otp_code string required The 6-digit OTP. Example: 123456
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "verify_auth": 1,
+     *     "user": {"id": 1, "username": "jdoe"},
+     *     "token": "eyJ0eXAiOiJKV1QiLCJhbGci...",
+     *     "access_id": 123
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function verifyOTP(Request $request)
     {
         try {
@@ -212,6 +270,21 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Resend OTP
+     *
+     * Re-sends the OTP email for a user (blocked after 5 wrong attempts).
+     *
+     * @bodyParam user_id integer required The user ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": "Đã gửi lại thành công mã OTP",
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function resendOTP(Request $request)
     {
         try {
@@ -243,6 +316,22 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Verify token
+     *
+     * Validates a one-time token (e.g. activation / reset) of a given type.
+     *
+     * @bodyParam token string required The token to verify. Example: 9f8c7b...
+     * @bodyParam type string required The token type. Example: reset_password
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Xác thực thành công !",
+     *   "data": {"id": 1, "user_id": 1, "token": "9f8c7b...", "type": "reset_password", "expired": "2026-06-12T00:05:00.000000Z"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function verifyToken(Request $request)
     {
         try {
@@ -290,6 +379,19 @@ class ApiAuthController extends Controller
         return Employee::create($dataResult);
     }
 
+    /**
+     * Create default business data
+     *
+     * Bootstraps default CRM data (stock, default customer/supplier) for a business.
+     *
+     * @urlParam id integer required The business ID. Example: 1
+     *
+     * @response 200 {
+     *   "id": 1,
+     *   "name": "Hana English",
+     *   "status": "is_active"
+     * }
+     */
     public function createBusinessDefault($id)
     {
         $businessPortal = $this->getBusinessById($id);
@@ -312,6 +414,29 @@ class ApiAuthController extends Controller
         return $businessPortal;
     }
 
+    /**
+     * Register
+     *
+     * Registers either a `business` account (creates business + owner + defaults) or an
+     * `individual` account, depending on the `type` field.
+     *
+     * @bodyParam type string required Either "business" or "individual". Example: individual
+     * @bodyParam full_name string Required for individual. Example: John Doe
+     * @bodyParam email string required The account email. Example: jdoe@example.com
+     * @bodyParam phone string The phone number. Example: 0900000000
+     * @bodyParam password string Required for individual. Example: secret123
+     * @bodyParam name string Required for business (business name). Example: Hana English
+     * @bodyParam owner_name string Required for business. Example: Jane Owner
+     * @bodyParam owner_email string Required for business. Example: owner@example.com
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đăng ký tài khoản thành công",
+     *   "data": {"id": 1, "full_name": "John Doe", "email": "jdoe@example.com", "type": "individual", "is_active": 1},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function register(Request $request)
     {
         try {
@@ -624,6 +749,21 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Send account activation email
+     *
+     * Generates an activation token and emails an activation link to the user.
+     *
+     * @bodyParam user_id integer required The user ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Vui lòng kiểm tra email để kích hoạt tài khoản !",
+     *   "data": {"id": 1, "username": "jdoe", "email": "jdoe@example.com"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function sendMailActiveAccount(Request $request)
     {
         try {
@@ -665,6 +805,22 @@ class ApiAuthController extends Controller
         return $password;
     }
 
+    /**
+     * Activate account
+     *
+     * Activates a user account using an activation token.
+     *
+     * @bodyParam token string required The activation token. Example: 9f8c7b...
+     * @bodyParam type string required The token type. Example: activation
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đã kích hoạt tài khoản thành công !",
+     *   "data": {"id": 5, "user_id": 1, "type": "activation"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function accountActivation(Request $request)
     {
         try {
@@ -696,6 +852,21 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Forgot password
+     *
+     * Sends a reset-password link (or activation link if the account is not yet active).
+     *
+     * @bodyParam email string required The account email / username. Example: jdoe@example.com
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Vui lòng kiểm tra email để khôi phục mật khẩu !",
+     *   "data": {"id": 1, "email": "jdoe@example.com"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function forgotPassword(Request $request)
     {
         try {
@@ -744,6 +915,24 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Reset password
+     *
+     * Resets the password using a valid reset token.
+     *
+     * @bodyParam token string required The reset token. Example: 9f8c7b...
+     * @bodyParam type string required The token type. Example: reset_password
+     * @bodyParam password string required The new password. Example: newSecret123
+     * @bodyParam confirm_password string required Must match password. Example: newSecret123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đặt lại mật khẩu thành công !",
+     *   "data": {"id": 1, "username": "jdoe", "email": "jdoe@example.com"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function resetPassword(Request $request)
     {
         try {
@@ -778,6 +967,26 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Check auth (SSO handoff)
+     *
+     * Validates an encrypted `access_id` payload and issues a fresh token for the user.
+     *
+     * @bodyParam salt string required Encryption salt (hex). Example: a1b2
+     * @bodyParam iv string required Encryption IV (hex). Example: c3d4
+     * @bodyParam da string required The encrypted payload (base64). Example: U2FsdGVk...
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "user": {"id": 1, "username": "jdoe", "full_name": "John Doe"},
+     *     "token": "eyJ0eXAiOiJKV1QiLCJhbGci..."
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function checkAuth(Request $request)
     {
         DB::beginTransaction();
@@ -837,6 +1046,28 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Logout
+     *
+     * Revokes the current access token and clears the user session.
+     *
+     * @authenticated
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": "Bạn đã đăng xuất thành công!",
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 401 {
+     *   "success": false,
+     *   "msg": "No permision!!",
+     *   "data": null,
+     *   "code": 401,
+     *   "errors": []
+     * }
+     */
     public function logout(Request $request)
     {
         DB::beginTransaction();
@@ -867,11 +1098,35 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Test (mail preview)
+     *
+     * Internal helper that renders the individual-registration mail template. Not part of the public API.
+     *
+     * @response 200 "<html>...rendered mail preview...</html>"
+     */
     public function test()
     {
         return view('mail.RegisterIndividual');
     }
 
+    /**
+     * Reset password directly
+     *
+     * Resets a user's password by user id (admin / direct flow) and revokes existing tokens.
+     *
+     * @bodyParam user_id integer required The user ID. Example: 1
+     * @bodyParam password string required The new password. Example: newSecret123
+     * @bodyParam confirm_password string required Must match password. Example: newSecret123
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đặt lại mật khẩu thành công !",
+     *   "data": {"id": 1, "username": "jdoe"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function resetDirectPassword(Request $request)
     {
         try {
@@ -895,6 +1150,22 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Login with Google
+     *
+     * Verifies a Google ID token and signs the user in.
+     *
+     * @bodyParam client_id string required The Google OAuth client id. Example: 1234.apps.googleusercontent.com
+     * @bodyParam access_token string required The Google ID token. Example: ya29...
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"user": {"id": 1, "email": "jdoe@example.com"}, "token": "eyJ0eXAiOiJKV1Qi..."},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function loginGoogle(Request $request)
     {
         try {
@@ -916,6 +1187,21 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Turn off welcome screen
+     *
+     * Marks the authenticated user as no longer first-time (`is_first = 0`).
+     *
+     * @authenticated
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": true,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function turnOffWelcome()
     {
         Auth::guard('api')->user()->update(['is_first' => 0]);
