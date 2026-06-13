@@ -6,23 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Parent id, code, business and status are immutable and ignored if sent.
- *
- * @bodyParam name string Full name. Example: Robert Smith
- * @bodyParam gender string male|female|other. Example: male
- * @bodyParam dob date Date of birth (<= today). Example: 1985-03-20
- * @bodyParam avatar string Avatar URL.
- * @bodyParam email string Contact email. Example: robert@example.com
- * @bodyParam phone string Contact phone. Example: 0922222222
- * @bodyParam address string Address. Example: 123 Le Loi
- * @bodyParam province string Province / city. Example: Ho Chi Minh
- * @bodyParam district string District. Example: District 7
- * @bodyParam branch_id integer Branch id. Example: 1
- * @bodyParam occupation string Occupation. Example: Engineer
- * @bodyParam company string Company. Example: ABC Corp
- * @bodyParam note string Note.
- * @bodyParam students object[] Students to link (replaces existing links).
- * @bodyParam students[].student_id integer required Existing student id. Example: 1
- * @bodyParam students[].relation string father|mother|guardian|grandfather|grandmother|other. Example: father
  */
 class UpdateParentRequest extends FormRequest
 {
@@ -61,6 +44,74 @@ class UpdateParentRequest extends FormRequest
         return [
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
             'dob.before_or_equal' => 'Ngày sinh phải nhỏ hơn hoặc bằng ngày hiện tại.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'Full name.',
+                'example' => 'Robert Smith',
+            ],
+            'gender' => [
+                'description' => 'male|female|other.',
+                'example' => 'male',
+            ],
+            'dob' => [
+                'description' => 'Date of birth (<= today).',
+                'example' => '1985-03-20',
+            ],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+            ],
+            'email' => [
+                'description' => 'Contact email.',
+                'example' => 'robert@example.com',
+            ],
+            'phone' => [
+                'description' => 'Contact phone.',
+                'example' => '0922222222',
+            ],
+            'address' => [
+                'description' => 'Address.',
+                'example' => '123 Le Loi',
+            ],
+            'province' => [
+                'description' => 'Province / city.',
+                'example' => 'Ho Chi Minh',
+            ],
+            'district' => [
+                'description' => 'District.',
+                'example' => 'District 7',
+            ],
+            'branch_id' => [
+                'description' => 'Branch id.',
+                'example' => 1,
+            ],
+            'occupation' => [
+                'description' => 'Occupation.',
+                'example' => 'Engineer',
+            ],
+            'company' => [
+                'description' => 'Company.',
+                'example' => 'ABC Corp',
+            ],
+            'note' => [
+                'description' => 'Note.',
+            ],
+            'students' => [
+                'description' => 'Students to link (replaces existing links).',
+                'type' => 'object[]',
+            ],
+            'students[].student_id' => [
+                'description' => 'Existing student id.',
+                'example' => 1,
+            ],
+            'students[].relation' => [
+                'description' => 'father|mother|guardian|grandfather|grandmother|other.',
+                'example' => 'father',
+            ],
         ];
     }
 }

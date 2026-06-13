@@ -4,11 +4,6 @@ namespace App\Modules\Education\Student\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * @bodyParam stop_date date required Suspension date. Example: 2026-06-12
- * @bodyParam reason string required Reason for suspension. Example: Nghỉ dài hạn
- * @bodyParam note string Additional note.
- */
 class SuspendStudentRequest extends FormRequest
 {
     public function authorize(): bool
@@ -22,6 +17,23 @@ class SuspendStudentRequest extends FormRequest
             'stop_date' => ['required', 'date'],
             'reason' => ['required', 'string', 'max:1000'],
             'note' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'stop_date' => [
+                'description' => 'Suspension date.',
+                'example' => '2026-06-12',
+            ],
+            'reason' => [
+                'description' => 'Reason for suspension.',
+                'example' => 'Nghỉ dài hạn',
+            ],
+            'note' => [
+                'description' => 'Additional note.',
+            ],
         ];
     }
 }

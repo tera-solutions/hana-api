@@ -5,24 +5,6 @@ namespace App\Modules\System\Branch\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * @bodyParam business_id integer required Owning business id (must be active). Example: 1
- * @bodyParam code string required Branch code, unique within the business. Example: Q1
- * @bodyParam name string required Branch name. Example: Chi nhánh Quận 1
- * @bodyParam short_name string Short name. Example: Q1
- * @bodyParam status string required active|inactive. Example: active
- * @bodyParam phone string required Hotline. Example: 0901234567
- * @bodyParam email string required Contact email. Example: q1@hana.edu.vn
- * @bodyParam website string Website. Example: https://hana.edu.vn
- * @bodyParam address string required Address. Example: 123 Le Loi
- * @bodyParam province string required Province. Example: Ho Chi Minh
- * @bodyParam district string required District. Example: District 1
- * @bodyParam ward string Ward. Example: Ben Nghe
- * @bodyParam postal_code string Postal code. Example: 700000
- * @bodyParam manager_id integer Branch manager user id. Example: 1
- * @bodyParam capacity integer Max capacity. Example: 200
- * @bodyParam opened_at date Opening date. Example: 2026-01-01
- */
 class CreateBranchRequest extends FormRequest
 {
     public function authorize(): bool
@@ -64,6 +46,76 @@ class CreateBranchRequest extends FormRequest
             'email.unique' => 'Email đã tồn tại.',
             'business_id.exists' => 'Business không tồn tại hoặc không hoạt động.',
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'business_id' => [
+                'description' => 'Owning business id (must be active).',
+                'example' => 1,
+            ],
+            'code' => [
+                'description' => 'Branch code, unique within the business.',
+                'example' => 'Q1',
+            ],
+            'name' => [
+                'description' => 'Branch name.',
+                'example' => 'Chi nhánh Quận 1',
+            ],
+            'short_name' => [
+                'description' => 'Short name.',
+                'example' => 'Q1',
+            ],
+            'status' => [
+                'description' => 'active|inactive.',
+                'example' => 'active',
+            ],
+            'phone' => [
+                'description' => 'Hotline.',
+                'example' => '0901234567',
+            ],
+            'email' => [
+                'description' => 'Contact email.',
+                'example' => 'q1@hana.edu.vn',
+            ],
+            'website' => [
+                'description' => 'Website.',
+                'example' => 'https://hana.edu.vn',
+            ],
+            'address' => [
+                'description' => 'Address.',
+                'example' => '123 Le Loi',
+            ],
+            'province' => [
+                'description' => 'Province.',
+                'example' => 'Ho Chi Minh',
+            ],
+            'district' => [
+                'description' => 'District.',
+                'example' => 'District 1',
+            ],
+            'ward' => [
+                'description' => 'Ward.',
+                'example' => 'Ben Nghe',
+            ],
+            'postal_code' => [
+                'description' => 'Postal code.',
+                'example' => '700000',
+            ],
+            'manager_id' => [
+                'description' => 'Branch manager user id.',
+                'example' => 1,
+            ],
+            'capacity' => [
+                'description' => 'Max capacity.',
+                'example' => 200,
+            ],
+            'opened_at' => [
+                'description' => 'Opening date.',
+                'example' => '2026-01-01',
+            ],
         ];
     }
 }

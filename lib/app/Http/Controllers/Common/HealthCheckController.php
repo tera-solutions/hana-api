@@ -8,8 +8,26 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+/**
+ * @group Core - Health
+ *
+ * Liveness / connectivity probes. These endpoints are public (no token required).
+ */
 class HealthCheckController extends Controller
 {
+    /**
+     * Health check
+     *
+     * Basic liveness probe.
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"status": "ok", "app_version": 1.0, "timestamp": "2026-06-12T00:00:00+00:00"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function index(Request $request)
     {
         $data = [
@@ -21,6 +39,33 @@ class HealthCheckController extends Controller
         return $this->respondSuccess($data);
     }
 
+    /**
+     * Connectivity check
+     *
+     * Reports database / cache / storage / auth status. If a bearer token is supplied,
+     * the authenticated user is included.
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "status": "ok",
+     *     "agent": "Mozilla/5.0",
+     *     "ip": "127.0.0.1",
+     *     "timestamp": "2026-06-12T00:00:00+00:00",
+     *     "services": {"database": "ok", "cache": "ok", "storage": "ok", "authenticated": "active"}
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 401 {
+     *   "success": false,
+     *   "msg": "USER EXPIRED!!",
+     *   "data": null,
+     *   "code": 401,
+     *   "errors": {"status": "expired"}
+     * }
+     */
     public function checkConnect(Request $request)
     {
         try {
