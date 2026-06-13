@@ -74,4 +74,38 @@ class CreateTeacherRequest extends FormRequest
             'skills.required' => 'Chuyên môn là bắt buộc.',
         ];
     }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'code' => [
+                'description' => 'Unique teacher code.',
+                'example' => 'T0001',
+            ],
+            'name' => [
+                'description' => 'Teacher full name.',
+                'example' => 'Jane Doe',
+            ],
+            'user_id' => [
+                'description' => 'Linked user id.',
+                'example' => 1,
+            ],
+            'business_id' => [
+                'description' => 'Owning business id.',
+                'example' => 1,
+            ],
+            'type' => [
+                'description' => 'Teacher type.',
+                'example' => 'teacher',
+            ],
+            'status' => [
+                'description' => 'active|inactive.',
+                'example' => 'active',
+            ],
+            'salary_per_hour' => [
+                'description' => 'Hourly salary.',
+                'example' => 150000,
+            ],
+        ];
+    }
 }

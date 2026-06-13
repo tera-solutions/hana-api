@@ -7,20 +7,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * ID, Code and Business cannot be changed once created.
- *
- * @bodyParam name string Branch name. Example: Chi nhánh Quận 1
- * @bodyParam short_name string Short name. Example: Q1
- * @bodyParam status string active|inactive. Example: active
- * @bodyParam phone string Hotline. Example: 0901234567
- * @bodyParam email string Contact email. Example: q1@hana.edu.vn
- * @bodyParam website string Website. Example: https://hana.edu.vn
- * @bodyParam address string Address. Example: 123 Le Loi
- * @bodyParam province string Province. Example: Ho Chi Minh
- * @bodyParam district string District. Example: District 1
- * @bodyParam ward string Ward. Example: Ben Nghe
- * @bodyParam postal_code string Postal code. Example: 700000
- * @bodyParam manager_id integer Branch manager user id. Example: 1
- * @bodyParam capacity integer Max capacity. Example: 200
  */
 class UpdateBranchRequest extends FormRequest
 {
@@ -57,6 +43,64 @@ class UpdateBranchRequest extends FormRequest
         return [
             'email.unique' => 'Email đã tồn tại.',
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'Branch name.',
+                'example' => 'Chi nhánh Quận 1',
+            ],
+            'short_name' => [
+                'description' => 'Short name.',
+                'example' => 'Q1',
+            ],
+            'status' => [
+                'description' => 'active|inactive.',
+                'example' => 'active',
+            ],
+            'phone' => [
+                'description' => 'Hotline.',
+                'example' => '0901234567',
+            ],
+            'email' => [
+                'description' => 'Contact email.',
+                'example' => 'q1@hana.edu.vn',
+            ],
+            'website' => [
+                'description' => 'Website.',
+                'example' => 'https://hana.edu.vn',
+            ],
+            'address' => [
+                'description' => 'Address.',
+                'example' => '123 Le Loi',
+            ],
+            'province' => [
+                'description' => 'Province.',
+                'example' => 'Ho Chi Minh',
+            ],
+            'district' => [
+                'description' => 'District.',
+                'example' => 'District 1',
+            ],
+            'ward' => [
+                'description' => 'Ward.',
+                'example' => 'Ben Nghe',
+            ],
+            'postal_code' => [
+                'description' => 'Postal code.',
+                'example' => '700000',
+            ],
+            'manager_id' => [
+                'description' => 'Branch manager user id.',
+                'example' => 1,
+            ],
+            'capacity' => [
+                'description' => 'Max capacity.',
+                'example' => 200,
+            ],
         ];
     }
 }

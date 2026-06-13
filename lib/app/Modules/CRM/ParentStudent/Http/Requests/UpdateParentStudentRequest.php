@@ -8,12 +8,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * Parent and Student are immutable and ignored if sent.
- *
- * @bodyParam relation string father|mother|guardian|grandfather|grandmother|uncle|aunt|other. Example: mother
- * @bodyParam is_primary_contact boolean Main contact. Example: true
- * @bodyParam is_billing_contact boolean Receives invoices. Example: true
- * @bodyParam is_pickup_authorized boolean Authorized to pick up the student. Example: false
- * @bodyParam note string Note.
  */
 class UpdateParentStudentRequest extends FormRequest
 {
@@ -47,6 +41,31 @@ class UpdateParentStudentRequest extends FormRequest
     {
         return [
             'relation.unique' => 'Quan hệ này đã tồn tại cho phụ huynh và học viên.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'relation' => [
+                'description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.',
+                'example' => 'mother',
+            ],
+            'is_primary_contact' => [
+                'description' => 'Main contact.',
+                'example' => true,
+            ],
+            'is_billing_contact' => [
+                'description' => 'Receives invoices.',
+                'example' => true,
+            ],
+            'is_pickup_authorized' => [
+                'description' => 'Authorized to pick up the student.',
+                'example' => false,
+            ],
+            'note' => [
+                'description' => 'Note.',
+            ],
         ];
     }
 }

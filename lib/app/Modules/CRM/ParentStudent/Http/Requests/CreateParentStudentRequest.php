@@ -5,15 +5,6 @@ namespace App\Modules\CRM\ParentStudent\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * @bodyParam parent_id integer required Active parent id. Example: 1
- * @bodyParam student_id integer required Active student id. Example: 1
- * @bodyParam relation string required father|mother|guardian|grandfather|grandmother|uncle|aunt|other. Example: father
- * @bodyParam is_primary_contact boolean Main contact. Example: true
- * @bodyParam is_billing_contact boolean Receives invoices. Example: true
- * @bodyParam is_pickup_authorized boolean Authorized to pick up the student. Example: false
- * @bodyParam note string Note.
- */
 class CreateParentStudentRequest extends FormRequest
 {
     public function authorize(): bool
@@ -54,6 +45,39 @@ class CreateParentStudentRequest extends FormRequest
             'parent_id.exists' => 'Phụ huynh không tồn tại hoặc không hoạt động.',
             'student_id.exists' => 'Học viên không tồn tại hoặc không hoạt động.',
             'relation.unique' => 'Quan hệ này đã tồn tại cho phụ huynh và học viên.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'parent_id' => [
+                'description' => 'Active parent id.',
+                'example' => 1,
+            ],
+            'student_id' => [
+                'description' => 'Active student id.',
+                'example' => 1,
+            ],
+            'relation' => [
+                'description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.',
+                'example' => 'father',
+            ],
+            'is_primary_contact' => [
+                'description' => 'Main contact.',
+                'example' => true,
+            ],
+            'is_billing_contact' => [
+                'description' => 'Receives invoices.',
+                'example' => true,
+            ],
+            'is_pickup_authorized' => [
+                'description' => 'Authorized to pick up the student.',
+                'example' => false,
+            ],
+            'note' => [
+                'description' => 'Note.',
+            ],
         ];
     }
 }
