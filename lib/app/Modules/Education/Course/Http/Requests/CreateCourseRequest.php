@@ -4,16 +4,6 @@ namespace App\Modules\Education\Course\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * @bodyParam name string required Course name. Example: IELTS Foundation
- * @bodyParam code string required Unique code (A-Z, 0-9, _). Example: IELTS_6_5
- * @bodyParam thumbnail string Thumbnail URL. Example: https://cdn.hana.edu.vn/c.png
- * @bodyParam duration_minutes integer required Lesson duration in minutes (> 0). Example: 90
- * @bodyParam price_per_lesson number required Price per lesson (>= 0). Example: 250000
- * @bodyParam description string Description.
- * @bodyParam is_active boolean Active state. Example: true
- * @bodyParam business_id integer Owning business id. Example: 1
- */
 class CreateCourseRequest extends FormRequest
 {
     public function authorize(): bool
@@ -41,6 +31,43 @@ class CreateCourseRequest extends FormRequest
             'code.unique' => 'Mã khóa học đã tồn tại.',
             'code.regex' => 'Mã khóa học chỉ gồm chữ in hoa, số và dấu gạch dưới.',
             'duration_minutes.min' => 'Thời lượng phải lớn hơn 0.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'Course name.',
+                'example' => 'IELTS Foundation',
+            ],
+            'code' => [
+                'description' => 'Unique code (A-Z, 0-9, _).',
+                'example' => 'IELTS_6_5',
+            ],
+            'thumbnail' => [
+                'description' => 'Thumbnail URL.',
+                'example' => 'https://cdn.hana.edu.vn/c.png',
+            ],
+            'duration_minutes' => [
+                'description' => 'Lesson duration in minutes (> 0).',
+                'example' => 90,
+            ],
+            'price_per_lesson' => [
+                'description' => 'Price per lesson (>= 0).',
+                'example' => 250000,
+            ],
+            'description' => [
+                'description' => 'Description.',
+            ],
+            'is_active' => [
+                'description' => 'Active state.',
+                'example' => true,
+            ],
+            'business_id' => [
+                'description' => 'Owning business id.',
+                'example' => 1,
+            ],
         ];
     }
 }

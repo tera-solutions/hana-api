@@ -5,22 +5,6 @@ namespace App\Modules\System\User\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
-/**
- * @bodyParam full_name string required Full name. Example: Nguyen Van A
- * @bodyParam email string required Login email (unique). Example: a@hana.edu.vn
- * @bodyParam phone string required Phone (unique). Example: 0901234567
- * @bodyParam username string required Login username (unique). Example: teacher01
- * @bodyParam password string required Min 8, upper/lower/number. Example: Abc@1234
- * @bodyParam password_confirmation string required Must match password. Example: Abc@1234
- * @bodyParam business_id integer required Business id. Example: 1
- * @bodyParam branch_id integer Branch id. Example: 1
- * @bodyParam role_id integer required Role id. Example: 1
- * @bodyParam department string Department. Example: Academic
- * @bodyParam gender string male|female|other. Example: male
- * @bodyParam dob date Date of birth. Example: 1995-05-20
- * @bodyParam avatar string Avatar path. Example: avatars/a.png
- * @bodyParam status string required active|inactive|locked. Example: active
- */
 class CreateUserRequest extends FormRequest
 {
     public function authorize(): bool
@@ -57,6 +41,68 @@ class CreateUserRequest extends FormRequest
             'username.unique' => 'Tên đăng nhập đã tồn tại.',
             'phone.unique' => 'Số điện thoại đã tồn tại.',
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'full_name' => [
+                'description' => 'Full name.',
+                'example' => 'Nguyen Van A',
+            ],
+            'email' => [
+                'description' => 'Login email (unique).',
+                'example' => 'a@hana.edu.vn',
+            ],
+            'phone' => [
+                'description' => 'Phone (unique).',
+                'example' => '0901234567',
+            ],
+            'username' => [
+                'description' => 'Login username (unique).',
+                'example' => 'teacher01',
+            ],
+            'password' => [
+                'description' => 'Min 8, upper/lower/number.',
+                'example' => 'Abc@1234',
+            ],
+            'password_confirmation' => [
+                'description' => 'Must match password.',
+                'example' => 'Abc@1234',
+            ],
+            'business_id' => [
+                'description' => 'Business id.',
+                'example' => 1,
+            ],
+            'branch_id' => [
+                'description' => 'Branch id.',
+                'example' => 1,
+            ],
+            'role_id' => [
+                'description' => 'Role id.',
+                'example' => 1,
+            ],
+            'department' => [
+                'description' => 'Department.',
+                'example' => 'Academic',
+            ],
+            'gender' => [
+                'description' => 'male|female|other.',
+                'example' => 'male',
+            ],
+            'dob' => [
+                'description' => 'Date of birth.',
+                'example' => '1995-05-20',
+            ],
+            'avatar' => [
+                'description' => 'Avatar path.',
+                'example' => 'avatars/a.png',
+            ],
+            'status' => [
+                'description' => 'active|inactive|locked.',
+                'example' => 'active',
+            ],
         ];
     }
 }

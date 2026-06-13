@@ -12,13 +12,37 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @group Core - User
+ *
+ * Authenticated user's own profile.
+ */
 class UserController extends Controller
 {
 
     /**
-     * Shows profile of logged in user
+     * Get current profile
      *
-     * @return \Illuminate\Http\Response
+     * Shows the profile of the logged-in user. Requires a bearer token and a `device-code` header.
+     *
+     * @authenticated
+     *
+     * @header Device-code {your-device-code}
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"id": 1, "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com", "status": "active", "role": "admin", "role_name": "Administrator", "access_id": 123},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 401 {
+     *   "success": false,
+     *   "msg": "No permision!!",
+     *   "data": null,
+     *   "code": 401,
+     *   "errors": []
+     * }
      */
     public function getProfile(Request $request)
     {

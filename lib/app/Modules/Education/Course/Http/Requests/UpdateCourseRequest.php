@@ -8,13 +8,6 @@ use Illuminate\Validation\Rule;
 /**
  * Course code becomes immutable once classes exist (ignored in that case).
  * is_active is changed via suspend/restore, not here.
- *
- * @bodyParam name string Course name. Example: IELTS Foundation
- * @bodyParam code string Unique code (A-Z, 0-9, _). Example: IELTS_6_5
- * @bodyParam thumbnail string Thumbnail URL.
- * @bodyParam duration_minutes integer Lesson duration in minutes (> 0). Example: 90
- * @bodyParam price_per_lesson number Price per lesson (>= 0). Example: 250000
- * @bodyParam description string Description.
  */
 class UpdateCourseRequest extends FormRequest
 {
@@ -43,6 +36,34 @@ class UpdateCourseRequest extends FormRequest
             'code.unique' => 'Mã khóa học đã tồn tại.',
             'code.regex' => 'Mã khóa học chỉ gồm chữ in hoa, số và dấu gạch dưới.',
             'duration_minutes.min' => 'Thời lượng phải lớn hơn 0.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'Course name.',
+                'example' => 'IELTS Foundation',
+            ],
+            'code' => [
+                'description' => 'Unique code (A-Z, 0-9, _).',
+                'example' => 'IELTS_6_5',
+            ],
+            'thumbnail' => [
+                'description' => 'Thumbnail URL.',
+            ],
+            'duration_minutes' => [
+                'description' => 'Lesson duration in minutes (> 0).',
+                'example' => 90,
+            ],
+            'price_per_lesson' => [
+                'description' => 'Price per lesson (>= 0).',
+                'example' => 250000,
+            ],
+            'description' => [
+                'description' => 'Description.',
+            ],
         ];
     }
 }

@@ -7,8 +7,34 @@ use App\Constants\DateTimeConstant;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+/**
+ * @group Core - Common
+ *
+ * Device bootstrap and calendar helpers. Public (no token required).
+ */
 class CommonController extends Controller
 {
+    /**
+     * Init device / client code
+     *
+     * Returns a generated device code plus bootstrap info (banners, urls, weather widget).
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "agent": "Mozilla/5.0",
+     *     "device_code": "Ab12Cd34Ef56",
+     *     "device_type": 0,
+     *     "is_mobile": false,
+     *     "auth_url": "https://auth.example.com",
+     *     "portal_url": "https://portal.example.com",
+     *     "ip": "127.0.0.1"
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function initClientCode(Request $request)
     {
         try {
@@ -65,6 +91,24 @@ class CommonController extends Controller
         }
     }
 
+    /**
+     * Days in month
+     *
+     * Returns calendar metadata for each day of the requested month.
+     *
+     * @queryParam month integer The month (1-12). Defaults to current month. Example: 6
+     * @queryParam year integer The year. Defaults to current year. Example: 2026
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": [
+     *     {"day": 1, "month": 6, "year": 2026, "day_of_week": "Monday", "date": "01/06/2026", "is_holiday": false, "is_week_day": true, "is_week_end": false, "is_today": false}
+     *   ],
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
     public function getDayInMonth(Request $request)
     {
         try {

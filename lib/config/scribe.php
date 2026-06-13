@@ -18,10 +18,10 @@ return [
 
     // Text to place in the "Introduction" section, right after the `description`. Markdown and HTML are supported.
     'intro_text' => <<<'INTRO'
-            This documentation aims to provide all the information you need to work with our API.
+        This documentation aims to provide all the information you need to work with our API.
 
-            <aside>As you scroll, you'll see code examples for working with the API in different programming languages in the dark area to the right (or as part of the content on mobile).
-            You can switch the language used with the tabs at the top right (or from the nav menu at the top left on mobile).</aside>
+        As you scroll, you'll see code examples for working with the API in different programming languages in the dark area to the right (or as part of the content on mobile).
+        You can switch the language used with the tabs at the top right (or from the nav menu at the top left on mobile).
         INTRO,
 
     // The base URL displayed in the docs.
@@ -33,7 +33,7 @@ return [
         [
             'match' => [
                 // Match only routes whose paths match this pattern (use * as a wildcard to match any characters). Example: 'users/*'.
-                'prefixes' => ['v1/*'],
+                'prefixes' => ['v1/*', 'api/health', 'api/connect', 'api/auth/*', 'api/file/*'],
 
                 // Match only routes whose domains match this pattern (use * as a wildcard to match any characters). Example: 'api.*'.
                 'domains' => ['*'],
@@ -55,7 +55,7 @@ return [
     // - "static" will generate a static HTMl page in the /public/docs folder,
     // - "laravel" will generate the documentation as a Blade view, so you can add routing and authentication.
     // - "external_static" and "external_laravel" do the same as above, but pass the OpenAPI spec as a URL to an external UI template
-    'type' => 'laravel',
+    'type' => 'static',
 
     // See https://scribe.knuckles.wtf/laravel/reference/config#theme for supported options
     'theme' => 'default',
@@ -63,7 +63,7 @@ return [
     'static' => [
         // HTML documentation, assets and Postman collection will be generated to this folder.
         // Source Markdown will still be in resources/docs.
-        'output_path' => 'assets/docs',
+        'output_path' => dirname(base_path()).'/assets/docs',
     ],
 
     'laravel' => [
@@ -105,7 +105,7 @@ return [
     // How is your API authenticated? This information will be used in the displayed docs, generated examples and response calls.
     'auth' => [
         // Set this to true if ANY endpoints in your API use authentication.
-        'enabled' => false,
+        'enabled' => true,
 
         // Set this to true if your API should be authenticated by default. If so, you must also set `enabled` (above) to true.
         // You can then use @unauthenticated or @authenticated on individual endpoints to change their status from the default.
@@ -115,7 +115,7 @@ return [
         'in' => AuthIn::BEARER->value,
 
         // The name of the auth parameter (e.g. token, key, apiKey) or header (e.g. Authorization, Api-Key).
-        'name' => 'key',
+        'name' => 'Authorization',
 
         // The value of the parameter to be used by Scribe to authenticate response calls.
         // This will NOT be included in the generated documentation. If empty, Scribe will use a random value.
@@ -235,7 +235,7 @@ return [
         'responses' => configureStrategy(
             Defaults::RESPONSES_STRATEGIES,
             Strategies\Responses\ResponseCalls::withSettings(
-                only: ['GET *'],
+                only: [],
                 // Recommended: disable debug mode in response calls to avoid error stack traces in responses
                 config: [
                     'app.debug' => false,
