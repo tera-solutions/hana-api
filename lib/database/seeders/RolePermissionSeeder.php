@@ -22,7 +22,7 @@ class RolePermissionSeeder extends Seeder
             'business.view',
             'branch.list', 'branch.view', 'branch.update',
             'user.list', 'user.view', 'user.create', 'user.update',
-            'teacher.list', 'teacher.view', 'teacher.create', 'teacher.update', 'teacher.delete',
+            'teacher.list', 'teacher.view', 'teacher.create', 'teacher.update', 'teacher.suspend', 'teacher.restore', 'teacher.resign',
         ],
 
         'ACADEMIC_STAFF' => [

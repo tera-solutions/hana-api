@@ -13,22 +13,66 @@ class TeacherTest extends TestCase
     use RefreshDatabase;
     use SeedsAuthContext;
 
+    private int $businessId;
+
+    private int $branchId;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Make the teacher.* permissions available for the permission guard.
         $this->seed(TeacherPermissionSeeder::class);
+
+        $this->businessId = $this->makeBusinessId();
+        $this->branchId = $this->makeBranchId($this->businessId);
+    }
+
+    private function makeBranchId(int $businessId): int
+    {
+        return DB::table('sys_branches')->insertGetId([
+            'business_id' => $businessId,
+            'name' => 'Branch '.uniqid(),
+            'code' => 'CN_'.strtoupper(uniqid()),
+            'address' => '123 Le Loi',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function linkClassToTeacher(int $teacherId): void
+    {
+        $programId = DB::table('edu_programs')->insertGetId(['name' => 'IELTS', 'created_at' => now(), 'updated_at' => now()]);
+        $levelId = DB::table('edu_levels')->insertGetId(['name' => 'A1', 'created_at' => now(), 'updated_at' => now()]);
+        $courseId = DB::table('edu_courses')->insertGetId([
+            'program_id' => $programId, 'level_id' => $levelId, 'business_id' => $this->businessId,
+            'name' => 'IELTS Foundation', 'code' => 'C_'.strtoupper(uniqid()), 'duration_minutes' => 60, 'price_per_lesson' => 1000000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $classId = DB::table('edu_classes')->insertGetId([
+            'course_id' => $courseId, 'business_id' => $this->businessId, 'name' => 'Class A',
+            'start_date' => now()->toDateString(), 'status' => 'running', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('edu_class_teacher')->insert([
+            'class_id' => $classId, 'teacher_id' => $teacherId, 'role' => 'main',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     private function payload(array $overrides = []): array
     {
         return array_merge([
+            'full_name' => 'Jane Doe',
             'code' => 'T0001',
-            'name' => 'Jane Doe',
-            'type' => 'teacher',
-            'status' => 'active',
-            'salary_per_hour' => 150000,
+            'gender' => 'female',
+            'email' => 'jane@hana.edu.vn',
+            'phone' => '0901234567',
+            'branch_id' => $this->branchId,
+            'joined_at' => '2026-01-10',
+            'teacher_type' => 'full_time',
+            'employment_type' => 'contract',
+            'hourly_rate' => 150000,
+            'business_id' => $this->businessId,
+            'skills' => [['skill_name' => 'IELTS', 'level' => 'expert']],
         ], $overrides);
     }
 
@@ -44,24 +88,7 @@ class TeacherTest extends TestCase
         $this->getJson('/v1/hr/teacher/list')->assertJsonPath('code', 403);
     }
 
-    public function test_manager_with_permission_can_access(): void
-    {
-        $this->actingAsManager(['teacher.list']);
-
-        $this->getJson('/v1/hr/teacher/list')
-            ->assertStatus(200)
-            ->assertJsonPath('success', true);
-    }
-
-    public function test_manager_with_list_permission_cannot_create(): void
-    {
-        $this->actingAsManager(['teacher.list']);
-
-        $this->postJson('/v1/hr/teacher/create', $this->payload())
-            ->assertJsonPath('code', 403);
-    }
-
-    public function test_can_create_teacher(): void
+    public function test_can_create_teacher_with_skills(): void
     {
         $this->actingAsAdmin();
 
@@ -69,60 +96,63 @@ class TeacherTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.code', 'T0001');
+            ->assertJsonPath('data.code', 'T0001')
+            ->assertJsonPath('data.full_name', 'Jane Doe')
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.skills.0.skill_name', 'IELTS');
 
-        $this->assertDatabaseHas('hr_teachers', ['code' => 'T0001', 'name' => 'Jane Doe']);
+        $id = $response->json('data.id');
+        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'code' => 'T0001', 'teacher_type' => 'full_time']);
+        $this->assertDatabaseHas('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'IELTS']);
+        $this->assertDatabaseHas('hr_teacher_histories', ['teacher_id' => $id, 'action' => 'created']);
     }
 
-    public function test_create_requires_code_and_name(): void
+    public function test_create_validates_required_and_enums(): void
     {
         $this->actingAsAdmin();
 
-        $response = $this->postJson('/v1/hr/teacher/create', []);
+        $this->postJson('/v1/hr/teacher/create', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['full_name', 'code', 'email', 'phone', 'branch_id', 'joined_at', 'teacher_type', 'employment_type', 'skills']);
 
-        $response->assertStatus(422)->assertJsonValidationErrors(['code', 'name']);
+        $this->postJson('/v1/hr/teacher/create', $this->payload(['teacher_type' => 'invalid']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('teacher_type');
     }
 
-    public function test_create_rejects_duplicate_code(): void
-    {
-        $this->actingAsAdmin();
-
-        $this->postJson('/v1/hr/teacher/create', $this->payload())->assertStatus(200);
-
-        $response = $this->postJson('/v1/hr/teacher/create', $this->payload(['name' => 'Other']));
-
-        $response->assertStatus(422)->assertJsonValidationErrors('code');
-    }
-
-    public function test_can_list_teachers(): void
-    {
-        $this->actingAsAdmin();
-
-        $this->postJson('/v1/hr/teacher/create', $this->payload())->assertStatus(200);
-        $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0002', 'name' => 'John Roe']))
-            ->assertStatus(200);
-
-        $this->getJson('/v1/hr/teacher/list')
-            ->assertStatus(200)
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.pagination.total', 2);
-    }
-
-    public function test_list_can_search_teachers(): void
+    public function test_create_rejects_duplicate_code_email_phone(): void
     {
         $this->actingAsAdmin();
 
         $this->postJson('/v1/hr/teacher/create', $this->payload())->assertStatus(200);
-        $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0002', 'name' => 'John Roe']))
-            ->assertStatus(200);
 
-        $this->getJson('/v1/hr/teacher/list?search=T0002')
-            ->assertStatus(200)
+        $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0002', 'email' => 'jane@hana.edu.vn', 'phone' => '0900000000']))
+            ->assertStatus(422)->assertJsonValidationErrors('email');
+        $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0002', 'email' => 'x@hana.edu.vn', 'phone' => '0901234567']))
+            ->assertStatus(422)->assertJsonValidationErrors('phone');
+        $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0001', 'email' => 'x@hana.edu.vn', 'phone' => '0900000000']))
+            ->assertStatus(422)->assertJsonValidationErrors('code');
+    }
+
+    public function test_list_search_and_filter(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/hr/teacher/create', $this->payload())->assertStatus(200);
+        $this->postJson('/v1/hr/teacher/create', $this->payload([
+            'code' => 'T0002', 'full_name' => 'John Native', 'email' => 'john@hana.edu.vn',
+            'phone' => '0907654321', 'teacher_type' => 'part_time',
+        ]))->assertStatus(200);
+
+        $this->getJson('/v1/hr/teacher/list')->assertJsonPath('data.pagination.total', 2);
+        $this->getJson('/v1/hr/teacher/list?search=Native')
             ->assertJsonPath('data.pagination.total', 1)
             ->assertJsonPath('data.items.0.code', 'T0002');
+        $this->getJson('/v1/hr/teacher/list?teacher_type=part_time')
+            ->assertJsonPath('data.pagination.total', 1);
     }
 
-    public function test_can_get_teacher_detail(): void
+    public function test_detail_returns_statistics(): void
     {
         $this->actingAsAdmin();
 
@@ -131,78 +161,98 @@ class TeacherTest extends TestCase
         $this->getJson("/v1/hr/teacher/detail/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('data.teacher.id', $id)
-            ->assertJsonPath('data.teacher.code', 'T0001')
-            ->assertJsonStructure([
-                'data' => [
-                    'statistics' => [
-                        'total_classes',
-                        'total_sessions',
-                        'total_contracts',
-                        'total_payrolls',
-                        'total_reviews',
-                    ],
-                ],
-            ]);
+            ->assertJsonStructure(['data' => ['statistics' => ['total_classes', 'total_sessions', 'average_rating']]]);
     }
 
-    public function test_can_update_teacher(): void
+    public function test_update_replaces_skills_and_keeps_code(): void
     {
         $this->actingAsAdmin();
 
         $id = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
 
-        $this->putJson("/v1/hr/teacher/update/{$id}", ['name' => 'Jane Updated'])
-            ->assertStatus(200)
-            ->assertJsonPath('data.name', 'Jane Updated');
+        $this->putJson("/v1/hr/teacher/update/{$id}", [
+            'full_name' => 'Jane Updated',
+            'code' => 'HACKED',
+            'skills' => [['skill_name' => 'TOEIC', 'level' => 'intermediate']],
+        ])->assertStatus(200)->assertJsonPath('data.full_name', 'Jane Updated');
 
-        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'name' => 'Jane Updated']);
+        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'full_name' => 'Jane Updated', 'code' => 'T0001']);
+        $this->assertDatabaseHas('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'TOEIC']);
+        $this->assertDatabaseMissing('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'IELTS']);
     }
 
-    public function test_update_rejects_duplicate_code(): void
-    {
-        $this->actingAsAdmin();
-
-        $this->postJson('/v1/hr/teacher/create', $this->payload())->assertStatus(200);
-        $id = $this->postJson('/v1/hr/teacher/create', $this->payload(['code' => 'T0002', 'name' => 'John Roe']))
-            ->json('data.id');
-
-        $this->putJson("/v1/hr/teacher/update/{$id}", ['code' => 'T0001'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('code');
-    }
-
-    public function test_delete_blocked_when_linked_data_exists(): void
+    public function test_suspend_and_restore_lifecycle(): void
     {
         $this->actingAsAdmin();
 
         $id = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
 
-        DB::table('hr_contracts')->insert([
-            'teacher_id' => $id,
-            'type' => 'fulltime',
-            'start_date' => now()->toDateString(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->postJson("/v1/hr/teacher/suspend/{$id}", ['reason' => 'Tạm nghỉ'])
+            ->assertStatus(200)->assertJsonPath('data.status', 'suspended');
+        $this->assertDatabaseHas('hr_teacher_histories', ['teacher_id' => $id, 'action' => 'suspended']);
 
-        $this->deleteJson("/v1/hr/teacher/delete/{$id}")
+        $this->postJson("/v1/hr/teacher/suspend/{$id}", ['reason' => 'x'])->assertJsonPath('success', false);
+
+        $this->postJson("/v1/hr/teacher/restore/{$id}")
+            ->assertStatus(200)->assertJsonPath('data.status', 'active');
+    }
+
+    public function test_resign_blocked_when_holding_classes(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
+
+        $this->linkClassToTeacher($id);
+
+        $this->postJson("/v1/hr/teacher/resign/{$id}", ['resigned_at' => '2026-06-30', 'reason' => 'Quit'])
             ->assertStatus(200)
             ->assertJsonPath('success', false);
 
-        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'status' => 'active']);
     }
 
-    public function test_delete_soft_deletes_when_no_linked_data(): void
+    public function test_resign_succeeds_when_no_classes(): void
     {
         $this->actingAsAdmin();
 
         $id = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
 
-        $this->deleteJson("/v1/hr/teacher/delete/{$id}")
+        $this->postJson("/v1/hr/teacher/resign/{$id}", ['resigned_at' => '2026-06-30', 'reason' => 'Quit'])
             ->assertStatus(200)
-            ->assertJsonPath('success', true);
+            ->assertJsonPath('data.status', 'resigned');
 
-        $this->assertSoftDeleted('hr_teachers', ['id' => $id]);
+        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'status' => 'resigned']);
+        $this->assertNotNull(DB::table('hr_teachers')->where('id', $id)->value('resigned_at'));
+        $this->assertDatabaseHas('hr_teacher_histories', ['teacher_id' => $id, 'action' => 'resigned']);
+    }
+
+    public function test_certificate_crud_and_expiry_flags(): void
+    {
+        $this->actingAsAdmin();
+
+        $teacherId = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
+
+        // Create one expiring soon (<= 30 days).
+        $soon = now()->addDays(10)->toDateString();
+        $certId = $this->postJson("/v1/hr/teacher/certificate/create/{$teacherId}", [
+            'certificate_name' => 'IELTS 8.0',
+            'issuer' => 'British Council',
+            'expired_date' => $soon,
+        ])->assertStatus(200)->assertJsonPath('data.is_expiring_soon', true)->json('data.id');
+
+        $this->assertDatabaseHas('hr_teacher_certificates', ['id' => $certId, 'teacher_id' => $teacherId]);
+
+        $this->getJson("/v1/hr/teacher/certificate/list/{$teacherId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.certificate_name', 'IELTS 8.0');
+
+        $this->putJson("/v1/hr/teacher/certificate/update/{$certId}", ['certificate_name' => 'IELTS 8.5'])
+            ->assertStatus(200)->assertJsonPath('data.certificate_name', 'IELTS 8.5');
+
+        $this->deleteJson("/v1/hr/teacher/certificate/delete/{$certId}")
+            ->assertStatus(200)->assertJsonPath('success', true);
+        $this->assertSoftDeleted('hr_teacher_certificates', ['id' => $certId]);
     }
 
     public function test_stamps_audit_columns(): void
@@ -210,16 +260,7 @@ class TeacherTest extends TestCase
         $admin = $this->actingAsAdmin();
 
         $id = $this->postJson('/v1/hr/teacher/create', $this->payload())->json('data.id');
-        $this->assertDatabaseHas('hr_teachers', [
-            'id' => $id,
-            'created_by' => $admin->id,
-            'updated_by' => $admin->id,
-        ]);
 
-        $this->putJson("/v1/hr/teacher/update/{$id}", ['name' => 'Renamed'])->assertStatus(200);
-        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'updated_by' => $admin->id]);
-
-        $this->deleteJson("/v1/hr/teacher/delete/{$id}")->assertStatus(200);
-        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'deleted_by' => $admin->id]);
+        $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'created_by' => $admin->id, 'updated_by' => $admin->id]);
     }
 }

@@ -11,22 +11,44 @@ class TeacherResource extends JsonResource
         return [
             'id' => $this->id,
             'code' => $this->code,
-            'name' => $this->name,
-            'type' => $this->type,
-            'status' => $this->status,
-            'salary_per_hour' => $this->salary_per_hour,
+            'full_name' => $this->full_name,
+            'avatar' => $this->avatar,
+            'gender' => $this->gender,
+            'dob' => $this->dob,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'identity_no' => $this->identity_no,
+            'address' => $this->address,
 
-            'user_id' => $this->user_id,
-            'user' => $this->whenLoaded('user', fn () => [
-                'id' => $this->user?->id,
-                'name' => $this->user?->full_name,
-            ]),
+            'teacher_type' => $this->teacher_type,
+            'employment_type' => $this->employment_type,
+            'hourly_rate' => $this->hourly_rate,
+            'monthly_salary' => $this->monthly_salary,
+            'status' => $this->status,
+            'joined_at' => $this->joined_at,
+            'resigned_at' => $this->resigned_at,
+            'note' => $this->note,
 
             'business_id' => $this->business_id,
-            'business' => $this->whenLoaded('business', fn () => [
-                'id' => $this->business?->id,
-                'name' => $this->business?->name,
+            'branch_id' => $this->branch_id,
+            'branch' => $this->whenLoaded('branch', fn () => [
+                'id' => $this->branch?->id,
+                'name' => $this->branch?->name,
             ]),
+
+            'manager_id' => $this->manager_id,
+            'manager' => $this->whenLoaded('manager', fn () => [
+                'id' => $this->manager?->id,
+                'name' => $this->manager?->full_name,
+            ]),
+
+            'skills' => $this->whenLoaded('skills', fn () => $this->skills->map(fn ($skill) => [
+                'id' => $skill->id,
+                'skill_name' => $skill->skill_name,
+                'level' => $skill->level,
+            ])),
+
+            'certificates' => $this->whenLoaded('certificates', fn () => TeacherCertificateResource::collection($this->certificates)),
 
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,

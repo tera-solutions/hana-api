@@ -3,9 +3,11 @@
 namespace App\Modules\HR\Teacher\Models;
 
 use App\Models\User;
+use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
 
@@ -18,8 +20,23 @@ class Teacher extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'dob' => 'date',
+        'joined_at' => 'date',
+        'resigned_at' => 'date',
+        'hourly_rate' => 'decimal:2',
+        'monthly_salary' => 'decimal:2',
+    ];
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_SUSPENDED = 'suspended';
+
+    public const STATUS_RESIGNED = 'resigned';
+
     /**
-     * Related tables that block deletion when they reference this teacher.
+     * Related tables that block hard-deletion / resignation when they reference
+     * this teacher.
      *
      * @var array<string, string> table => teacher foreign key column
      */
@@ -38,5 +55,30 @@ class Teacher extends Model
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class, 'business_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function skills(): HasMany
+    {
+        return $this->hasMany(TeacherSkill::class, 'teacher_id');
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(TeacherCertificate::class, 'teacher_id');
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(TeacherHistory::class, 'teacher_id');
     }
 }
