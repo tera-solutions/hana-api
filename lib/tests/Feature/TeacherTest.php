@@ -45,7 +45,7 @@ class TeacherTest extends TestCase
         $levelId = DB::table('edu_levels')->insertGetId(['name' => 'A1', 'created_at' => now(), 'updated_at' => now()]);
         $courseId = DB::table('edu_courses')->insertGetId([
             'program_id' => $programId, 'level_id' => $levelId, 'business_id' => $this->businessId,
-            'name' => 'IELTS Foundation', 'code' => 'C_'.strtoupper(uniqid()), 'duration' => 60, 'price' => 1000000,
+            'name' => 'IELTS Foundation', 'code' => 'C_'.strtoupper(uniqid()), 'duration_minutes' => 60, 'price_per_lesson' => 1000000,
             'created_at' => now(), 'updated_at' => now(),
         ]);
         $classId = DB::table('edu_classes')->insertGetId([

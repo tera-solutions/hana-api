@@ -5,7 +5,7 @@ namespace App\Modules\HR\Teacher\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @bodyParam reason string required Reason for suspending. Example: Tạm nghỉ cá nhân
+ * Suspend a teacher.
  */
 class SuspendTeacherRequest extends FormRequest
 {
@@ -18,6 +18,13 @@ class SuspendTeacherRequest extends FormRequest
     {
         return [
             'reason' => ['required', 'string', 'max:1000'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'reason' => ['description' => 'Reason for suspending.', 'example' => 'Tạm nghỉ cá nhân'],
         ];
     }
 }

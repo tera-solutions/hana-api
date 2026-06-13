@@ -5,27 +5,7 @@ namespace App\Modules\HR\Teacher\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @bodyParam full_name string required Full name. Example: Jane Doe
- * @bodyParam code string required Unique teacher code. Example: T0001
- * @bodyParam avatar string Avatar URL.
- * @bodyParam gender string male|female|other. Example: female
- * @bodyParam dob date Date of birth. Example: 1990-05-12
- * @bodyParam email string required Unique email. Example: jane@hana.edu.vn
- * @bodyParam phone string required Unique phone. Example: 0901234567
- * @bodyParam identity_no string ID / passport number. Example: 0790xxxxxxx
- * @bodyParam address string Address.
- * @bodyParam branch_id integer required Branch id. Example: 1
- * @bodyParam joined_at date required Joining date. Example: 2026-01-10
- * @bodyParam teacher_type string required full_time|part_time|freelancer|assistant. Example: full_time
- * @bodyParam employment_type string required Cooperation form. Example: contract
- * @bodyParam hourly_rate number Hourly rate. Example: 150000
- * @bodyParam monthly_salary number Monthly salary. Example: 15000000
- * @bodyParam manager_id integer Manager user id. Example: 1
- * @bodyParam business_id integer Business id. Example: 1
- * @bodyParam note string Note.
- * @bodyParam skills object[] required Specializations.
- * @bodyParam skills[].skill_name string required Skill name. Example: IELTS
- * @bodyParam skills[].level string Skill level. Example: expert
+ * Create a teacher with their initial specialisations.
  */
 class CreateTeacherRequest extends FormRequest
 {
@@ -78,34 +58,27 @@ class CreateTeacherRequest extends FormRequest
     public function bodyParameters(): array
     {
         return [
-            'code' => [
-                'description' => 'Unique teacher code.',
-                'example' => 'T0001',
-            ],
-            'name' => [
-                'description' => 'Teacher full name.',
-                'example' => 'Jane Doe',
-            ],
-            'user_id' => [
-                'description' => 'Linked user id.',
-                'example' => 1,
-            ],
-            'business_id' => [
-                'description' => 'Owning business id.',
-                'example' => 1,
-            ],
-            'type' => [
-                'description' => 'Teacher type.',
-                'example' => 'teacher',
-            ],
-            'status' => [
-                'description' => 'active|inactive.',
-                'example' => 'active',
-            ],
-            'salary_per_hour' => [
-                'description' => 'Hourly salary.',
-                'example' => 150000,
-            ],
+            'full_name' => ['description' => 'Full name.', 'example' => 'Jane Doe'],
+            'code' => ['description' => 'Unique teacher code.', 'example' => 'TCH001'],
+            'avatar' => ['description' => 'Avatar path.', 'example' => 'avatars/jane.png'],
+            'gender' => ['description' => 'male|female|other.', 'example' => 'female'],
+            'dob' => ['description' => 'Date of birth (<= today).', 'example' => '1990-05-12'],
+            'email' => ['description' => 'Unique email.', 'example' => 'jane@hana.edu.vn'],
+            'phone' => ['description' => 'Unique phone.', 'example' => '0901234567'],
+            'identity_no' => ['description' => 'ID / passport number.', 'example' => '079012345678'],
+            'address' => ['description' => 'Address.', 'example' => '123 Lê Lợi, Hà Nội'],
+            'branch_id' => ['description' => 'Branch id.', 'example' => 1],
+            'joined_at' => ['description' => 'Joining date.', 'example' => '2026-01-10'],
+            'teacher_type' => ['description' => 'full_time|part_time|freelancer|assistant.', 'example' => 'full_time'],
+            'employment_type' => ['description' => 'Cooperation form.', 'example' => 'contract'],
+            'hourly_rate' => ['description' => 'Hourly rate.', 'example' => 150000],
+            'monthly_salary' => ['description' => 'Monthly salary.', 'example' => 15000000],
+            'manager_id' => ['description' => 'Manager user id.', 'example' => 1],
+            'business_id' => ['description' => 'Business id.', 'example' => 1],
+            'note' => ['description' => 'Note.', 'example' => 'Giáo viên tốt nghiệp đại học Ngoại ngữ'],
+            'skills' => ['description' => 'Specialisations (at least one required).', 'example' => []],
+            'skills[].skill_name' => ['description' => 'Skill name.', 'example' => 'IELTS'],
+            'skills[].level' => ['description' => 'Skill level.', 'example' => 'expert'],
         ];
     }
 }

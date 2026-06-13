@@ -5,8 +5,7 @@ namespace App\Modules\HR\Teacher\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @bodyParam resigned_at date required Resignation date. Example: 2026-06-30
- * @bodyParam reason string required Reason for resignation. Example: Chuyển công tác
+ * Process a teacher's resignation.
  */
 class ResignTeacherRequest extends FormRequest
 {
@@ -20,6 +19,14 @@ class ResignTeacherRequest extends FormRequest
         return [
             'resigned_at' => ['required', 'date'],
             'reason' => ['required', 'string', 'max:1000'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'resigned_at' => ['description' => 'Resignation date.', 'example' => '2026-06-30'],
+            'reason' => ['description' => 'Reason for resignation.', 'example' => 'Chuyển công tác'],
         ];
     }
 }

@@ -6,26 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Teacher code is immutable; status changes via suspend/restore/resign.
- *
- * @bodyParam full_name string Full name. Example: Jane Doe
- * @bodyParam avatar string Avatar URL.
- * @bodyParam gender string male|female|other. Example: female
- * @bodyParam dob date Date of birth. Example: 1990-05-12
- * @bodyParam email string Unique email. Example: jane@hana.edu.vn
- * @bodyParam phone string Unique phone. Example: 0901234567
- * @bodyParam identity_no string ID / passport number.
- * @bodyParam address string Address.
- * @bodyParam branch_id integer Branch id. Example: 1
- * @bodyParam teacher_type string full_time|part_time|freelancer|assistant. Example: part_time
- * @bodyParam employment_type string Cooperation form. Example: contract
- * @bodyParam hourly_rate number Hourly rate. Example: 150000
- * @bodyParam monthly_salary number Monthly salary. Example: 15000000
- * @bodyParam manager_id integer Manager user id. Example: 1
- * @bodyParam note string Note.
- * @bodyParam skills object[] Specializations (replaces existing).
- * @bodyParam skills[].skill_name string required Skill name. Example: TOEIC
- * @bodyParam skills[].level string Skill level. Example: intermediate
+ * Update a teacher. Code and status are immutable.
  */
 class UpdateTeacherRequest extends FormRequest
 {
@@ -74,34 +55,24 @@ class UpdateTeacherRequest extends FormRequest
     public function bodyParameters(): array
     {
         return [
-            'code' => [
-                'description' => 'Unique teacher code.',
-                'example' => 'T0001',
-            ],
-            'name' => [
-                'description' => 'Teacher full name.',
-                'example' => 'Jane Doe',
-            ],
-            'user_id' => [
-                'description' => 'Linked user id.',
-                'example' => 1,
-            ],
-            'business_id' => [
-                'description' => 'Owning business id.',
-                'example' => 1,
-            ],
-            'type' => [
-                'description' => 'Teacher type.',
-                'example' => 'teacher',
-            ],
-            'status' => [
-                'description' => 'active|inactive.',
-                'example' => 'active',
-            ],
-            'salary_per_hour' => [
-                'description' => 'Hourly salary.',
-                'example' => 150000,
-            ],
+            'full_name' => ['description' => 'Full name.', 'example' => 'Jane Doe'],
+            'avatar' => ['description' => 'Avatar path.', 'example' => 'avatars/jane.png'],
+            'gender' => ['description' => 'male|female|other.', 'example' => 'female'],
+            'dob' => ['description' => 'Date of birth (<= today).', 'example' => '1990-05-12'],
+            'email' => ['description' => 'Unique email.', 'example' => 'jane@hana.edu.vn'],
+            'phone' => ['description' => 'Unique phone.', 'example' => '0901234567'],
+            'identity_no' => ['description' => 'ID / passport number.', 'example' => '079012345678'],
+            'address' => ['description' => 'Address.', 'example' => '123 Lê Lợi, Hà Nội'],
+            'branch_id' => ['description' => 'Branch id.', 'example' => 1],
+            'teacher_type' => ['description' => 'full_time|part_time|freelancer|assistant.', 'example' => 'part_time'],
+            'employment_type' => ['description' => 'Cooperation form.', 'example' => 'contract'],
+            'hourly_rate' => ['description' => 'Hourly rate.', 'example' => 200000],
+            'monthly_salary' => ['description' => 'Monthly salary.', 'example' => 15000000],
+            'manager_id' => ['description' => 'Manager user id.', 'example' => 1],
+            'note' => ['description' => 'Note.', 'example' => 'Chuyển sang dạy part-time'],
+            'skills' => ['description' => 'Specialisations (replaces all existing when provided).', 'example' => []],
+            'skills[].skill_name' => ['description' => 'Skill name.', 'example' => 'TOEIC'],
+            'skills[].level' => ['description' => 'Skill level.', 'example' => 'intermediate'],
         ];
     }
 }
