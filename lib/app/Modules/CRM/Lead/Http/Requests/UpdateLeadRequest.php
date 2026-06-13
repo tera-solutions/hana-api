@@ -8,20 +8,6 @@ use Illuminate\Validation\Rule;
 /**
  * Update a lead. Code, business and status are immutable and ignored if sent;
  * status is changed via suspend/restore (lead.md §4).
- *
- * @bodyParam name string Full name. Example: Nguyễn Văn A
- * @bodyParam gender string male|female|other. Example: male
- * @bodyParam dob date Date of birth (<= today). Example: 2010-03-20
- * @bodyParam email string Contact email. Example: a@example.com
- * @bodyParam phone string Contact phone (unique among active leads). Example: 0901234567
- * @bodyParam source string Lead source. Example: facebook
- * @bodyParam owner_id integer Assigned staff (user) id. Example: 1
- * @bodyParam branch_id integer Branch id. Example: 1
- * @bodyParam note string Note.
- * @bodyParam tag_ids integer[] Tag ids (replaces existing). Example: [1,2]
- * @bodyParam course_ids integer[] Interested course ids (replaces existing). Example: [1]
- * @bodyParam guardians object[] Guardians (replaces existing when provided).
- * @bodyParam students object[] Linked students (replaces existing when provided).
  */
 class UpdateLeadRequest extends FormRequest
 {
@@ -77,6 +63,31 @@ class UpdateLeadRequest extends FormRequest
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
             'dob.before_or_equal' => 'Ngày sinh phải nhỏ hơn hoặc bằng ngày hiện tại.',
             'guardians.*.phone.distinct' => 'Số điện thoại người giám hộ bị trùng trong cùng một khách hàng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Full name.', 'example' => 'Nguyễn Văn A'],
+            'gender' => ['description' => 'male|female|other.', 'example' => 'male'],
+            'dob' => ['description' => 'Date of birth (<= today).', 'example' => '2010-03-20'],
+            'email' => ['description' => 'Contact email.', 'example' => 'a@example.com'],
+            'phone' => ['description' => 'Contact phone (unique among active leads).', 'example' => '0901234567'],
+            'source' => ['description' => 'Lead source.', 'example' => 'zalo'],
+            'owner_id' => ['description' => 'Assigned staff (user) id.', 'example' => 1],
+            'branch_id' => ['description' => 'Branch id.', 'example' => 1],
+            'note' => ['description' => 'Note.', 'example' => 'Đã tư vấn lần 2'],
+            'tag_ids' => ['description' => 'Tag ids (replaces existing).', 'example' => [1, 2]],
+            'course_ids' => ['description' => 'Interested course ids (replaces existing).', 'example' => [1]],
+            'guardians' => ['description' => 'Guardians (replaces all existing when provided).', 'example' => []],
+            'guardians[].full_name' => ['description' => 'Guardian full name.', 'example' => 'Nguyễn Văn B'],
+            'guardians[].relationship' => ['description' => 'Relationship to the lead.', 'example' => 'Bố'],
+            'guardians[].phone' => ['description' => 'Guardian phone.', 'example' => '0907654321'],
+            'guardians[].email' => ['description' => 'Guardian email.', 'example' => 'b@example.com'],
+            'students' => ['description' => 'Linked students (replaces all existing when provided).', 'example' => []],
+            'students[].student_id' => ['description' => 'Active student id.', 'example' => 1],
+            'students[].relationship' => ['description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.', 'example' => 'father'],
         ];
     }
 }

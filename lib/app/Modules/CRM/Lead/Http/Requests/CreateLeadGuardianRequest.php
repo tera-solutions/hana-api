@@ -7,11 +7,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * Add a guardian to a lead (lead.md §3 / §8).
- *
- * @bodyParam full_name string required Guardian full name. Example: Nguyễn Văn A
- * @bodyParam relationship string required Relationship to the lead. Example: Bố
- * @bodyParam phone string required Phone number, unique within the lead. Example: 0901234567
- * @bodyParam email string Guardian email. Example: guardian@example.com
  */
 class CreateLeadGuardianRequest extends FormRequest
 {
@@ -53,6 +48,16 @@ class CreateLeadGuardianRequest extends FormRequest
         return [
             'lead_id.exists' => 'Khách hàng không tồn tại.',
             'phone.unique' => 'Số điện thoại người giám hộ đã tồn tại trong khách hàng này.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'full_name' => ['description' => 'Guardian full name.', 'example' => 'Nguyễn Văn B'],
+            'relationship' => ['description' => 'Relationship to the lead.', 'example' => 'Bố'],
+            'phone' => ['description' => 'Phone number (unique within this lead).', 'example' => '0907654321'],
+            'email' => ['description' => 'Guardian email.', 'example' => 'guardian@example.com'],
         ];
     }
 }

@@ -7,8 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 /**
  * Lead and Student are immutable and ignored if sent; only the relationship is
  * editable (lead.md §9).
- *
- * @bodyParam relationship string father|mother|guardian|grandfather|grandmother|uncle|aunt|other. Example: mother
  */
 class UpdateLeadStudentRequest extends FormRequest
 {
@@ -24,6 +22,13 @@ class UpdateLeadStudentRequest extends FormRequest
                 'sometimes', 'nullable', 'string',
                 'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other',
             ],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'relationship' => ['description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.', 'example' => 'mother'],
         ];
     }
 }

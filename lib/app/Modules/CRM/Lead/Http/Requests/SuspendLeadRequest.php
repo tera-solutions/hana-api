@@ -6,9 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Suspend a lead (lead.md §6 "Ngừng khách hàng").
- *
- * @bodyParam reason string required Reason for stopping. Example: Không còn nhu cầu
- * @bodyParam note string Additional note.
  */
 class SuspendLeadRequest extends FormRequest
 {
@@ -22,6 +19,14 @@ class SuspendLeadRequest extends FormRequest
         return [
             'reason' => ['required', 'string', 'max:1000'],
             'note' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'reason' => ['description' => 'Reason for suspending the lead.', 'example' => 'Không còn nhu cầu'],
+            'note' => ['description' => 'Additional note.', 'example' => 'Sẽ liên hệ lại sau 3 tháng'],
         ];
     }
 }

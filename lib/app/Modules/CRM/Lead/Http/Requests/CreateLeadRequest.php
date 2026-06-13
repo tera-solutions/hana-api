@@ -7,28 +7,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * Create a lead with its guardians, linked students, tags and courses (lead.md §3).
- *
- * @bodyParam name string required Full name. Example: Nguyễn Văn A
- * @bodyParam gender string male|female|other. Example: male
- * @bodyParam dob date Date of birth (<= today). Example: 2010-03-20
- * @bodyParam email string Contact email. Example: a@example.com
- * @bodyParam phone string required Contact phone (unique among active leads). Example: 0901234567
- * @bodyParam source string required Lead source. Example: facebook
- * @bodyParam status string Initial status (defaults to pending). Example: pending
- * @bodyParam owner_id integer required Assigned staff (user) id. Example: 1
- * @bodyParam business_id integer Business id. Example: 1
- * @bodyParam branch_id integer Branch id. Example: 1
- * @bodyParam note string Note.
- * @bodyParam tag_ids integer[] Tag ids. Example: [1,2]
- * @bodyParam course_ids integer[] Interested course ids. Example: [1]
- * @bodyParam guardians object[] Guardians to create.
- * @bodyParam guardians[].full_name string required Guardian name. Example: Nguyễn Văn B
- * @bodyParam guardians[].relationship string required Relationship. Example: Bố
- * @bodyParam guardians[].phone string required Guardian phone. Example: 0907654321
- * @bodyParam guardians[].email string Guardian email.
- * @bodyParam students object[] Existing students to link.
- * @bodyParam students[].student_id integer required Student id. Example: 1
- * @bodyParam students[].relationship string Relationship. Example: father
  */
 class CreateLeadRequest extends FormRequest
 {
@@ -86,6 +64,33 @@ class CreateLeadRequest extends FormRequest
             'phone.regex' => 'Số điện thoại không đúng định dạng.',
             'dob.before_or_equal' => 'Ngày sinh phải nhỏ hơn hoặc bằng ngày hiện tại.',
             'guardians.*.phone.distinct' => 'Số điện thoại người giám hộ bị trùng trong cùng một khách hàng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => ['description' => 'Full name.', 'example' => 'Nguyễn Văn A'],
+            'gender' => ['description' => 'male|female|other.', 'example' => 'male'],
+            'dob' => ['description' => 'Date of birth (<= today).', 'example' => '2010-03-20'],
+            'email' => ['description' => 'Contact email.', 'example' => 'a@example.com'],
+            'phone' => ['description' => 'Contact phone (unique among active leads).', 'example' => '0901234567'],
+            'source' => ['description' => 'Lead source.', 'example' => 'facebook'],
+            'status' => ['description' => 'Initial status (defaults to pending): pending|verified|studying|inactive.', 'example' => 'pending'],
+            'owner_id' => ['description' => 'Assigned staff (user) id.', 'example' => 1],
+            'business_id' => ['description' => 'Business id.', 'example' => 1],
+            'branch_id' => ['description' => 'Branch id.', 'example' => 1],
+            'note' => ['description' => 'Note.', 'example' => 'Tư vấn qua Zalo'],
+            'tag_ids' => ['description' => 'Tag ids.', 'example' => [1, 2]],
+            'course_ids' => ['description' => 'Interested course ids.', 'example' => [1]],
+            'guardians' => ['description' => 'Guardians to create alongside the lead.', 'example' => []],
+            'guardians[].full_name' => ['description' => 'Guardian full name.', 'example' => 'Nguyễn Văn B'],
+            'guardians[].relationship' => ['description' => 'Relationship to the lead.', 'example' => 'Bố'],
+            'guardians[].phone' => ['description' => 'Guardian phone (unique within this lead).', 'example' => '0907654321'],
+            'guardians[].email' => ['description' => 'Guardian email.', 'example' => 'b@example.com'],
+            'students' => ['description' => 'Existing students to link.', 'example' => []],
+            'students[].student_id' => ['description' => 'Active student id.', 'example' => 1],
+            'students[].relationship' => ['description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.', 'example' => 'father'],
         ];
     }
 }

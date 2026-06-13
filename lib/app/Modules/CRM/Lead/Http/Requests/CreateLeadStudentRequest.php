@@ -7,9 +7,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * Link an existing student to a lead (lead.md §9).
- *
- * @bodyParam student_id integer required Active student id. Example: 1
- * @bodyParam relationship string father|mother|guardian|grandfather|grandmother|uncle|aunt|other. Example: father
  */
 class CreateLeadStudentRequest extends FormRequest
 {
@@ -54,6 +51,14 @@ class CreateLeadStudentRequest extends FormRequest
             'lead_id.exists' => 'Khách hàng không tồn tại.',
             'student_id.exists' => 'Học viên không tồn tại hoặc không hoạt động.',
             'student_id.unique' => 'Học viên này đã được liên kết với khách hàng.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'student_id' => ['description' => 'Active student id (may be linked once per lead).', 'example' => 1],
+            'relationship' => ['description' => 'father|mother|guardian|grandfather|grandmother|uncle|aunt|other.', 'example' => 'father'],
         ];
     }
 }

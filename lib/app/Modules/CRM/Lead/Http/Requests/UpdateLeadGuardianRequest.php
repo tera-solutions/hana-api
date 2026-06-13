@@ -8,11 +8,6 @@ use Illuminate\Validation\Rule;
 
 /**
  * Update a guardian. The owning lead is immutable and ignored if sent.
- *
- * @bodyParam full_name string Guardian full name. Example: Nguyễn Văn A
- * @bodyParam relationship string Relationship to the lead. Example: Mẹ
- * @bodyParam phone string Phone number, unique within the lead. Example: 0901234567
- * @bodyParam email string Guardian email. Example: guardian@example.com
  */
 class UpdateLeadGuardianRequest extends FormRequest
 {
@@ -43,6 +38,16 @@ class UpdateLeadGuardianRequest extends FormRequest
     {
         return [
             'phone.unique' => 'Số điện thoại người giám hộ đã tồn tại trong khách hàng này.',
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'full_name' => ['description' => 'Guardian full name.', 'example' => 'Nguyễn Văn B'],
+            'relationship' => ['description' => 'Relationship to the lead.', 'example' => 'Mẹ'],
+            'phone' => ['description' => 'Phone number (unique within this lead).', 'example' => '0907654321'],
+            'email' => ['description' => 'Guardian email.', 'example' => 'guardian@example.com'],
         ];
     }
 }
