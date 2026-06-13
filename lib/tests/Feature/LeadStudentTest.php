@@ -82,21 +82,21 @@ class LeadStudentTest extends TestCase
 
     public function test_requires_authentication(): void
     {
-        $this->getJson("/v1/crm/leads/{$this->leadId}/students")->assertJsonPath('code', 401);
+        $this->getJson("/v1/crm/lead/{$this->leadId}/student/list")->assertJsonPath('code', 401);
     }
 
     public function test_manager_without_permission_is_forbidden(): void
     {
         $this->actingAsManager([]);
 
-        $this->getJson("/v1/crm/leads/{$this->leadId}/students")->assertJsonPath('code', 403);
+        $this->getJson("/v1/crm/lead/{$this->leadId}/student/list")->assertJsonPath('code', 403);
     }
 
     public function test_can_link_student(): void
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.relationship', 'father');
@@ -112,7 +112,7 @@ class LeadStudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", [])
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors('student_id');
     }
@@ -123,7 +123,7 @@ class LeadStudentTest extends TestCase
 
         $inactive = $this->makeStudentId('dropped');
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload(['student_id' => $inactive]))
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload(['student_id' => $inactive]))
             ->assertStatus(422)
             ->assertJsonValidationErrors('student_id');
     }
@@ -132,9 +132,9 @@ class LeadStudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())->assertStatus(200);
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())->assertStatus(200);
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())
             ->assertStatus(422)
             ->assertJsonValidationErrors('student_id');
     }
@@ -143,9 +143,9 @@ class LeadStudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())->assertStatus(200);
+        $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())->assertStatus(200);
 
-        $this->getJson("/v1/crm/leads/{$this->leadId}/students")
+        $this->getJson("/v1/crm/lead/{$this->leadId}/student/list")
             ->assertStatus(200)
             ->assertJsonPath('data.pagination.total', 1)
             ->assertJsonPath('data.items.0.student.id', $this->studentId);
@@ -155,11 +155,11 @@ class LeadStudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())->json('data.id');
+        $id = $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())->json('data.id');
 
         $otherStudent = $this->makeStudentId();
 
-        $this->putJson("/v1/crm/leads/{$this->leadId}/students/update/{$id}", [
+        $this->putJson("/v1/crm/lead/{$this->leadId}/student/update/{$id}", [
             'relationship' => 'mother',
             'student_id' => $otherStudent,
         ])->assertStatus(200)->assertJsonPath('data.relationship', 'mother');
@@ -175,9 +175,9 @@ class LeadStudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())->json('data.id');
+        $id = $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())->json('data.id');
 
-        $this->deleteJson("/v1/crm/leads/{$this->leadId}/students/delete/{$id}")
+        $this->deleteJson("/v1/crm/lead/{$this->leadId}/student/delete/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('success', true);
 
@@ -188,7 +188,7 @@ class LeadStudentTest extends TestCase
     {
         $admin = $this->actingAsAdmin();
 
-        $id = $this->postJson("/v1/crm/leads/{$this->leadId}/students/add", $this->payload())->json('data.id');
+        $id = $this->postJson("/v1/crm/lead/{$this->leadId}/student/add", $this->payload())->json('data.id');
 
         $this->assertDatabaseHas('crm_lead_students', [
             'id' => $id,

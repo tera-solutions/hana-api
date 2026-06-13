@@ -95,21 +95,21 @@ class LeadTest extends TestCase
 
     public function test_requires_authentication(): void
     {
-        $this->getJson('/v1/crm/leads')->assertJsonPath('code', 401);
+        $this->getJson('/v1/crm/lead/list')->assertJsonPath('code', 401);
     }
 
     public function test_manager_without_permission_is_forbidden(): void
     {
         $this->actingAsManager([]);
 
-        $this->getJson('/v1/crm/leads')->assertJsonPath('code', 403);
+        $this->getJson('/v1/crm/lead/list')->assertJsonPath('code', 403);
     }
 
     public function test_can_create_lead_and_generates_code(): void
     {
         $this->actingAsAdmin();
 
-        $response = $this->postJson('/v1/crm/leads', $this->payload());
+        $response = $this->postJson('/v1/crm/lead/create', $this->payload());
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
@@ -126,9 +126,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/v1/crm/leads', $this->payload())
+        $this->postJson('/v1/crm/lead/create', $this->payload())
             ->assertJsonPath('data.code', 'LEAD000001');
-        $this->postJson('/v1/crm/leads', $this->payload(['phone' => '0911222333']))
+        $this->postJson('/v1/crm/lead/create', $this->payload(['phone' => '0911222333']))
             ->assertJsonPath('data.code', 'LEAD000002');
     }
 
@@ -136,7 +136,7 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/v1/crm/leads', [])
+        $this->postJson('/v1/crm/lead/create', [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'phone', 'source', 'owner_id']);
     }
@@ -149,7 +149,7 @@ class LeadTest extends TestCase
         $tagId = $this->makeTagId();
         $courseId = $this->makeCourseId();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload([
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload([
             'tag_ids' => [$tagId],
             'course_ids' => [$courseId],
             'guardians' => [
@@ -170,9 +170,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/v1/crm/leads', $this->payload(['phone' => '0911000111']))->assertStatus(200);
+        $this->postJson('/v1/crm/lead/create', $this->payload(['phone' => '0911000111']))->assertStatus(200);
 
-        $this->postJson('/v1/crm/leads', $this->payload(['phone' => '0911000111']))
+        $this->postJson('/v1/crm/lead/create', $this->payload(['phone' => '0911000111']))
             ->assertStatus(422)
             ->assertJsonValidationErrors('phone');
     }
@@ -181,12 +181,12 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload(['phone' => '0911000222']))->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload(['phone' => '0911000222']))->json('data.id');
 
-        $this->postJson("/v1/crm/leads/{$id}/suspend", ['reason' => 'Stopped'])->assertStatus(200);
+        $this->postJson("/v1/crm/lead/suspend/{$id}", ['reason' => 'Stopped'])->assertStatus(200);
 
         // The inactive lead no longer blocks the phone.
-        $this->postJson('/v1/crm/leads', $this->payload(['phone' => '0911000222']))
+        $this->postJson('/v1/crm/lead/create', $this->payload(['phone' => '0911000222']))
             ->assertStatus(200)
             ->assertJsonPath('success', true);
     }
@@ -195,14 +195,14 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/v1/crm/leads', $this->payload())->assertStatus(200);
-        $this->postJson('/v1/crm/leads', $this->payload(['name' => 'Unique Prospect', 'phone' => '0911333444']))->assertStatus(200);
+        $this->postJson('/v1/crm/lead/create', $this->payload())->assertStatus(200);
+        $this->postJson('/v1/crm/lead/create', $this->payload(['name' => 'Unique Prospect', 'phone' => '0911333444']))->assertStatus(200);
 
-        $this->getJson('/v1/crm/leads')
+        $this->getJson('/v1/crm/lead/list')
             ->assertStatus(200)
             ->assertJsonPath('data.pagination.total', 2);
 
-        $this->getJson('/v1/crm/leads?search=Unique')
+        $this->getJson('/v1/crm/lead/list?search=Unique')
             ->assertStatus(200)
             ->assertJsonPath('data.pagination.total', 1)
             ->assertJsonPath('data.items.0.name', 'Unique Prospect');
@@ -212,9 +212,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
-        $this->getJson("/v1/crm/leads/{$id}")
+        $this->getJson("/v1/crm/lead/detail/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('data.lead.id', $id)
             ->assertJsonPath('data.histories.0.action', 'created');
@@ -224,9 +224,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
-        $this->putJson("/v1/crm/leads/{$id}", [
+        $this->putJson("/v1/crm/lead/update/{$id}", [
             'name' => 'Renamed',
             'code' => 'HACKED',
             'status' => 'inactive',
@@ -244,11 +244,11 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
         $newOwner = $this->makeUser(false, $this->makeRoleId($this->businessId), $this->businessId)->id;
 
-        $this->putJson("/v1/crm/leads/{$id}", ['owner_id' => $newOwner])
+        $this->putJson("/v1/crm/lead/update/{$id}", ['owner_id' => $newOwner])
             ->assertStatus(200)
             ->assertJsonPath('data.owner_id', $newOwner);
 
@@ -263,9 +263,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
-        $this->postJson("/v1/crm/leads/{$id}/suspend", ['reason' => 'No longer interested'])
+        $this->postJson("/v1/crm/lead/suspend/{$id}", ['reason' => 'No longer interested'])
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'inactive');
 
@@ -273,10 +273,10 @@ class LeadTest extends TestCase
         $this->assertDatabaseHas('crm_lead_histories', ['lead_id' => $id, 'action' => 'suspended']);
 
         // Suspending again is rejected.
-        $this->postJson("/v1/crm/leads/{$id}/suspend", ['reason' => 'x'])
+        $this->postJson("/v1/crm/lead/suspend/{$id}", ['reason' => 'x'])
             ->assertJsonPath('success', false);
 
-        $this->postJson("/v1/crm/leads/{$id}/restore")
+        $this->postJson("/v1/crm/lead/restore/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'pending');
 
@@ -287,9 +287,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
-        $this->postJson("/v1/crm/leads/{$id}/suspend", [])
+        $this->postJson("/v1/crm/lead/suspend/{$id}", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors('reason');
     }
@@ -298,9 +298,9 @@ class LeadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
-        $this->postJson("/v1/crm/leads/{$id}/restore")
+        $this->postJson("/v1/crm/lead/restore/{$id}")
             ->assertJsonPath('success', false);
     }
 
@@ -308,7 +308,7 @@ class LeadTest extends TestCase
     {
         $admin = $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/crm/leads', $this->payload())->json('data.id');
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
 
         $this->assertDatabaseHas('crm_leads', [
             'id' => $id,

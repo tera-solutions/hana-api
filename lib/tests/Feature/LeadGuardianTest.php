@@ -68,27 +68,27 @@ class LeadGuardianTest extends TestCase
 
     private function addGuardian(array $overrides = []): int
     {
-        return $this->postJson("/v1/crm/leads/{$this->leadId}/guardians/add", $this->payload($overrides))
+        return $this->postJson("/v1/crm/lead/{$this->leadId}/guardian/add", $this->payload($overrides))
             ->json('data.id');
     }
 
     public function test_requires_authentication(): void
     {
-        $this->getJson("/v1/crm/leads/{$this->leadId}/guardians")->assertJsonPath('code', 401);
+        $this->getJson("/v1/crm/lead/{$this->leadId}/guardian/list")->assertJsonPath('code', 401);
     }
 
     public function test_manager_without_permission_is_forbidden(): void
     {
         $this->actingAsManager([]);
 
-        $this->getJson("/v1/crm/leads/{$this->leadId}/guardians")->assertJsonPath('code', 403);
+        $this->getJson("/v1/crm/lead/{$this->leadId}/guardian/list")->assertJsonPath('code', 403);
     }
 
     public function test_can_add_guardian(): void
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/guardians/add", $this->payload())
+        $this->postJson("/v1/crm/lead/{$this->leadId}/guardian/add", $this->payload())
             ->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.relationship', 'Bố');
@@ -104,7 +104,7 @@ class LeadGuardianTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/guardians/add", [])
+        $this->postJson("/v1/crm/lead/{$this->leadId}/guardian/add", [])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['full_name', 'relationship', 'phone']);
     }
@@ -115,7 +115,7 @@ class LeadGuardianTest extends TestCase
 
         $this->addGuardian();
 
-        $this->postJson("/v1/crm/leads/{$this->leadId}/guardians/add", $this->payload())
+        $this->postJson("/v1/crm/lead/{$this->leadId}/guardian/add", $this->payload())
             ->assertStatus(422)
             ->assertJsonValidationErrors('phone');
     }
@@ -127,7 +127,7 @@ class LeadGuardianTest extends TestCase
         $this->addGuardian();
         $this->addGuardian(['full_name' => 'Jane Smith', 'relationship' => 'Mẹ', 'phone' => '0933333333']);
 
-        $this->getJson("/v1/crm/leads/{$this->leadId}/guardians")
+        $this->getJson("/v1/crm/lead/{$this->leadId}/guardian/list")
             ->assertStatus(200)
             ->assertJsonPath('data.pagination.total', 2);
     }
@@ -138,7 +138,7 @@ class LeadGuardianTest extends TestCase
 
         $id = $this->addGuardian();
 
-        $this->putJson("/v1/crm/leads/{$this->leadId}/guardians/update/{$id}", [
+        $this->putJson("/v1/crm/lead/{$this->leadId}/guardian/update/{$id}", [
             'full_name' => 'Robert Smith Jr',
             'relationship' => 'Người giám hộ',
         ])->assertStatus(200)->assertJsonPath('data.full_name', 'Robert Smith Jr');
@@ -156,7 +156,7 @@ class LeadGuardianTest extends TestCase
 
         $id = $this->addGuardian();
 
-        $this->deleteJson("/v1/crm/leads/{$this->leadId}/guardians/delete/{$id}")
+        $this->deleteJson("/v1/crm/lead/{$this->leadId}/guardian/delete/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('success', false);
 
@@ -170,7 +170,7 @@ class LeadGuardianTest extends TestCase
         $first = $this->addGuardian();
         $this->addGuardian(['full_name' => 'Jane Smith', 'relationship' => 'Mẹ', 'phone' => '0933333333']);
 
-        $this->deleteJson("/v1/crm/leads/{$this->leadId}/guardians/delete/{$first}")
+        $this->deleteJson("/v1/crm/lead/{$this->leadId}/guardian/delete/{$first}")
             ->assertStatus(200)
             ->assertJsonPath('success', true);
 
