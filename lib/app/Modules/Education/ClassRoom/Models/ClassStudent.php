@@ -29,6 +29,8 @@ class ClassStudent extends Model
 
     const STATUS_DROPPED = 'dropped';
 
+    const STATUS_TRANSFERRED_OUT = 'transferred_out';
+
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
