@@ -24,6 +24,12 @@ class TeacherResource extends JsonResource
             'employment_type' => $this->employment_type,
             'hourly_rate' => $this->hourly_rate,
             'monthly_salary' => $this->monthly_salary,
+            'bank_account' => $this->whenLoaded('bankAccount', fn () => $this->bankAccount ? [
+                'bank_name' => $this->bankAccount->bank_name,
+                'bank_account_number' => $this->bankAccount->bank_account_number,
+                'bank_account_holder' => $this->bankAccount->bank_account_holder,
+                'bank_branch' => $this->bankAccount->bank_branch,
+            ] : null),
             'status' => $this->status,
             'joined_at' => $this->joined_at,
             'resigned_at' => $this->resigned_at,
