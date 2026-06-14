@@ -1,0 +1,45 @@
+name: Deploy Laravel API on Merge
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SERVER_PORT }}
+        script: |
+          cd /var/www/hana-api # Đường dẫn chứa source code trên server
+          
+          # Kích hoạt chế độ bảo trì (Tùy chọn, tránh lỗi khi user đang truy cập)
+          php artisan down || true
+          
+          # Pull code mới
+          git pull origin master
+          
+          # Cập nhật các dependency và tối ưu Laravel
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+          php artisan migrate --force
+          
+          # Clear & Cache cấu hình tối ưu hiệu năng cho API
+          php artisan config:cache
+          php artisan route:cache
+          php artisan event:cache
+          
+          # Đảm bảo quyền sở hữu cho web server (Nginx/Apache)
+          sudo chown -R www-data:www-data storage bootstrap/cache
+          
+          # Tắt chế độ bảo trì
+          php artisan up
