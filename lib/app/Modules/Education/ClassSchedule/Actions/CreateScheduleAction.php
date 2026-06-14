@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Education\ClassRoom\Actions;
+namespace App\Modules\Education\ClassSchedule\Actions;
 
-use App\Modules\Education\ClassRoom\Models\ClassSchedule;
-use App\Modules\Education\ClassRoom\Services\ClassScheduleService;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\ClassSchedule\Services\ClassScheduleService;
 
 class CreateScheduleAction
 {

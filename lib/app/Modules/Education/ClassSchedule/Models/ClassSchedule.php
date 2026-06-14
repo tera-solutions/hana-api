@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Modules\Education\ClassRoom\Models;
+namespace App\Modules\Education\ClassSchedule\Models;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

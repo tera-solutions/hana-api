@@ -31,6 +31,8 @@ return [
             'Student',
             'Course',
             'ClassRoom',
+            'ClassSchedule',
+            'ClassSession',
             'LessonPlan',
             'Lesson',
             'Attendance',

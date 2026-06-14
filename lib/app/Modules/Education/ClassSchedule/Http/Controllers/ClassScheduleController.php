@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Modules\Education\ClassRoom\Http\Controllers;
+namespace App\Modules\Education\ClassSchedule\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Education\ClassRoom\Actions\CreateScheduleAction;
-use App\Modules\Education\ClassRoom\Actions\DeleteScheduleAction;
-use App\Modules\Education\ClassRoom\Actions\GetScheduleAction;
-use App\Modules\Education\ClassRoom\Actions\ListScheduleAction;
-use App\Modules\Education\ClassRoom\Actions\UpdateScheduleAction;
-use App\Modules\Education\ClassRoom\Http\Requests\CreateScheduleRequest;
-use App\Modules\Education\ClassRoom\Http\Requests\UpdateScheduleRequest;
-use App\Modules\Education\ClassRoom\Http\Resources\ClassScheduleResource;
+use App\Modules\Education\ClassSchedule\Actions\CreateScheduleAction;
+use App\Modules\Education\ClassSchedule\Actions\DeleteScheduleAction;
+use App\Modules\Education\ClassSchedule\Actions\GetScheduleAction;
+use App\Modules\Education\ClassSchedule\Actions\ListScheduleAction;
+use App\Modules\Education\ClassSchedule\Actions\UpdateScheduleAction;
+use App\Modules\Education\ClassSchedule\Http\Requests\CreateScheduleRequest;
+use App\Modules\Education\ClassSchedule\Http\Requests\UpdateScheduleRequest;
+use App\Modules\Education\ClassSchedule\Http\Resources\ClassScheduleResource;
 
 /**
  * @group Education - Class Schedule

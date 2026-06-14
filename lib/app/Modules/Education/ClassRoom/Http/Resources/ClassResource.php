@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\ClassRoom\Http\Resources;
 
+use App\Modules\Education\ClassSchedule\Http\Resources\ClassScheduleResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ClassResource extends JsonResource

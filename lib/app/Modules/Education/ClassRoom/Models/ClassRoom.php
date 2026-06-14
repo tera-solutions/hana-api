@@ -3,6 +3,8 @@
 namespace App\Modules\Education\ClassRoom\Models;
 
 use App\Models\User;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Model;
