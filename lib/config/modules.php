@@ -20,7 +20,6 @@ return [
             'Lead',
             'Parent',
             'ParentStudent',
-            'Enrollment',
         ]
     ],
 
@@ -33,6 +32,7 @@ return [
             'ClassRoom',
             'ClassSchedule',
             'ClassSession',
+            'Enrollment',
             'LessonPlan',
             'Lesson',
             'Attendance',

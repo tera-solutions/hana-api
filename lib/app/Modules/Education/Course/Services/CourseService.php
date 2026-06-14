@@ -100,7 +100,7 @@ class CourseService
                 ->whereIn('status', ['opening', 'running'])
                 ->count()),
             'total_students' => $this->countStudents($id),
-            'studying_students' => $this->countStudents($id, 'active'),
+            'studying_students' => $this->countStudents($id, 'studying'),
             'reserved_students' => 0, // not modelled on enrollments yet
             'completed_students' => $this->countStudents($id, 'completed'),
         ];
