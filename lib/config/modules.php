@@ -50,6 +50,7 @@ return [
             'Refund',
             'Debt',
             'Discount',
+            'BankAccount',
         ]
     ],
 
