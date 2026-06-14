@@ -40,14 +40,14 @@ class MetadataTest extends TestCase
             ]);
     }
 
-    public function test_options_are_value_label_pairs(): void
+    public function test_options_are_key_value_label_triples(): void
     {
         $this->actingAsAdmin();
 
         $this->getJson('/api/auth/metadata')
             ->assertStatus(200)
-            ->assertJsonPath('data.shared.gender.0', ['value' => 'male', 'label' => 'Nam'])
-            ->assertJsonPath('data.education.enrollment_status.0', ['value' => 'pending', 'label' => 'Chờ xác nhận']);
+            ->assertJsonPath('data.shared.gender.0', ['key' => 'MALE', 'value' => 'male', 'label' => 'Nam'])
+            ->assertJsonPath('data.education.enrollment_status.0', ['key' => 'PENDING', 'value' => 'pending', 'label' => 'Chờ xác nhận']);
     }
 
     public function test_catalog_matches_model_constants(): void

@@ -35,7 +35,7 @@ class MetadataRegistry
     /**
      * The full catalog: `domain => field => [{value, label}, ...]`.
      *
-     * @return array<string, array<string, array<int, array{value: int|string, label: string}>>>
+     * @return array<string, array<string, array<int, array{key: string, value: int|string, label: string}>>>
      */
     public static function all(): array
     {
