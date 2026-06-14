@@ -32,6 +32,8 @@ class ClassStudent extends Model
 
     const STATUS_TRANSFERRED_OUT = ClassStudentStatus::TransferredOut->value;
 
+    const STATUS_TRANSFERRED_OUT = 'transferred_out';
+
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');

@@ -3,7 +3,7 @@
 namespace App\Modules\Education\ClassRoom\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
-use App\Modules\Education\ClassRoom\Models\ClassSchedule;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
