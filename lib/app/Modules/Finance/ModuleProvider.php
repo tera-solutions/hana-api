@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\HR;
+namespace App\Modules\Finance;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider as Provider;

@@ -58,7 +58,7 @@ class TeacherService
 
     public function find($id)
     {
-        return Teacher::with(['user', 'business', 'branch', 'manager', 'skills', 'certificates'])->findOrFail($id);
+        return Teacher::with(['user', 'business', 'branch', 'manager', 'skills', 'certificates', 'bankAccount'])->findOrFail($id);
     }
 
     /**
@@ -88,13 +88,18 @@ class TeacherService
     {
         return DB::transaction(function () use ($data) {
             $skills = $data['skills'] ?? null;
+            $bankAccount = $data['bank_account'] ?? null;
 
-            $teacher = new Teacher($this->withoutSkills($data));
+            $teacher = new Teacher($this->stripRelations($data));
             $teacher->status = $data['status'] ?? Teacher::STATUS_ACTIVE;
             $teacher->save();
 
             if (is_array($skills)) {
                 $this->syncSkills($teacher, $skills);
+            }
+
+            if (is_array($bankAccount)) {
+                $this->syncBankAccount($teacher, $bankAccount);
             }
 
             $this->log($teacher, 'created', null, $teacher->status);
@@ -114,11 +119,16 @@ class TeacherService
             unset($data['id'], $data['code'], $data['status']);
 
             $skills = $data['skills'] ?? null;
+            $bankAccount = $data['bank_account'] ?? null;
 
-            $teacher->update($this->withoutSkills($data));
+            $teacher->update($this->stripRelations($data));
 
             if (is_array($skills)) {
                 $this->syncSkills($teacher, $skills);
+            }
+
+            if (is_array($bankAccount)) {
+                $this->syncBankAccount($teacher, $bankAccount);
             }
 
             $this->log($teacher, 'updated');
@@ -134,8 +144,8 @@ class TeacherService
     {
         $teacher = $this->find($id);
 
-        if ($teacher->status === Teacher::STATUS_SUSPENDED) {
-            throw new \RuntimeException('Giáo viên đang ở trạng thái tạm ngừng.');
+        if ($teacher->status !== Teacher::STATUS_ACTIVE) {
+            throw new \RuntimeException('Chỉ có thể tạm ngừng giáo viên đang hoạt động.');
         }
 
         $from = $teacher->status;
@@ -190,11 +200,32 @@ class TeacherService
         return $this->find($teacher->id);
     }
 
-    private function withoutSkills(array $data): array
+    private function stripRelations(array $data): array
     {
-        unset($data['skills']);
+        unset($data['skills'], $data['bank_account']);
 
         return $data;
+    }
+
+    /**
+     * Upsert the teacher's single bank account. Skips when no field is provided.
+     *
+     * @param  array<string, mixed>  $bank
+     */
+    private function syncBankAccount(Teacher $teacher, array $bank): void
+    {
+        $values = [
+            'bank_name' => $bank['bank_name'] ?? null,
+            'bank_account_number' => $bank['bank_account_number'] ?? null,
+            'bank_account_holder' => $bank['bank_account_holder'] ?? null,
+            'bank_branch' => $bank['bank_branch'] ?? null,
+        ];
+
+        if (! array_filter($values, fn ($v) => $v !== null && $v !== '')) {
+            return;
+        }
+
+        $teacher->bankAccount()->updateOrCreate([], $values);
     }
 
     /**
