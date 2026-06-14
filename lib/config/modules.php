@@ -30,6 +30,8 @@ return [
             'Student',
             'Course',
             'ClassRoom',
+            'ClassSchedule',
+            'ClassSession',
             'Enrollment',
             'LessonPlan',
             'Lesson',
@@ -48,6 +50,7 @@ return [
             'Refund',
             'Debt',
             'Discount',
+            'BankAccount',
         ]
     ],
 

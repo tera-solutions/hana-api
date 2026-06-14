@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Modules\HR\Teacher\Models\Teacher;
 use Database\Seeders\TeacherPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +106,38 @@ class TeacherTest extends TestCase
         $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'code' => 'T0001', 'teacher_type' => 'full_time']);
         $this->assertDatabaseHas('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'IELTS']);
         $this->assertDatabaseHas('hr_teacher_histories', ['teacher_id' => $id, 'action' => 'created']);
+    }
+
+    public function test_can_set_and_update_bank_account(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/hr/teacher/create', $this->payload([
+            'bank_account' => [
+                'bank_name' => 'Vietcombank',
+                'bank_account_number' => '0123456789',
+                'bank_account_holder' => 'NGUYEN VAN A',
+                'bank_branch' => 'Chi nhánh Hà Nội',
+            ],
+        ]))->assertStatus(200)
+            ->assertJsonPath('data.bank_account.bank_account_number', '0123456789')
+            ->json('data.id');
+
+        $this->assertDatabaseHas('fin_bank_accounts', [
+            'owner_type' => Teacher::class,
+            'owner_id' => $id,
+            'bank_account_number' => '0123456789',
+            'bank_account_holder' => 'NGUYEN VAN A',
+        ]);
+
+        // Update upserts the same single account (no duplicate row).
+        $this->putJson("/v1/hr/teacher/update/{$id}", [
+            'bank_account' => ['bank_name' => 'Techcombank', 'bank_account_number' => '9999'],
+        ])->assertStatus(200)
+            ->assertJsonPath('data.bank_account.bank_name', 'Techcombank');
+
+        $this->assertSame(1, DB::table('fin_bank_accounts')->where('owner_id', $id)->count());
+        $this->assertDatabaseHas('fin_bank_accounts', ['owner_id' => $id, 'bank_account_number' => '9999']);
     }
 
     public function test_create_validates_required_and_enums(): void
