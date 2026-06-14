@@ -2,6 +2,7 @@
 
 namespace App\Modules\System\Business\Http\Requests;
 
+use App\Modules\System\Business\Enums\BusinessStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +36,7 @@ class UpdateBusinessRequest extends FormRequest
             'zip_code' => ['nullable', 'string', 'max:20'],
 
             'manager_id' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['sometimes', 'required', 'string', 'in:active,inactive,suspended'],
+            'status' => ['sometimes', 'required', 'string', Rule::in(BusinessStatus::values())],
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Modules\Education\Student\Models;
 
 use App\Models\User;
 use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\Student\Enums\StudentStatus;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -23,13 +24,13 @@ class Student extends Model
 
     protected $guarded = [];
 
-    public const STATUS_ACTIVE = 'active';
+    public const STATUS_ACTIVE = StudentStatus::Active->value;
 
-    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_SUSPENDED = StudentStatus::Suspended->value;
 
-    public const STATUS_GRADUATED = 'graduated';
+    public const STATUS_GRADUATED = StudentStatus::Graduated->value;
 
-    public const STATUS_DROPPED = 'dropped';
+    public const STATUS_DROPPED = StudentStatus::Dropped->value;
 
     /**
      * Related tables that block hard-deletion when they reference this student.

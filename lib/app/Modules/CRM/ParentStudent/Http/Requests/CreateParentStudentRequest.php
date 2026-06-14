@@ -2,6 +2,7 @@
 
 namespace App\Modules\CRM\ParentStudent\Http\Requests;
 
+use App\Enums\Shared\GuardianRelation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class CreateParentStudentRequest extends FormRequest
             ],
             'relation' => [
                 'required', 'string',
-                'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other',
+                Rule::in(GuardianRelation::values()),
                 // Unique per (parent, student, relation) among non-deleted rows.
                 Rule::unique('crm_parent_student', 'relation')->where(fn ($q) => $q
                     ->where('parent_id', $this->input('parent_id'))

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\ClassRoom\Models;
 
+use App\Modules\Education\ClassRoom\Enums\ClassStudentStatus;
 use App\Modules\Education\Student\Models\Student;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,13 +22,15 @@ class ClassStudent extends Model
         'enrolled_at' => 'date',
     ];
 
-    const STATUS_ACTIVE = 'active';
+    const STATUS_ACTIVE = ClassStudentStatus::Active->value;
 
-    const STATUS_RESERVED = 'reserved';
+    const STATUS_RESERVED = ClassStudentStatus::Reserved->value;
 
-    const STATUS_COMPLETED = 'completed';
+    const STATUS_COMPLETED = ClassStudentStatus::Completed->value;
 
-    const STATUS_DROPPED = 'dropped';
+    const STATUS_DROPPED = ClassStudentStatus::Dropped->value;
+
+    const STATUS_TRANSFERRED_OUT = ClassStudentStatus::TransferredOut->value;
 
     public function classRoom(): BelongsTo
     {

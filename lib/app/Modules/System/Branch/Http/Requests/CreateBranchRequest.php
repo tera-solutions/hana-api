@@ -2,6 +2,7 @@
 
 namespace App\Modules\System\Branch\Http\Requests;
 
+use App\Modules\System\Branch\Enums\BranchStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,7 @@ class CreateBranchRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'short_name' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'string', 'in:active,inactive,suspended'],
+            'status' => ['required', 'string', Rule::in(BranchStatus::values())],
 
             'phone' => ['required', 'string', 'regex:/^[0-9+\-\s().]{6,20}$/'],
             'email' => ['required', 'email', 'max:255', 'unique:sys_branches,email'],

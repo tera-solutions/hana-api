@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -46,6 +44,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'prefix' => 'auth'], fu
 
     Route::group(['namespace' => 'User'], function () {
         Route::get('/profile', 'UserController@getProfile');
+    });
+
+    // Frontend bootstrap: all model enumerations (status/type/gender/…). Auth-guarded.
+    Route::group(['middleware' => 'auth.tera', 'namespace' => 'Common'], function () {
+        Route::get('/metadata', 'MetadataController@index');
     });
 
 });

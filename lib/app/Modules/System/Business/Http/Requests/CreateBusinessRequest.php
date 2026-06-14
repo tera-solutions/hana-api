@@ -2,7 +2,9 @@
 
 namespace App\Modules\System\Business\Http\Requests;
 
+use App\Modules\System\Business\Enums\BusinessStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateBusinessRequest extends FormRequest
 {
@@ -30,7 +32,7 @@ class CreateBusinessRequest extends FormRequest
             'zip_code' => ['nullable', 'string', 'max:20'],
 
             'manager_id' => ['nullable', 'integer', 'exists:users,id'],
-            'status' => ['required', 'string', 'in:active,inactive,suspended'],
+            'status' => ['required', 'string', Rule::in(BusinessStatus::values())],
         ];
     }
 
