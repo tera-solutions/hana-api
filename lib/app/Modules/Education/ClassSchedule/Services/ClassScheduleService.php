@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Modules\Education\ClassRoom\Services;
+namespace App\Modules\Education\ClassSchedule\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
-use App\Modules\Education\ClassRoom\Models\ClassSchedule;
+use App\Modules\Education\ClassRoom\Services\ClassService;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use Illuminate\Database\Eloquent\Collection;
 
 class ClassScheduleService
