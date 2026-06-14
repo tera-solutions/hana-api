@@ -6,6 +6,7 @@ use App\Modules\CRM\Lead\Models\Tag;
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\SessionFeedback\Models\SessionFeedback;
 use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Model;
@@ -30,13 +31,13 @@ class ClassSession extends Model
         'revenue_amount' => 'decimal:2',
     ];
 
-    const STATUS_UPCOMING = 'upcoming';
+    const STATUS_UPCOMING = ClassSessionStatus::Upcoming->value;
 
-    const STATUS_ONGOING = 'ongoing';
+    const STATUS_ONGOING = ClassSessionStatus::Ongoing->value;
 
-    const STATUS_COMPLETED = 'completed';
+    const STATUS_COMPLETED = ClassSessionStatus::Completed->value;
 
-    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_CANCELLED = ClassSessionStatus::Cancelled->value;
 
     public function classRoom(): BelongsTo
     {

@@ -2,7 +2,10 @@
 
 namespace App\Modules\HR\Teacher\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Modules\HR\Teacher\Enums\TeacherType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Create a teacher with their initial specialisations.
@@ -20,7 +23,7 @@ class CreateTeacherRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:hr_teachers,code'],
             'avatar' => ['nullable', 'string', 'max:1000'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date', 'before_or_equal:today'],
             'email' => ['required', 'email', 'max:255', 'unique:hr_teachers,email'],
             'phone' => ['required', 'string', 'regex:/^[0-9+\-\s().]{6,20}$/', 'unique:hr_teachers,phone'],
@@ -30,7 +33,7 @@ class CreateTeacherRequest extends FormRequest
             'branch_id' => ['required', 'integer', 'exists:sys_branches,id'],
             'joined_at' => ['required', 'date'],
 
-            'teacher_type' => ['required', 'string', 'in:full_time,part_time,freelancer,assistant'],
+            'teacher_type' => ['required', 'string', Rule::in(TeacherType::values())],
             'employment_type' => ['required', 'string', 'max:255'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],

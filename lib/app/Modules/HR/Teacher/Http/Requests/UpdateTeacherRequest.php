@@ -2,6 +2,8 @@
 
 namespace App\Modules\HR\Teacher\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Modules\HR\Teacher\Enums\TeacherType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +24,7 @@ class UpdateTeacherRequest extends FormRequest
         return [
             'full_name' => ['sometimes', 'required', 'string', 'max:255'],
             'avatar' => ['nullable', 'string', 'max:1000'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date', 'before_or_equal:today'],
             'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('hr_teachers', 'email')->ignore($id)],
             'phone' => ['sometimes', 'required', 'string', 'regex:/^[0-9+\-\s().]{6,20}$/', Rule::unique('hr_teachers', 'phone')->ignore($id)],
@@ -30,7 +32,7 @@ class UpdateTeacherRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:1000'],
 
             'branch_id' => ['nullable', 'integer', 'exists:sys_branches,id'],
-            'teacher_type' => ['sometimes', 'required', 'string', 'in:full_time,part_time,freelancer,assistant'],
+            'teacher_type' => ['sometimes', 'required', 'string', Rule::in(TeacherType::values())],
             'employment_type' => ['nullable', 'string', 'max:255'],
             'hourly_rate' => ['nullable', 'numeric', 'min:0'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],

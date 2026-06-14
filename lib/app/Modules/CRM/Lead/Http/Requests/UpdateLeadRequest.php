@@ -2,6 +2,8 @@
 
 namespace App\Modules\CRM\Lead\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Enums\Shared\GuardianRelation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +24,7 @@ class UpdateLeadRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date', 'before_or_equal:today'],
 
             'email' => ['nullable', 'email', 'max:255'],
@@ -52,7 +54,7 @@ class UpdateLeadRequest extends FormRequest
 
             'students' => ['nullable', 'array'],
             'students.*.student_id' => ['required', 'integer', 'distinct', 'exists:edu_students,id'],
-            'students.*.relationship' => ['nullable', 'string', 'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other'],
+            'students.*.relationship' => ['nullable', 'string', Rule::in(GuardianRelation::values())],
         ];
     }
 

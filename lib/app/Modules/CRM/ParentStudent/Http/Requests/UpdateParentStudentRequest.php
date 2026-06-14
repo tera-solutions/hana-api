@@ -2,6 +2,7 @@
 
 namespace App\Modules\CRM\ParentStudent\Http\Requests;
 
+use App\Enums\Shared\GuardianRelation;
 use App\Modules\CRM\ParentStudent\Models\ParentStudent;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,7 +25,7 @@ class UpdateParentStudentRequest extends FormRequest
         return [
             'relation' => [
                 'sometimes', 'required', 'string',
-                'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other',
+                Rule::in(GuardianRelation::values()),
                 Rule::unique('crm_parent_student', 'relation')->ignore($id)->where(fn ($q) => $q
                     ->where('parent_id', $link?->parent_id)
                     ->where('student_id', $link?->student_id)

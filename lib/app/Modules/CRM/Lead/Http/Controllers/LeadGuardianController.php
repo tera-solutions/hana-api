@@ -25,6 +25,7 @@ class LeadGuardianController extends Controller
      * List guardians for a lead
      *
      * @urlParam leadId integer required The lead ID. Example: 1
+     *
      * @queryParam per_page integer Page size: 20, 50 or 100 (default 20). Example: 20
      * @queryParam page integer Page number (default 1). Example: 1
      *

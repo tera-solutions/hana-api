@@ -3,6 +3,7 @@
 namespace App\Modules\CRM\Parent\Models;
 
 use App\Models\User;
+use App\Modules\CRM\Parent\Enums\ParentStatus;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
@@ -28,11 +29,11 @@ class ParentModel extends Model
 
     protected $guarded = [];
 
-    public const STATUS_ACTIVE = 'active';
+    public const STATUS_ACTIVE = ParentStatus::Active->value;
 
-    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_SUSPENDED = ParentStatus::Suspended->value;
 
-    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_INACTIVE = ParentStatus::Inactive->value;
 
     public function user(): BelongsTo
     {

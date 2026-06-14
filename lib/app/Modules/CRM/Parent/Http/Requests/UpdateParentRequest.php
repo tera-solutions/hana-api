@@ -2,7 +2,10 @@
 
 namespace App\Modules\CRM\Parent\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Enums\Shared\GuardianRelation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Parent id, code, business and status are immutable and ignored if sent.
@@ -18,7 +21,7 @@ class UpdateParentRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date', 'before_or_equal:today'],
             'avatar' => ['nullable', 'string', 'max:1000'],
 
@@ -35,7 +38,7 @@ class UpdateParentRequest extends FormRequest
 
             'students' => ['nullable', 'array'],
             'students.*.student_id' => ['required', 'integer', 'exists:edu_students,id'],
-            'students.*.relation' => ['nullable', 'string', 'in:father,mother,guardian,grandfather,grandmother,other'],
+            'students.*.relation' => ['nullable', 'string', Rule::in(GuardianRelation::values())],
         ];
     }
 

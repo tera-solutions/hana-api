@@ -3,6 +3,7 @@
 namespace App\Modules\Education\ClassRoom\Models;
 
 use App\Models\User;
+use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Course\Models\Course;
@@ -32,15 +33,15 @@ class ClassRoom extends Model
         'max_capacity' => 'integer',
     ];
 
-    const STATUS_DRAFT = 'draft';
+    const STATUS_DRAFT = ClassStatus::Draft->value;
 
-    const STATUS_UPCOMING = 'upcoming';
+    const STATUS_UPCOMING = ClassStatus::Upcoming->value;
 
-    const STATUS_ACTIVE = 'active';
+    const STATUS_ACTIVE = ClassStatus::Active->value;
 
-    const STATUS_SUSPENDED = 'suspended';
+    const STATUS_SUSPENDED = ClassStatus::Suspended->value;
 
-    const STATUS_COMPLETED = 'completed';
+    const STATUS_COMPLETED = ClassStatus::Completed->value;
 
     public function course(): BelongsTo
     {

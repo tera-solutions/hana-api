@@ -2,7 +2,10 @@
 
 namespace App\Modules\System\User\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Modules\System\User\Enums\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class CreateUserRequest extends FormRequest
@@ -26,11 +29,11 @@ class CreateUserRequest extends FormRequest
             'role_id' => ['required', 'integer', 'exists:sys_roles,id'],
             'department' => ['nullable', 'string', 'max:255'],
 
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date'],
             'avatar' => ['nullable', 'string', 'max:255'],
             'is_admin' => ['nullable', 'boolean'],
-            'status' => ['required', 'string', 'in:active,inactive,locked'],
+            'status' => ['required', 'string', Rule::in(UserStatus::values())],
         ];
     }
 

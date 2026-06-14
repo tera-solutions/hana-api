@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\Student\Http\Requests;
 
+use App\Enums\Shared\Gender;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Student id, code, business and branch are immutable and ignored if sent.
@@ -19,7 +21,7 @@ class UpdateStudentRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'dob' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
-            'gender' => ['sometimes', 'required', 'string', 'in:male,female,other'],
+            'gender' => ['sometimes', 'required', 'string', Rule::in(Gender::values())],
             'avatar' => ['nullable', 'string', 'max:1000'],
             'nationality' => ['nullable', 'string', 'max:255'],
             'language' => ['nullable', 'string', 'max:255'],

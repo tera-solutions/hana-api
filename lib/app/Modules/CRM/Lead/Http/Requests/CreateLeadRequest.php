@@ -2,6 +2,9 @@
 
 namespace App\Modules\CRM\Lead\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Enums\Shared\GuardianRelation;
+use App\Modules\CRM\Lead\Enums\LeadStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +22,7 @@ class CreateLeadRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date', 'before_or_equal:today'],
 
             'email' => ['nullable', 'email', 'max:255'],
@@ -32,7 +35,7 @@ class CreateLeadRequest extends FormRequest
             ],
 
             'source' => ['required', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:pending,verified,studying,inactive'],
+            'status' => ['nullable', 'string', Rule::in(LeadStatus::values())],
             'owner_id' => ['required', 'integer', 'exists:users,id'],
             'business_id' => ['nullable', 'integer', 'exists:sys_business,id'],
             'branch_id' => ['nullable', 'integer', 'exists:sys_branches,id'],
@@ -53,7 +56,7 @@ class CreateLeadRequest extends FormRequest
 
             'students' => ['nullable', 'array'],
             'students.*.student_id' => ['required', 'integer', 'distinct', 'exists:edu_students,id'],
-            'students.*.relationship' => ['nullable', 'string', 'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other'],
+            'students.*.relationship' => ['nullable', 'string', Rule::in(GuardianRelation::values())],
         ];
     }
 
