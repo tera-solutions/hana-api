@@ -2,8 +2,8 @@
 
 namespace App\Modules\Education;
 
-use Illuminate\Support\ServiceProvider as Provider;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\ServiceProvider as Provider;
 
 class ModuleProvider extends Provider
 {
@@ -37,8 +37,8 @@ class ModuleProvider extends Provider
 
     public function loadResource()
     {
-        if (File::exists(__DIR__ . '/routes.php')) {
-            $this->loadRoutesFrom(__DIR__ . '/routes.php');
+        if (File::exists(__DIR__.'/routes.php')) {
+            $this->loadRoutesFrom(__DIR__.'/routes.php');
         }
     }
 

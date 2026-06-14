@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Attendance\Models;
 
+use App\Modules\Education\Attendance\Enums\AttendanceStatus;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Student\Models\Student;
 use Illuminate\Database\Eloquent\Model;
@@ -23,13 +24,13 @@ class Attendance extends Model
         'checkout_time' => 'datetime',
     ];
 
-    const STATUS_PRESENT = 'present';
+    const STATUS_PRESENT = AttendanceStatus::Present->value;
 
-    const STATUS_ABSENT = 'absent';
+    const STATUS_ABSENT = AttendanceStatus::Absent->value;
 
-    const STATUS_LATE = 'late';
+    const STATUS_LATE = AttendanceStatus::Late->value;
 
-    const STATUS_EXCUSED = 'excused';
+    const STATUS_EXCUSED = AttendanceStatus::Excused->value;
 
     public function session(): BelongsTo
     {

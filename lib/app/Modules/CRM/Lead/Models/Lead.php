@@ -3,6 +3,7 @@
 namespace App\Modules\CRM\Lead\Models;
 
 use App\Models\User;
+use App\Modules\CRM\Lead\Enums\LeadStatus;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\System\Branch\Models\Branch;
@@ -31,13 +32,13 @@ class Lead extends Model
         'suspended_at' => 'datetime',
     ];
 
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING = LeadStatus::Pending->value;
 
-    public const STATUS_VERIFIED = 'verified';
+    public const STATUS_VERIFIED = LeadStatus::Verified->value;
 
-    public const STATUS_STUDYING = 'studying';
+    public const STATUS_STUDYING = LeadStatus::Studying->value;
 
-    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_INACTIVE = LeadStatus::Inactive->value;
 
     public function business(): BelongsTo
     {

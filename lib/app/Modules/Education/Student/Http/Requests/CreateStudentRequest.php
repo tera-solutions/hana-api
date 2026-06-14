@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\Student\Http\Requests;
 
+use App\Enums\Shared\Gender;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateStudentRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class CreateStudentRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'dob' => ['required', 'date', 'before_or_equal:today'],
-            'gender' => ['required', 'string', 'in:male,female,other'],
+            'gender' => ['required', 'string', Rule::in(Gender::values())],
             'avatar' => ['nullable', 'string', 'max:1000'],
             'nationality' => ['nullable', 'string', 'max:255'],
             'language' => ['nullable', 'string', 'max:255'],

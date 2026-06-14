@@ -2,7 +2,9 @@
 
 namespace App\Modules\CRM\Lead\Http\Requests;
 
+use App\Enums\Shared\GuardianRelation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Lead and Student are immutable and ignored if sent; only the relationship is
@@ -20,7 +22,7 @@ class UpdateLeadStudentRequest extends FormRequest
         return [
             'relationship' => [
                 'sometimes', 'nullable', 'string',
-                'in:father,mother,guardian,grandfather,grandmother,uncle,aunt,other',
+                Rule::in(GuardianRelation::values()),
             ],
         ];
     }

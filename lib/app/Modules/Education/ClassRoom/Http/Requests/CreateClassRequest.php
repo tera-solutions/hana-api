@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\ClassRoom\Http\Requests;
 
+use App\Modules\Education\ClassRoom\Enums\ClassLearningType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +22,7 @@ class CreateClassRequest extends FormRequest
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'room_id' => ['nullable', 'integer'],
-            'learning_type' => ['required', Rule::in(['scheduled', 'self_learning', 'flexible'])],
+            'learning_type' => ['required', Rule::in(ClassLearningType::values())],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after:start_date'],
             'min_warning_capacity' => ['nullable', 'integer', 'min:0'],

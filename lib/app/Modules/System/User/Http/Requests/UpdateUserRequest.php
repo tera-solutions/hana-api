@@ -2,6 +2,8 @@
 
 namespace App\Modules\System\User\Http\Requests;
 
+use App\Enums\Shared\Gender;
+use App\Modules\System\User\Enums\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,10 +31,10 @@ class UpdateUserRequest extends FormRequest
             'role_id' => ['sometimes', 'required', 'integer', 'exists:sys_roles,id'],
             'department' => ['nullable', 'string', 'max:255'],
 
-            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'gender' => ['nullable', 'string', Rule::in(Gender::values())],
             'dob' => ['nullable', 'date'],
             'avatar' => ['nullable', 'string', 'max:255'],
-            'status' => ['sometimes', 'required', 'string', 'in:active,inactive,locked'],
+            'status' => ['sometimes', 'required', 'string', Rule::in(UserStatus::values())],
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Modules\HR\Teacher\Models;
 
 use App\Models\User;
 use App\Modules\Finance\BankAccount\Models\BankAccount;
+use App\Modules\HR\Teacher\Enums\TeacherStatus;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -30,11 +31,11 @@ class Teacher extends Model
         'monthly_salary' => 'decimal:2',
     ];
 
-    public const STATUS_ACTIVE = 'active';
+    public const STATUS_ACTIVE = TeacherStatus::Active->value;
 
-    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_SUSPENDED = TeacherStatus::Suspended->value;
 
-    public const STATUS_RESIGNED = 'resigned';
+    public const STATUS_RESIGNED = TeacherStatus::Resigned->value;
 
     /**
      * Related tables that block hard-deletion / resignation when they reference

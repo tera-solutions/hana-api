@@ -5,6 +5,7 @@ namespace App\Modules\Education\Enrollment\Models;
 use App\Models\User;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\Course\Models\Course;
+use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
 use App\Modules\Education\Student\Models\Student;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,19 +34,19 @@ class Enrollment extends Model
         'debt_amount' => 'decimal:2',
     ];
 
-    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING = EnrollmentStatus::Pending->value;
 
-    const STATUS_STUDYING = 'studying';
+    const STATUS_STUDYING = EnrollmentStatus::Studying->value;
 
-    const STATUS_SUSPENDED = 'suspended';
+    const STATUS_SUSPENDED = EnrollmentStatus::Suspended->value;
 
-    const STATUS_TRANSFERRED = 'transferred';
+    const STATUS_TRANSFERRED = EnrollmentStatus::Transferred->value;
 
-    const STATUS_COMPLETED = 'completed';
+    const STATUS_COMPLETED = EnrollmentStatus::Completed->value;
 
-    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_CANCELLED = EnrollmentStatus::Cancelled->value;
 
-    const STATUS_REFUNDED = 'refunded';
+    const STATUS_REFUNDED = EnrollmentStatus::Refunded->value;
 
     /**
      * Statuses considered "active" — they block a duplicate enrollment of the
