@@ -2,10 +2,7 @@
 
 namespace App\Support\Metadata;
 
-use App\Enums\Finance\DebtStatus;
-use App\Enums\Finance\InvoiceStatus;
 use App\Enums\Finance\PaymentMethod;
-use App\Enums\Finance\PaymentStatus;
 use App\Enums\Finance\RefundStatus;
 use App\Enums\Shared\Gender;
 use App\Enums\Shared\GuardianRelation;
@@ -18,6 +15,15 @@ use App\Modules\Education\ClassRoom\Enums\ClassStudentStatus;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
 use App\Modules\Education\Student\Enums\StudentStatus;
+use App\Modules\Finance\Account\Enums\AccountType;
+use App\Modules\Finance\Debt\Enums\AdjustmentType;
+use App\Modules\Finance\Debt\Enums\DebtStatus;
+use App\Modules\Finance\Invoice\Enums\InvoiceStatus;
+use App\Modules\Finance\Invoice\Enums\InvoiceType;
+use App\Modules\Finance\Invoice\Enums\PartnerType;
+use App\Modules\Finance\Payment\Enums\PaymentDirection;
+use App\Modules\Finance\Payment\Enums\PaymentStatus;
+use App\Modules\Finance\Payment\Enums\PaymentType;
 use App\Modules\HR\Teacher\Enums\TeacherStatus;
 use App\Modules\HR\Teacher\Enums\TeacherType;
 use App\Modules\System\Branch\Enums\BranchStatus;
@@ -67,10 +73,16 @@ class MetadataRegistry
                 'teacher_type' => TeacherType::options(),
             ],
             'finance' => [
+                'invoice_type' => InvoiceType::options(),
                 'invoice_status' => InvoiceStatus::options(),
+                'partner_type' => PartnerType::options(),
+                'payment_direction' => PaymentDirection::options(),
                 'payment_status' => PaymentStatus::options(),
+                'payment_type' => PaymentType::options(),
                 'payment_method' => PaymentMethod::options(),
+                'account_type' => AccountType::options(),
                 'debt_status' => DebtStatus::options(),
+                'adjustment_type' => AdjustmentType::options(),
                 'refund_status' => RefundStatus::options(),
             ],
         ];

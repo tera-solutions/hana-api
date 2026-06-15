@@ -9,6 +9,8 @@ use App\Modules\Education\Enrollment\Models\Enrollment;
 use App\Modules\Education\Enrollment\Models\EnrollmentSuspension;
 use App\Modules\Education\Enrollment\Models\EnrollmentTransfer;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Finance\Invoice\Models\Invoice;
+use App\Modules\Finance\Invoice\Services\InvoiceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -436,8 +438,12 @@ class EnrollmentService
     }
 
     /**
-     * Generate the invoice, optional payment and outstanding debt (enrollment.md §7).
-     * Guarded so an incomplete finance schema never aborts the enrollment itself.
+     * Generate the enrollment's invoice and optional payment (enrollment.md §7).
+     *
+     * Routed through the Invoice/Payment services so it produces the same records
+     * as a manual invoice. The outstanding debt is the invoice's balance
+     * (debt.md BR-10) — no separate fin_debts row is written. Guarded so an
+     * incomplete finance schema never aborts the enrollment itself.
      *
      * @param  array{tuition_amount:float, discount_amount:float, paid_amount:float, debt_amount:float}  $money
      */
@@ -447,51 +453,31 @@ class EnrollmentService
             return;
         }
 
-        $payable = round($money['tuition_amount'] - $money['discount_amount'], 2);
-        $fullyPaid = $money['debt_amount'] <= 0;
-
-        $invoiceId = $this->guard(fn () => DB::table('fin_invoices')->insertGetId([
-            'business_id' => $businessId,
-            'student_id' => $studentId,
-            'enrollment_id' => $enrollment->id,
-            'code' => $this->makeCode('INV', $enrollment->id),
-            'subtotal' => $money['tuition_amount'],
-            'discount' => $money['discount_amount'],
-            'total' => $payable,
-            'status' => $fullyPaid ? 'paid' : ($money['paid_amount'] > 0 ? 'partial' : 'pending'),
-            'paid_at' => $fullyPaid ? now() : null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]));
-
-        if ($money['paid_amount'] > 0) {
-            $this->guard(fn () => DB::table('fin_payments')->insert([
+        $this->guard(fn () => DB::transaction(function () use ($enrollment, $studentId, $businessId, $money, $method) {
+            $invoice = app(InvoiceService::class)->create([
+                'invoice_type' => Invoice::TYPE_RECEIVABLE,
                 'business_id' => $businessId,
+                'partner_type' => 'student',
+                'partner_id' => $studentId,
                 'student_id' => $studentId,
                 'enrollment_id' => $enrollment->id,
-                'invoice_id' => $invoiceId ?: null,
-                'amount' => $money['paid_amount'],
-                'method' => $method,
-                'status' => 'completed',
-                'paid_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
-        }
+                'invoice_date' => now()->toDateString(),
+                'discount' => $money['discount_amount'],
+                'note' => 'Học phí ghi danh '.$enrollment->code,
+                'items' => [[
+                    'name' => 'Học phí khóa học',
+                    'quantity' => 1,
+                    'unit_price' => $money['tuition_amount'],
+                ]],
+            ]);
 
-        if ($money['debt_amount'] > 0) {
-            $this->guard(fn () => DB::table('fin_debts')->insert([
-                'business_id' => $businessId,
-                'student_id' => $studentId,
-                'invoice_id' => $invoiceId ?: null,
-                'amount' => $payable,
-                'paid_amount' => $money['paid_amount'],
-                'remaining_amount' => $money['debt_amount'],
-                'status' => $money['paid_amount'] > 0 ? 'partial' : 'unpaid',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
-        }
+            if ($money['paid_amount'] > 0) {
+                app(InvoiceService::class)->recordPayment($invoice->id, [
+                    'amount' => $money['paid_amount'],
+                    'method' => $method,
+                ]);
+            }
+        }));
     }
 
     private function logHistory(Enrollment $enrollment, string $action, $businessId, $studentId, $fromClassId = null, $toClassId = null): void
