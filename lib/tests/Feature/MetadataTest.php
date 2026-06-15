@@ -47,7 +47,7 @@ class MetadataTest extends TestCase
         $this->getJson('/api/auth/metadata')
             ->assertStatus(200)
             ->assertJsonPath('data.shared.gender.0', ['key' => 'MALE', 'value' => 'male', 'label' => 'Nam'])
-            ->assertJsonPath('data.education.enrollment_status.0', ['key' => 'PENDING', 'value' => 'pending', 'label' => 'Chờ xác nhận']);
+            ->assertJsonPath('data.education.enrollment_status.0', ['key' => 'PENDING', 'value' => 'pending', 'label' => 'Chờ xác nhận', 'color' => '#92400e', 'backgroundColor' => '#fef3c7']);
     }
 
     public function test_catalog_matches_model_constants(): void
