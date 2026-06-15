@@ -47,6 +47,7 @@ return [
         'features' => [
             'Invoice',
             'Payment',
+            'Account',
             'Refund',
             'Debt',
             'Discount',
