@@ -159,7 +159,8 @@ class EnrollmentTest extends TestCase
         $id = $response->json('data.id');
 
         $this->assertDatabaseHas('fin_payments', ['enrollment_id' => $id, 'amount' => 3000000]);
-        $this->assertDatabaseHas('fin_debts', ['invoice_id' => DB::table('fin_invoices')->where('enrollment_id', $id)->value('id'), 'remaining_amount' => 2400000]);
+        // Debt is the invoice's outstanding balance (debt.md BR-10), not a fin_debts row.
+        $this->assertDatabaseHas('fin_invoices', ['enrollment_id' => $id, 'balance_amount' => 2400000, 'status' => 'partial']);
     }
 
     public function test_create_validates_required_fields(): void
