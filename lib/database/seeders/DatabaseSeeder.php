@@ -29,6 +29,10 @@ class DatabaseSeeder extends Seeder
             ClassRoomPermissionSeeder::class,
             ClassSessionPermissionSeeder::class,
             EnrollmentPermissionSeeder::class,
+            InvoicePermissionSeeder::class,
+            AccountPermissionSeeder::class,
+            PaymentPermissionSeeder::class,
+            DebtPermissionSeeder::class,
             RolePermissionSeeder::class,
         ]);
     }
