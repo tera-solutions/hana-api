@@ -17,6 +17,7 @@ class UpdateClassRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
+            'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'room_id' => ['nullable', 'integer'],
@@ -42,7 +43,12 @@ class UpdateClassRequest extends FormRequest
             'name' => ['description' => 'Tên lớp học.', 'example' => 'IELTS Foundation - Khai giảng tháng 7'],
             'teacher_id' => ['description' => 'ID giáo viên phụ trách.', 'example' => 2],
             'assignee_id' => ['description' => 'ID nhân viên phụ trách.', 'example' => 5],
-            'schedules' => ['description' => 'Toàn bộ lịch học mới (thay thế lịch cũ). Null = giữ nguyên.'],
+            'schedules' => [
+                'description' => 'Toàn bộ lịch học mới (thay thế lịch cũ). Null = giữ nguyên.',
+                'example' => [
+                    ['weekday' => 2, 'start_time' => '19:00', 'end_time' => '20:30'],
+                ],
+            ],
         ];
     }
 }
