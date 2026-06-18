@@ -37,7 +37,7 @@ class LeadStudentController extends Controller
      *       {
      *         "id": 1, "lead_id": 1,
      *         "student_id": 5,
-     *         "student": {"id": 5, "code": "STU000005", "name": "Nguyễn Thị C", "level": "beginner", "status": "active"},
+     *         "student": {"id": 5, "code": "STU000005", "name": "Nguyễn Thị C", "level_id": 1, "status": "active"},
      *         "relationship": "father",
      *         "created_by": 1, "updated_by": null, "deleted_by": null,
      *         "created_at": "2026-06-01T08:00:00.000000Z", "updated_at": "2026-06-01T08:00:00.000000Z", "deleted_at": null

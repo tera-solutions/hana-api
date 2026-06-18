@@ -17,6 +17,8 @@ class StudentTest extends TestCase
 
     private int $branchId;
 
+    private int $levelId;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,6 +28,19 @@ class StudentTest extends TestCase
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId($this->businessId);
+        $this->levelId = $this->makeLevelId();
+    }
+
+    private function makeLevelId(): int
+    {
+        return DB::table('edu_levels')->insertGetId([
+            'level_code' => 'A1_'.strtoupper(uniqid()),
+            'level_name' => 'A1',
+            'level_order' => 1,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function makeBranchId(int $businessId): int
@@ -50,12 +65,17 @@ class StudentTest extends TestCase
             'phone' => '0901234567',
             'business_id' => $this->businessId,
             'branch_id' => $this->branchId,
-            'level' => 'A1',
+            'level_id' => $this->levelId,
             'enrollment_date' => '2026-06-01',
             'address' => '123 Le Loi',
             'province' => 'Ho Chi Minh',
             'district' => 'District 7',
         ], $overrides);
+    }
+
+    private function createStudent(array $overrides = []): int
+    {
+        return $this->postJson('/v1/edu/student/create', $this->payload($overrides))->json('data.id');
     }
 
     public function test_requires_authentication(): void
@@ -79,7 +99,8 @@ class StudentTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.code', 'STD000001')
-            ->assertJsonPath('data.status', 'active');
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.level_id', $this->levelId);
 
         $id = $response->json('data.id');
 
@@ -120,11 +141,11 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload([
+        $id = $this->createStudent([
             'parents' => [
                 ['name' => 'Tran Thi B', 'phone' => '0907654321', 'relation' => 'mother'],
             ],
-        ]))->json('data.id');
+        ]);
 
         $this->assertDatabaseHas('crm_parents', ['name' => 'Tran Thi B']);
         $this->assertDatabaseHas('crm_parent_student', ['student_id' => $id, 'relation' => 'mother']);
@@ -134,8 +155,8 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/v1/edu/student/create', $this->payload())->assertStatus(200);
-        $this->postJson('/v1/edu/student/create', $this->payload(['name' => 'Unique Person']))->assertStatus(200);
+        $this->createStudent();
+        $this->createStudent(['name' => 'Unique Person']);
 
         $this->getJson('/v1/edu/student/list')
             ->assertStatus(200)
@@ -151,7 +172,7 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->getJson("/v1/edu/student/detail/{$id}")
             ->assertStatus(200)
@@ -165,7 +186,7 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->putJson("/v1/edu/student/update/{$id}", [
             'name' => 'Renamed',
@@ -185,7 +206,7 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->postJson("/v1/edu/student/suspend/{$id}", ['stop_date' => '2026-06-12', 'reason' => 'Nghỉ dài hạn'])
             ->assertStatus(200)
@@ -208,7 +229,7 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->postJson("/v1/edu/student/restore/{$id}")
             ->assertJsonPath('success', false);
@@ -218,7 +239,7 @@ class StudentTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->deleteJson("/v1/edu/student/delete/{$id}")
             ->assertStatus(200)
@@ -231,7 +252,7 @@ class StudentTest extends TestCase
     {
         $admin = $this->actingAsAdmin();
 
-        $id = $this->postJson('/v1/edu/student/create', $this->payload())->json('data.id');
+        $id = $this->createStudent();
 
         $this->assertDatabaseHas('edu_students', [
             'id' => $id,

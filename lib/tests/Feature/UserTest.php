@@ -113,6 +113,27 @@ class UserTest extends TestCase
         $this->assertTrue(Hash::check('Abc@1234', $stored));
     }
 
+    public function test_user_management_emits_activity_log(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/sys/user/create', $this->payload(['username' => 'teacher02']))
+            ->json('data.id');
+
+        $this->assertDatabaseHas('sys_activity_logs', [
+            'module' => 'system',
+            'entity' => 'User',
+            'entity_id' => $id,
+            'action' => 'created',
+        ]);
+
+        // The password must be masked in the audit payload, never stored in clear/hash.
+        $newData = DB::table('sys_activity_logs')
+            ->where('entity', 'User')->where('entity_id', $id)->where('action', 'created')
+            ->value('new_data');
+        $this->assertStringContainsString('"password":"***"', (string) $newData);
+    }
+
     public function test_create_rejects_duplicate_username_email_phone(): void
     {
         $this->actingAsAdmin();
