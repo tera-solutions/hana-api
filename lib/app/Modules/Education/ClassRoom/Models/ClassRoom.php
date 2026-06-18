@@ -7,7 +7,12 @@ use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Course\Models\Course;
+use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\LessonPlan\Models\LessonPlan;
+use App\Modules\Education\Room\Models\Room;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
+use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +22,7 @@ use Package\Database\Concerns\HasAuditFields;
 class ClassRoom extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_classes';
@@ -43,9 +49,24 @@ class ClassRoom extends Model
 
     const STATUS_COMPLETED = ClassStatus::Completed->value;
 
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class, 'business_id');
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function lessonPlan(): BelongsTo
+    {
+        return $this->belongsTo(LessonPlan::class, 'lesson_plan_id');
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'room_id');
     }
 
     public function teacher(): BelongsTo
@@ -71,5 +92,10 @@ class ClassRoom extends Model
     public function sessions(): HasMany
     {
         return $this->hasMany(ClassSession::class, 'class_id');
+    }
+
+    public function lessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class, 'class_room_id');
     }
 }

@@ -2,23 +2,24 @@
 
 namespace App\Models;
 
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
-use Spatie\Permission\Traits\HasRoles;
 use Laravel\Passport\HasApiTokens;
 use Package\Database\Concerns\HasAuditFields;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+    use HasApiTokens;
     use HasAuditFields;
+    use HasRoles;
+    use LogsActivity;
     use Notifiable;
     use SoftDeletes;
-    use HasRoles;
-    use HasApiTokens;
 
     /**
      * The attributes that aren't mass assignable.
@@ -38,9 +39,9 @@ class User extends Authenticatable
 
     protected $appends = ['avatar_url'];
 
-    public  function getBearerToken()
+    public function getBearerToken()
     {
-        if (!request()->header('Authorization')) {
+        if (! request()->header('Authorization')) {
             return null;
         }
         $authorizationHeader = request()->header('Authorization');
@@ -50,9 +51,10 @@ class User extends Authenticatable
 
         return null;
     }
+
     public function getAvatarUrlAttribute()
     {
-        if (!empty($this->avatar)) {
+        if (! empty($this->avatar)) {
             $avatar_url = asset($this->avatar);
         } else {
             $avatar_url = asset('/assets/user_default.jpg');
@@ -61,14 +63,19 @@ class User extends Authenticatable
         return $avatar_url;
     }
 
+    protected function activityModule(): string
+    {
+        return 'system';
+    }
+
     public function created_by()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function role()
     {
-        return $this->belongsTo(\App\Models\Role::class, 'role_id');
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function business()
@@ -83,6 +90,6 @@ class User extends Authenticatable
 
     public function has_roles()
     {
-        return $this->hasMany(\App\Models\RolePermission::class, 'role_id', 'role_id');
+        return $this->hasMany(RolePermission::class, 'role_id', 'role_id');
     }
 }

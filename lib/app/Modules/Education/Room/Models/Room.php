@@ -6,6 +6,7 @@ use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Room\Enums\RoomStatus;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Room extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_rooms';

@@ -19,6 +19,7 @@ class CreateClassRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:255', 'unique:edu_classes,code'],
             'course_id' => ['required', 'integer', 'exists:edu_courses,id'],
+            'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'room_id' => ['nullable', 'integer'],
@@ -100,7 +101,12 @@ class CreateClassRequest extends FormRequest
             'max_capacity' => ['description' => 'Sĩ số tối đa.', 'example' => 20],
             'use_course_curriculum' => ['description' => 'Sao chép chương trình học từ khóa học mẫu.', 'example' => true],
             'description' => ['description' => 'Mô tả lớp học.'],
-            'schedules' => ['description' => 'Danh sách lịch học (array).'],
+            'schedules' => [
+                'description' => 'Danh sách lịch học (array).',
+                'example' => [
+                    ['weekday' => 2, 'start_time' => '19:00', 'end_time' => '20:30'],
+                ],
+            ],
             'schedules[].weekday' => ['description' => 'Thứ trong tuần (1=T2 … 7=CN).', 'example' => 2],
             'schedules[].start_time' => ['description' => 'Giờ bắt đầu (HH:MM).', 'example' => '19:00'],
             'schedules[].end_time' => ['description' => 'Giờ kết thúc (HH:MM).', 'example' => '20:30'],

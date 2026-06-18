@@ -21,6 +21,15 @@ class ClassResource extends JsonResource
                 'name' => $this->course?->name,
             ]),
 
+            'lesson_plan_id' => $this->lesson_plan_id,
+            'lesson_plan' => $this->whenLoaded('lessonPlan', fn () => $this->lessonPlan ? [
+                'id' => $this->lessonPlan->id,
+                'plan_code' => $this->lessonPlan->plan_code,
+                'plan_name' => $this->lessonPlan->plan_name,
+                'version' => $this->lessonPlan->version,
+                'status' => $this->lessonPlan->status,
+            ] : null),
+
             'teacher_id' => $this->teacher_id,
             'teacher' => $this->whenLoaded('teacher', fn () => $this->teacher ? [
                 'id' => $this->teacher->id,
@@ -35,6 +44,11 @@ class ClassResource extends JsonResource
             ] : null),
 
             'room_id' => $this->room_id,
+            'room' => $this->whenLoaded('room', fn () => $this->room ? [
+                'id' => $this->room->id,
+                'room_code' => $this->room->room_code,
+                'room_name' => $this->room->room_name,
+            ] : null),
 
             'learning_type' => $this->learning_type,
             'start_date' => $this->start_date?->toDateString(),
@@ -56,6 +70,12 @@ class ClassResource extends JsonResource
             ),
 
             'business_id' => $this->business_id,
+            'business' => $this->whenLoaded('business', fn () => $this->business ? [
+                'id' => $this->business->id,
+                'name' => $this->business->name,
+                'email' => $this->business->email,
+            ] : null),
+
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'deleted_by' => $this->deleted_by,

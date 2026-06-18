@@ -3,6 +3,7 @@
 namespace App\Modules\System\Branch\Models;
 
 use App\Models\User;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Branch extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'sys_branches';

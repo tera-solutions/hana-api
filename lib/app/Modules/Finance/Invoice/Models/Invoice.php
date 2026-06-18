@@ -7,6 +7,7 @@ use App\Modules\Education\Student\Models\Student;
 use App\Modules\Finance\Invoice\Enums\InvoiceStatus;
 use App\Modules\Finance\Invoice\Enums\InvoiceType;
 use App\Modules\Finance\Payment\Models\Payment;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Invoice extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'fin_invoices';

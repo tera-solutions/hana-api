@@ -74,7 +74,7 @@ class ClassService
         $this->applySort($query, $params, ['code', 'name', 'start_date', 'status', 'created_at']);
 
         $result = $query
-            ->with(['course', 'teacher', 'assignee', 'schedules'])
+            ->with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])
             ->paginate($this->resolvePerPage($params));
 
         $this->attachCurrentStudents($result->getCollection());
@@ -84,7 +84,7 @@ class ClassService
 
     public function find($id): ClassRoom
     {
-        return ClassRoom::with(['course', 'teacher', 'assignee', 'schedules'])->findOrFail($id);
+        return ClassRoom::with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])->findOrFail($id);
     }
 
     /**

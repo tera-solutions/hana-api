@@ -5,6 +5,7 @@ namespace App\Modules\Education\LessonPlanLesson\Models;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanMaterial\Models\LessonPlanMaterial;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +15,7 @@ use Package\Database\Concerns\HasAuditFields;
 class LessonPlanLesson extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_lesson_plan_lessons';

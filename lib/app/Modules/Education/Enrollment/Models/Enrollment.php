@@ -7,6 +7,7 @@ use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +17,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Enrollment extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_enrollments';

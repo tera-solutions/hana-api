@@ -14,6 +14,11 @@ use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Enums\ClassStudentStatus;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
+use App\Modules\Education\Lesson\Enums\LessonStatus;
+use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
+use App\Modules\Education\LessonPlanMaterial\Enums\MaterialType;
+use App\Modules\Education\Room\Enums\RoomStatus;
+use App\Modules\Education\Room\Enums\RoomType;
 use App\Modules\Education\Student\Enums\StudentStatus;
 use App\Modules\Finance\Account\Enums\AccountType;
 use App\Modules\Finance\Debt\Enums\AdjustmentType;
@@ -67,6 +72,11 @@ class MetadataRegistry
                 'class_session_status' => ClassSessionStatus::options(),
                 'attendance_status' => AttendanceStatus::options(),
                 'enrollment_status' => EnrollmentStatus::options(),
+                'room_status' => RoomStatus::options(),
+                'room_type' => RoomType::options(),
+                'lesson_plan_status' => LessonPlanStatus::options(),
+                'material_type' => MaterialType::options(),
+                'lesson_status' => LessonStatus::options(),
             ],
             'hr' => [
                 'teacher_status' => TeacherStatus::options(),

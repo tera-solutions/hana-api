@@ -4,6 +4,7 @@ namespace App\Modules\Finance\Account\Models;
 
 use App\Modules\Finance\Account\Enums\AccountType;
 use App\Modules\Finance\Payment\Models\Payment;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Account extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'fin_accounts';
