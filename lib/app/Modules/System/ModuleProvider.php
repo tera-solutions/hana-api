@@ -2,6 +2,9 @@
 
 namespace App\Modules\System;
 
+use App\Modules\System\ActivityLog\Events\ActivityLogged;
+use App\Modules\System\ActivityLog\Listeners\WriteActivityLog;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider as Provider;
 
@@ -10,6 +13,8 @@ class ModuleProvider extends Provider
     public function boot()
     {
         $this->activate();
+
+        Event::listen(ActivityLogged::class, WriteActivityLog::class);
     }
 
     public function register()

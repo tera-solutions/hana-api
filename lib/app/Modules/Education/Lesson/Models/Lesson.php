@@ -8,6 +8,7 @@ use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +17,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Lesson extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
 
     protected $table = 'edu_lessons';
 

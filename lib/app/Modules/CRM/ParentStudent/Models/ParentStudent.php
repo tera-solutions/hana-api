@@ -4,6 +4,7 @@ namespace App\Modules\CRM\ParentStudent\Models;
 
 use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,6 +17,7 @@ use Package\Database\Concerns\HasAuditFields;
 class ParentStudent extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'crm_parent_student';

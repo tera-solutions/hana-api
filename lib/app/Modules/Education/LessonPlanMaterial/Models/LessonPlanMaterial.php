@@ -3,6 +3,7 @@
 namespace App\Modules\Education\LessonPlanMaterial\Models;
 
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Package\Database\Concerns\HasAuditFields;
@@ -10,6 +11,7 @@ use Package\Database\Concerns\HasAuditFields;
 class LessonPlanMaterial extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
 
     protected $table = 'edu_lesson_plan_materials';
 

@@ -9,6 +9,7 @@ use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\SessionFeedback\Models\SessionFeedback;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,6 +20,7 @@ use Package\Database\Concerns\HasAuditFields;
 class ClassSession extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_sessions';

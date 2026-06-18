@@ -2,6 +2,7 @@
 
 namespace App\Modules\CRM\Lead\Models;
 
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,6 +15,7 @@ use Package\Database\Concerns\HasAuditFields;
 class LeadGuardian extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'crm_lead_guardians';

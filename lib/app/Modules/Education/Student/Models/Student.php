@@ -5,6 +5,7 @@ namespace App\Modules\Education\Student\Models;
 use App\Models\User;
 use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\Education\Student\Enums\StudentStatus;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Student extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_students';

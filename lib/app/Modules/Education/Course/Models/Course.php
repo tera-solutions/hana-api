@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Course\Models;
 
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Course extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_courses';
