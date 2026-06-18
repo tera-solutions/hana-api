@@ -9,31 +9,31 @@ use App\Jobs\SendMailAccountActivation;
 use App\Jobs\SendMailInformationAccount;
 use App\Jobs\SendMailResetPassword;
 use App\Jobs\SendMailVerifyOTP;
-use App\Models\Business;
-use App\Models\Customer;
-use App\Models\Employee;
-use App\Models\Session;
-use App\Models\User;
 use App\Models\AccessToken;
+use App\Models\Business;
 use App\Models\BusinessCRM;
 use App\Models\BusinessService;
+use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\MailConfig;
 use App\Models\Module;
+use App\Models\ModulePermission;
 use App\Models\OTP;
 use App\Models\Role;
-use App\Models\Token;
-use App\Models\ModulePermission;
 use App\Models\Service;
+use App\Models\Session;
 use App\Models\StockCRM;
-use Carbon\Carbon;
+use App\Models\Token;
+use App\Models\User;
+use App\Modules\System\ActivityLog\Support\ActivityLogger;
 use Exception;
 use Google_Client;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\Request;
 use Package\Exception\HttpException;
 
 /**
@@ -89,18 +89,20 @@ class ApiAuthController extends Controller
             $input = $request;
 
             $validator = Validator::make($request->all(), []);
-            $device_code = $request->header("device-code");
+            $device_code = $request->header('device-code');
 
             if ($validator->fails()) {
-                $message = "Vui lòng nhập đủ thông tin";
+                $message = 'Vui lòng nhập đủ thông tin';
                 $errors = $validator->errors()->all();
                 DB::rollBack();
+
                 return $this->respondWithError($message, $errors, 422);
             }
 
-            if (!$device_code) {
-                $message = "Không tìm thấy thiết bị";
+            if (! $device_code) {
+                $message = 'Không tìm thấy thiết bị';
                 DB::rollBack();
+
                 return $this->respondWithError($message, [], 422);
             }
 
@@ -113,63 +115,72 @@ class ApiAuthController extends Controller
                 $pass = $input->password;
                 if (Hash::check($pass, $user->password)) {
                     $dataUser = User::select([
-                        "id",
-                        "username",
-                        "full_name",
-                        "email",
-                        "avatar",
+                        'id',
+                        'username',
+                        'full_name',
+                        'email',
+                        'avatar',
                         'status',
                         'code',
-                        'is_admin'
+                        'is_admin',
                     ])
                         ->find($user->id);
 
-                    if (!$user->is_active) {
-                        return $this->respondWithError("Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !", [], 501);
+                    if (! $user->is_active) {
+                        return $this->respondWithError('Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !', [], 501);
                     }
 
                     $response = $this->createToken($user);
                     DB::commit();
-                    return $this->respondSuccess($response, "Đăng nhập thành công !");
+                    $this->logAuthEvent('login', 'success', $user->id, "Đăng nhập thành công: {$user->username}");
+
+                    return $this->respondSuccess($response, 'Đăng nhập thành công !');
                 } else {
-                    $message = "Mật khẩu không hợp lệ";
+                    $message = 'Mật khẩu không hợp lệ';
                     DB::rollBack();
+                    $this->logAuthEvent('login', 'failed', $user->id, "Đăng nhập thất bại (sai mật khẩu): {$input->username}");
+
                     return $this->respondWithError([
-                        "field" => "password",
-                        "message" => $message
+                        'field' => 'password',
+                        'message' => $message,
                     ], [], 500);
                 }
             } else {
-                $message = "Tài khoản không tồn tại";
+                $message = 'Tài khoản không tồn tại';
                 DB::rollBack();
+                $this->logAuthEvent('login', 'failed', null, "Đăng nhập thất bại (tài khoản không tồn tại): {$input->username}");
+
                 return $this->respondWithError([
-                    "field" => "username",
-                    "message" => $message
+                    'field' => 'username',
+                    'message' => $message,
                 ], [], 500);
             }
-        } catch (\Exception $err) {
+        } catch (Exception $err) {
             DB::rollBack();
+
             return $this->respondWithError($err->getMessage(), [], 403);
         }
     }
+
     //
     private function sendOTP($data, $dataUser, $user)
     {
         $mailConfig = MailConfig::where('type', 'system')->first();
         $OTP = substr(rand(), 0, 6);
         OTP::updateOrCreate([
-            "user_id" => $dataUser->id
+            'user_id' => $dataUser->id,
         ], [
-            "user_id" => $dataUser->id,
-            "otp_code" => $OTP,
-            "expired" => now()->addMinutes(5),
-            "created_at" => now(),
-            "count" => DB::raw('count + 1'),
-            "count_wrong" => 0
+            'user_id' => $dataUser->id,
+            'otp_code' => $OTP,
+            'expired' => now()->addMinutes(5),
+            'created_at' => now(),
+            'count' => DB::raw('count + 1'),
+            'count_wrong' => 0,
         ]);
         SendMailVerifyOTP::dispatch($dataUser, $OTP, $mailConfig);
         $data['verify_auth'] = $user->verify_auth;
         $data['user']['id'] = $dataUser->id;
+
         return $data;
     }
 
@@ -177,12 +188,31 @@ class ApiAuthController extends Controller
     {
         $token = $user->createToken('Tera Auth Private key');
         $user->save();
+
         return [
             'verify_auth' => $user->verify_auth,
             'user' => $user,
             'token' => $token->accessToken,
-            'access_id' => $token->accessTokenId ?? null
+            'access_id' => $token->accessTokenId ?? null,
         ];
+    }
+
+    /**
+     * Record an authentication event in the system audit trail (spec 028). Called
+     * after the request transaction commits/rolls back so failed-login attempts are
+     * still captured.
+     */
+    private function logAuthEvent(string $action, string $status, ?int $userId, string $description): void
+    {
+        ActivityLogger::log([
+            'module' => 'system',
+            'entity' => 'User',
+            'entity_id' => $userId,
+            'action' => $action,
+            'status' => $status,
+            'user_id' => $userId,
+            'description' => $description,
+        ]);
     }
 
     public function generateToken($length = 32)
@@ -216,8 +246,10 @@ class ApiAuthController extends Controller
         try {
             return DB::transaction(function () use ($request) {
                 $user = User::where('id', $request->user_id)->first();
-                if (!$user) {
-                    return $this->respondWithError("Tài khoản không tồn tại !", [], 500);
+                if (! $user) {
+                    $this->logAuthEvent('login', 'failed', null, "Xác thực OTP thất bại (tài khoản không tồn tại): user_id={$request->user_id}");
+
+                    return $this->respondWithError('Tài khoản không tồn tại !', [], 500);
                 }
                 $check = OTP::where('user_id', $request->user_id)->first();
                 if ($check) {
@@ -235,11 +267,16 @@ class ApiAuthController extends Controller
                             $userBlock->time_block = $timeBlock;
                             $userBlock->save();
                         }
-                        return $this->respondWithError("Đã quá số lần nhập sai mã xác thực, tài khoản bị khóa 1 giờ!", [], 501);
+
+                        $this->logAuthEvent('login', 'failed', $user->id, "Xác thực OTP thất bại (tài khoản bị khóa): {$user->username}");
+
+                        return $this->respondWithError('Đã quá số lần nhập sai mã xác thực, tài khoản bị khóa 1 giờ!', [], 501);
                     }
                     if ($check->otp_code == $request->otp_code) {
                         if (now() > $check->expired) {
-                            return $this->respondWithError("Mã OTP đã hết hạn !", [], 501);
+                            $this->logAuthEvent('login', 'failed', $user->id, "Xác thực OTP thất bại (mã hết hạn): {$user->username}");
+
+                            return $this->respondWithError('Mã OTP đã hết hạn !', [], 501);
                         } else {
                             if ($user->is_active == 1) {
                                 $token = $user->createToken('Tera Auth Private key');
@@ -248,21 +285,31 @@ class ApiAuthController extends Controller
                                     'verify_auth' => $user->verify_auth,
                                     'user' => $user,
                                     'token' => $token->accessToken,
-                                    'access_id' => isset($token->token->id) ? $token->token->id : null
+                                    'access_id' => isset($token->token->id) ? $token->token->id : null,
                                 ];
                                 $check->delete();
+
+                                $this->logAuthEvent('login', 'success', $user->id, "Đăng nhập bằng OTP thành công: {$user->username}");
+
                                 return $this->respondSuccess($response);
                             } else {
-                                return $this->respondWithError("Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !", [], 501);
+                                $this->logAuthEvent('login', 'failed', $user->id, "Xác thực OTP thất bại (tài khoản chưa kích hoạt): {$user->username}");
+
+                                return $this->respondWithError('Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !', [], 501);
                             }
                         }
                     } else {
                         $check->count_wrong++;
                         $check->save();
-                        return $this->respondWithError("Mã OTP Không chính xác !", [], 500);
+
+                        $this->logAuthEvent('login', 'failed', $user->id, "Xác thực OTP thất bại (mã không chính xác): {$user->username}");
+
+                        return $this->respondWithError('Mã OTP Không chính xác !', [], 500);
                     }
                 } else {
-                    return $this->respondWithError("Mã OTP Không tồn tại !", [], 500);
+                    $this->logAuthEvent('login', 'failed', $user->id, "Xác thực OTP thất bại (chưa có mã OTP): {$user->username}");
+
+                    return $this->respondWithError('Mã OTP Không tồn tại !', [], 500);
                 }
             });
         } catch (HttpException $e) {
@@ -290,26 +337,27 @@ class ApiAuthController extends Controller
         try {
             return DB::transaction(function () use ($request) {
                 $checkRecord = OTP::where('user_id', $request->user_id)->first();
-                if (!$checkRecord) {
-                    return $this->respondWithError("Không tìm thấy dữ liệu !", [], 500);
+                if (! $checkRecord) {
+                    return $this->respondWithError('Không tìm thấy dữ liệu !', [], 500);
                 }
                 if ($checkRecord->count_wrong >= 5) {
-                    return $this->respondWithError("Đã quá số lần nhập sai mã sác thực không thể gửi lại mã !", [], 500);
+                    return $this->respondWithError('Đã quá số lần nhập sai mã sác thực không thể gửi lại mã !', [], 500);
                 }
                 $mailConfig = MailConfig::where('type', 'system')->first();
                 $OTP = substr(rand(), 0, 6);
                 $checkRecord->update([
-                    "otp_code" => $OTP,
-                    "expired" => now()->addMinutes(5),
-                    "updated_at" => now(),
-                    "count" => DB::raw('count + 1')
+                    'otp_code' => $OTP,
+                    'expired' => now()->addMinutes(5),
+                    'updated_at' => now(),
+                    'count' => DB::raw('count + 1'),
                 ]);
                 SendMailVerifyOTP::dispatch(
                     User::find($checkRecord->user_id),
                     $OTP,
                     $mailConfig
                 );
-                return $this->respondSuccess("Đã gửi lại thành công mã OTP");
+
+                return $this->respondSuccess('Đã gửi lại thành công mã OTP');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -337,15 +385,15 @@ class ApiAuthController extends Controller
         try {
             return DB::transaction(function () use ($request) {
                 $checkToken = Token::where('token', $request->token)->where('type', $request->type)->first();
-                if (!$checkToken) {
-                    return $this->respondWithError("Token không tồn tại !", [], 500);
+                if (! $checkToken) {
+                    return $this->respondWithError('Token không tồn tại !', [], 500);
                 }
 
                 if (now() > $checkToken->expired) {
-                    return $this->respondWithError("Token đã hết hạn !", [], 500);
+                    return $this->respondWithError('Token đã hết hạn !', [], 500);
                 }
 
-                return $this->respondSuccess($checkToken, "Xác thực thành công !");
+                return $this->respondSuccess($checkToken, 'Xác thực thành công !');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -372,10 +420,11 @@ class ApiAuthController extends Controller
             'user_id' => $data->id,
             'status_work' => 1,
             'source_type' => 2,
-            'code' => $data->business_id . $data->id . random_int(1111, 9999),
+            'code' => $data->business_id.$data->id.random_int(1111, 9999),
             'business_id' => $data->business_id,
-            'is_default' => 1
+            'is_default' => 1,
         ];
+
         return Employee::create($dataResult);
     }
 
@@ -399,14 +448,14 @@ class ApiAuthController extends Controller
         $this->createStockDefault([
             'business_id' => $id,
             'location_id' => null,
-            'stock_name' => 'Kho ' . $businessPortal->name,
+            'stock_name' => 'Kho '.$businessPortal->name,
             'stock_type' => 'type3',
             'is_active' => 1,
             'is_delete' => 0,
             'is_sync' => 0,
             'created_by' => null,
             'created_at' => now(),
-            'is_default' => 1
+            'is_default' => 1,
         ]);
         $this->createCustomerDefault($id);
         $this->createSupplierDefault($id);
@@ -443,22 +492,22 @@ class ApiAuthController extends Controller
             return DB::transaction(function () use ($request) {
                 if ($request->type === 'business') {
                     $inputBusiness = [
-                        "owner_name",
-                        "owner_email",
-                        "owner_job_title",
-                        "owner_department",
-                        "owner_phone",
-                        "name",
-                        "email",
-                        "address",
-                        "employee_size",
-                        "payment_methods"
+                        'owner_name',
+                        'owner_email',
+                        'owner_job_title',
+                        'owner_department',
+                        'owner_phone',
+                        'name',
+                        'email',
+                        'address',
+                        'employee_size',
+                        'payment_methods',
                     ];
                     $checkEmailExist = User::where('email', trim($request->owner_email))->first();
                     if ($checkEmailExist) {
                         return $this->respondWithError([
-                            "field" => "owner_email",
-                            "message" => "Email đã tồn tại !"
+                            'field' => 'owner_email',
+                            'message' => 'Email đã tồn tại !',
                         ], [], 500);
                     }
                     $dataBusiness = $request->only($inputBusiness);
@@ -475,18 +524,18 @@ class ApiAuthController extends Controller
                     $businessResult = Business::create($dataBusiness);
                     DB::commit();
                     $id = null;
-                    if (!empty($businessResult)) {
+                    if (! empty($businessResult)) {
                         $id = $businessResult->id;
                         $this->createBusinessDefault($id);
-                        $this->createWorkflowDefault(env('OPERATION_URL') . "/api/operation/workflow/create-object-workflow", ["business_id" => $id]);
-                        $this->setWorkflowDefault(env('OPERATION_URL') . "/api/operation/workflow/workflow-default", ["business_id" => $id]);
+                        $this->createWorkflowDefault(env('OPERATION_URL').'/api/operation/workflow/create-object-workflow', ['business_id' => $id]);
+                        $this->setWorkflowDefault(env('OPERATION_URL').'/api/operation/workflow/workflow-default', ['business_id' => $id]);
                     }
 
                     if ($autoActive == 1 && $id) {
                         $user = $this->createOwner($id, $request);
                         DB::commit();
 
-                        if (!empty($user)) {
+                        if (! empty($user)) {
                             $this->createEmployee($user);
                         }
                         $this->addServicePackageTrialDefault($id);
@@ -497,24 +546,25 @@ class ApiAuthController extends Controller
 
                         return $this->respondSuccess($user);
                     }
+
                     return $this->respondSuccess($businessResult);
                 } else {
                     $inputIndividual = [
-                        "full_name",
-                        "email",
-                        "phone",
-                        "password"
+                        'full_name',
+                        'email',
+                        'phone',
+                        'password',
                     ];
                     $checkEmailExist = User::where('email', trim($request->email))->first();
                     if ($checkEmailExist) {
                         return $this->respondWithError([
-                            "field" => "email",
-                            "message" => "Email đã tồn tại !"
+                            'field' => 'email',
+                            'message' => 'Email đã tồn tại !',
                         ], [], 500);
                     }
                     $dataIndividual = $request->only($inputIndividual);
                     $dataIndividual['username'] = $request->email;
-                    $dataIndividual['type'] = "individual";
+                    $dataIndividual['type'] = 'individual';
                     $dataIndividual['status_account'] = 'is_active';
                     $dataIndividual['is_active'] = 1;
                     $dataIndividual['verify_auth'] = env('VERIFY_AUTH');
@@ -539,15 +589,15 @@ class ApiAuthController extends Controller
                         if (count($getModuleForIndividual) > 0) {
                             foreach ($getModuleForIndividual as $key => $module) {
                                 foreach ($module->type as $type) {
-                                    if ($type == "individual") {
-                                        ModulePermission::create(["type" => $type, 'user_id' => $result->id, 'module_id' => $module->id, 'created_at' => now()]);
+                                    if ($type == 'individual') {
+                                        ModulePermission::create(['type' => $type, 'user_id' => $result->id, 'module_id' => $module->id, 'created_at' => now()]);
                                     }
                                 }
                             }
                         }
                     }
                     //
-                    $urlAuth = env('CLIENT_URL') . '/auth/login';
+                    $urlAuth = env('CLIENT_URL').'/auth/login';
                     $mailConfig = MailConfig::where('type', 'system')->first();
                     //
                     JobsMailRegister::dispatch(
@@ -555,10 +605,11 @@ class ApiAuthController extends Controller
                         $request->email,
                         $urlAuth
                     );
-                    if (!$result) {
-                        throw new HttpException("Không thể đăng ký !");
+                    if (! $result) {
+                        throw new HttpException('Không thể đăng ký !');
                     }
-                    $message = "Đăng ký tài khoản thành công";
+                    $message = 'Đăng ký tài khoản thành công';
+
                     return $this->respondSuccess($result, $message);
                 }
             });
@@ -567,7 +618,7 @@ class ApiAuthController extends Controller
         }
     }
 
-    private function createWorkflowDefault($apiUrl = "", $data = [])
+    private function createWorkflowDefault($apiUrl = '', $data = [])
     {
         try {
             $jsonData = json_encode($data);
@@ -577,19 +628,20 @@ class ApiAuthController extends Controller
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Content-Length: ' . strlen($jsonData)
-            ));
+                'Content-Length: '.strlen($jsonData),
+            ]);
 
             $response = curl_exec($ch);
 
             if (curl_errno($ch)) {
 
-                echo 'Lỗi cURL: ' . curl_error($ch);
+                echo 'Lỗi cURL: '.curl_error($ch);
             }
 
             curl_close($ch);
+
             // Decode the JSON response into an associative array
             return json_decode($response, true);
         } catch (HttpException $e) {
@@ -620,7 +672,7 @@ class ApiAuthController extends Controller
             ->where('type', 'customer')
             ->first();
         if (empty($customer)) {
-            $code = 'kh_default_' . $business_id;
+            $code = 'kh_default_'.$business_id;
             $name = 'Khách hàng vãng lai';
             Customer::create([
                 'code' => $code,
@@ -628,14 +680,14 @@ class ApiAuthController extends Controller
                 'business_id' => $business_id,
                 'foreign_name' => $name,
                 'type' => 'customer',
-                'is_default' => 1
+                'is_default' => 1,
             ]);
         }
     }
 
     private function createSupplierDefault($business_id)
     {
-        $code = 'ncc_default_' . $business_id;
+        $code = 'ncc_default_'.$business_id;
         $name = 'Nhà cung cấp mặc định';
         $customer = Customer::where('code', $code)
             ->first();
@@ -646,7 +698,7 @@ class ApiAuthController extends Controller
                 'business_id' => $business_id,
                 'foreign_name' => $name,
                 'type' => 'supplier',
-                'is_default' => 1
+                'is_default' => 1,
             ]);
         }
     }
@@ -660,29 +712,29 @@ class ApiAuthController extends Controller
     {
         $getTrialDefault = Service::with(['packages'])->where('is_trial_default', 1)->first();
         if ($getTrialDefault) {
-            if (!empty($getTrialDefault->packages)) {
+            if (! empty($getTrialDefault->packages)) {
                 $arrInsert = [];
                 $checkHaveOrNo = BusinessService::where('business_id', $business_id)
                     ->where('service_id', $getTrialDefault->id)
-                    ->whereIn('package_id', array_column(collect($getTrialDefault->packages)->toArray(), "id"))
+                    ->whereIn('package_id', array_column(collect($getTrialDefault->packages)->toArray(), 'id'))
                     ->first();
-                if (!$checkHaveOrNo) {
+                if (! $checkHaveOrNo) {
                     foreach ($getTrialDefault->packages as $key => $value) {
                         $arrInsert[] = [
-                            "business_id" => $business_id,
-                            "service_id" => $getTrialDefault->id,
-                            "package_id" => $value->id,
-                            "date_active" => now()->format('Y-m-d'),
-                            "date_expired" => now()->addMonths(1)->format('Y-m-d'),
-                            "status" => "is_active",
-                            "service_type" => "trial",
-                            "time" => 1,
-                            "created_at" => now()
+                            'business_id' => $business_id,
+                            'service_id' => $getTrialDefault->id,
+                            'package_id' => $value->id,
+                            'date_active' => now()->format('Y-m-d'),
+                            'date_expired' => now()->addMonths(1)->format('Y-m-d'),
+                            'status' => 'is_active',
+                            'service_type' => 'trial',
+                            'time' => 1,
+                            'created_at' => now(),
                         ];
                     }
                 }
 
-                if (!empty($arrInsert)) {
+                if (! empty($arrInsert)) {
                     BusinessService::insert($arrInsert);
                 }
             }
@@ -704,6 +756,7 @@ class ApiAuthController extends Controller
             'is_default' => 1,
             'created_at' => now(),
         ])->id;
+
         return User::create([
             'full_name' => $request->owner_name,
             'username' => $request->owner_email,
@@ -716,11 +769,11 @@ class ApiAuthController extends Controller
             'verify_auth' => env('VERIFY_AUTH') == null ? 1 : env('VERIFY_AUTH'),
             'business_id' => $business_id,
             'department' => $request->owner_department,
-            'job_title' => $request->owner_job_title
+            'job_title' => $request->owner_job_title,
         ]);
     }
 
-    public function createBusiness($apiUrl = "", $data = [])
+    public function createBusiness($apiUrl = '', $data = [])
     {
         try {
             $jsonData = json_encode($data);
@@ -730,18 +783,19 @@ class ApiAuthController extends Controller
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-                'Content-Length: ' . strlen($jsonData)
-            ));
+                'Content-Length: '.strlen($jsonData),
+            ]);
 
             $response = curl_exec($ch);
 
             if (curl_errno($ch)) {
-                echo 'Lỗi cURL: ' . curl_error($ch);
+                echo 'Lỗi cURL: '.curl_error($ch);
             }
 
             curl_close($ch);
+
             // Decode the JSON response into an associative array
             return json_decode($response, true);
         } catch (HttpException $e) {
@@ -768,12 +822,12 @@ class ApiAuthController extends Controller
     {
         try {
             return DB::transaction(function () use ($request) {
-                if (!$request->user_id) {
-                    throw new HttpException("Không tìm thấy người dùng");
+                if (! $request->user_id) {
+                    throw new HttpException('Không tìm thấy người dùng');
                 }
                 $user = User::where('id', $request->user_id)->first();
-                if (!$user) {
-                    throw new HttpException("Không tìm thấy người dùng");
+                if (! $user) {
+                    throw new HttpException('Không tìm thấy người dùng');
                 }
                 $mailConfig = MailConfig::where('type', 'system')->first();
                 $token = $this->generateToken(64);
@@ -782,11 +836,12 @@ class ApiAuthController extends Controller
                     'token' => $token,
                     'expired' => now()->addMinutes(5),
                     'type' => 'activation',
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]);
-                $urlActivation = env('CLIENT_URL') . '/auth/account-activation?token=' . $token;
+                $urlActivation = env('CLIENT_URL').'/auth/account-activation?token='.$token;
                 SendMailAccountActivation::dispatch($user, $urlActivation, $mailConfig);
-                return $this->respondSuccess($user, "Vui lòng kiểm tra email để kích hoạt tài khoản !");
+
+                return $this->respondSuccess($user, 'Vui lòng kiểm tra email để kích hoạt tài khoản !');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -827,16 +882,16 @@ class ApiAuthController extends Controller
             return DB::transaction(function () use ($request) {
                 $token = $request->token;
                 $type = $request->type;
-                if (!isset($token)) {
-                    return $this->respondWithError("Kích hoạt thất bại !", [], 500);
+                if (! isset($token)) {
+                    return $this->respondWithError('Kích hoạt thất bại !', [], 500);
                 }
                 $check = Token::where('token', $token)->where('type', $type)->first();
-                if (!$check) {
-                    return $this->respondWithError("Token không tồn tại !", [], 500);
+                if (! $check) {
+                    return $this->respondWithError('Token không tồn tại !', [], 500);
                 }
 
                 if (now() > $check->expired) {
-                    return $this->respondWithError("Token đã hết hạn !", [], 500);
+                    return $this->respondWithError('Token đã hết hạn !', [], 500);
                 }
 
                 $user = User::where('id', $check->user_id)->first();
@@ -845,7 +900,8 @@ class ApiAuthController extends Controller
                     $user->save();
                 }
                 $check->delete();
-                return $this->respondSuccess($check, "Đã kích hoạt tài khoản thành công !");
+
+                return $this->respondSuccess($check, 'Đã kích hoạt tài khoản thành công !');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -873,40 +929,42 @@ class ApiAuthController extends Controller
             return DB::transaction(function () use ($request) {
                 $email = $request->email;
                 $checkEmailExist = User::where('username', $email)->first();
-                if (!$checkEmailExist) {
-                    return $this->respondWithError("Email không tồn tại !", [], 500);
+                if (! $checkEmailExist) {
+                    return $this->respondWithError('Email không tồn tại !', [], 500);
                 } else {
                     $token = $this->generateToken(64);
                     $mailConfig = MailConfig::where('type', 'system')->first();
                     if ($checkEmailExist->is_active != 1) {
                         Token::updateOrCreate([
                             'user_id' => $checkEmailExist->id,
-                            'type' => 'activation'
+                            'type' => 'activation',
                         ], [
                             'user_id' => $checkEmailExist->id,
                             'type' => 'activation',
                             'token' => $token,
                             'expired' => now()->addMinutes(5),
-                            'created_at' => now()
+                            'created_at' => now(),
                         ]);
                         $checkEmailExist->save();
-                        $urlActivation = env('CLIENT_URL') . '/auth/account-activation?token=' . $token;
+                        $urlActivation = env('CLIENT_URL').'/auth/account-activation?token='.$token;
                         SendMailAccountActivation::dispatch($checkEmailExist, $urlActivation, $mailConfig);
-                        return $this->respondWithError("Tài khoản chưa được kích hoạt vui lòng kiểm tra email để kích hoạt tài khoản !");
+
+                        return $this->respondWithError('Tài khoản chưa được kích hoạt vui lòng kiểm tra email để kích hoạt tài khoản !');
                     } else {
-                        $urlResetPassword = env('CLIENT_URL') . '/auth/reset-password?token=' . $token;
+                        $urlResetPassword = env('CLIENT_URL').'/auth/reset-password?token='.$token;
                         Token::updateOrCreate([
                             'user_id' => $checkEmailExist->id,
-                            'type' => 'reset_password'
+                            'type' => 'reset_password',
                         ], [
                             'user_id' => $checkEmailExist->id,
                             'type' => 'reset_password',
                             'token' => $token,
                             'expired' => now()->addMinutes(5),
-                            'created_at' => now()
+                            'created_at' => now(),
                         ]);
                         SendMailResetPassword::dispatch($checkEmailExist, $urlResetPassword, $mailConfig);
-                        return $this->respondSuccess($checkEmailExist, "Vui lòng kiểm tra email để khôi phục mật khẩu !");
+
+                        return $this->respondSuccess($checkEmailExist, 'Vui lòng kiểm tra email để khôi phục mật khẩu !');
                     }
                 }
             });
@@ -939,28 +997,29 @@ class ApiAuthController extends Controller
             return DB::transaction(function () use ($request) {
                 $token = $request->token;
                 $type = $request->type;
-                if (!$token) {
-                    return $this->respondWithError("Có lỗi xảy ra !", [], 500);
+                if (! $token) {
+                    return $this->respondWithError('Có lỗi xảy ra !', [], 500);
                 }
                 $check = Token::where('token', $token)->where('type', $type)->first();
-                if (!$check) {
-                    return $this->respondWithError("Token không tồn tại !", [], 500);
+                if (! $check) {
+                    return $this->respondWithError('Token không tồn tại !', [], 500);
                 }
 
                 if (now() > $check->expired) {
-                    return $this->respondWithError("Token đã hết hạn !", [], 500);
+                    return $this->respondWithError('Token đã hết hạn !', [], 500);
                 }
 
                 $user = User::where('id', $check->user_id)->first();
                 if ($request->password != $request->confirm_password) {
-                    return $this->respondWithError("Nhập lại mật khẩu không đúng !", [], 500);
+                    return $this->respondWithError('Nhập lại mật khẩu không đúng !', [], 500);
                 }
 
                 $user->update(['password' => bcrypt($request->password)]);
                 $check->delete();
                 $mailConfig = MailConfig::where('type', 'system')->first();
                 SendMailInformationAccount::dispatch($user, $request->password, $mailConfig);
-                return $this->respondSuccess($user, "Đặt lại mật khẩu thành công !");
+
+                return $this->respondSuccess($user, 'Đặt lại mật khẩu thành công !');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -1000,27 +1059,33 @@ class ApiAuthController extends Controller
             $input = (object) $this->CryptoJSAesDecrypt($dataPayload);
 
             if (empty($input->access_id)) {
-                return $this->respondWithError("Bạn không có quyền truy câp access_id", [], 403);
+                DB::rollBack();
+                $this->logAuthEvent('login', 'failed', null, 'Đăng nhập SSO thất bại (thiếu access_id)');
+
+                return $this->respondWithError('Bạn không có quyền truy câp access_id', [], 403);
             }
 
-            $checkExit = AccessToken::where("id", $input->access_id)->first();
+            $checkExit = AccessToken::where('id', $input->access_id)->first();
 
             if (empty($checkExit)) {
-                return $this->respondWithError("Bạn không có quyền truy câp", [], status: 403);
+                DB::rollBack();
+                $this->logAuthEvent('login', 'failed', null, 'Đăng nhập SSO thất bại (access_id không hợp lệ)');
+
+                return $this->respondWithError('Bạn không có quyền truy câp', [], status: 403);
             }
 
-            $user = User::where("id", $checkExit->user_id)->first();
+            $user = User::where('id', $checkExit->user_id)->first();
 
             if ($user) {
                 $dataUser = User::select([
-                    "id",
-                    "username",
-                    "full_name",
-                    "avatar",
+                    'id',
+                    'username',
+                    'full_name',
+                    'avatar',
                     'status',
                     'code',
                     'is_admin',
-                    'type'
+                    'type',
                 ])
                     ->find($user->id);
 
@@ -1028,20 +1093,26 @@ class ApiAuthController extends Controller
 
                 $response = [
                     'user' => $dataUser,
-                    'token' => $token->accessToken
+                    'token' => $token->accessToken,
                 ];
 
                 // $checkExit->delete();
 
                 DB::commit();
+
+                $this->logAuthEvent('login', 'success', $user->id, "Đăng nhập SSO thành công: {$user->username}");
+
                 return $this->respondSuccess($response);
             } else {
-                $message = "Người dùng không tồn tại";
+                $message = 'Người dùng không tồn tại';
                 DB::rollBack();
+                $this->logAuthEvent('login', 'failed', $checkExit->user_id, "Đăng nhập SSO thất bại (người dùng không tồn tại): user_id={$checkExit->user_id}");
+
                 return $this->respondWithError($message, [], 500);
             }
-        } catch (\Exception $err) {
+        } catch (Exception $err) {
             DB::rollBack();
+
             return $this->respondWithError($err->getMessage(), [], 403);
         }
     }
@@ -1073,8 +1144,8 @@ class ApiAuthController extends Controller
         DB::beginTransaction();
 
         try {
-            if (!Auth::guard('api')->user()) {
-                return $this->respondWithError("No permision!!", [], 401);
+            if (! Auth::guard('api')->user()) {
+                return $this->respondWithError('No permision!!', [], 401);
             }
 
             $token = Auth::guard('api')->user()->token();
@@ -1083,17 +1154,19 @@ class ApiAuthController extends Controller
 
             $user_id = Auth::guard('api')->user()->id;
 
-            $session = Session::where("user_id", $user_id)->first();
+            $session = Session::where('user_id', $user_id)->first();
             if ($session) {
                 $session->delete();
             }
 
             DB::commit();
 
-            $response = "Bạn đã đăng xuất thành công!";
+            $this->logAuthEvent('logout', 'success', $user_id, 'Đăng xuất thành công');
+
+            $response = 'Bạn đã đăng xuất thành công!';
 
             return $this->respondSuccess($response);
-        } catch (\Exception $err) {
+        } catch (Exception $err) {
             return $this->respondWithError($err->getMessage(), [], 403);
         }
     }
@@ -1133,17 +1206,18 @@ class ApiAuthController extends Controller
             return DB::transaction(function () use ($request) {
                 $user = User::where('id', $request->user_id)->first();
 
-                if (!$user) {
-                    throw new HttpException("Không tìm thấy người dùng");
+                if (! $user) {
+                    throw new HttpException('Không tìm thấy người dùng');
                 }
 
                 if ($request->password != $request->confirm_password) {
-                    return $this->respondWithError("Nhập lại mật khẩu không đúng !", [], 500);
+                    return $this->respondWithError('Nhập lại mật khẩu không đúng !', [], 500);
                 }
                 $userTokens = $user->tokens->pluck('id');
                 $user->tokens()->whereIn('id', $userTokens)->delete();
                 $user->update(['password' => bcrypt($request->password)]);
-                return $this->respondSuccess($user, "Đặt lại mật khẩu thành công !");
+
+                return $this->respondSuccess($user, 'Đặt lại mật khẩu thành công !');
             });
         } catch (HttpException $e) {
             throw new HttpException($e->getMessage());
@@ -1177,7 +1251,7 @@ class ApiAuthController extends Controller
             if ($payload) {
                 $userid = $payload['sub'];
                 // If request specified a G Suite domain:
-                //$domain = $payload['hd'];
+                // $domain = $payload['hd'];
             } else {
                 dd(0);
                 // Invalid ID token
@@ -1205,6 +1279,7 @@ class ApiAuthController extends Controller
     public function turnOffWelcome()
     {
         Auth::guard('api')->user()->update(['is_first' => 0]);
+
         return $this->respondSuccess(true);
     }
 }

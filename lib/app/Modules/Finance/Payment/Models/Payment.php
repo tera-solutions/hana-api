@@ -6,6 +6,7 @@ use App\Modules\Finance\Account\Models\Account;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Payment\Enums\PaymentDirection;
 use App\Modules\Finance\Payment\Enums\PaymentStatus;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Payment extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'fin_payments';

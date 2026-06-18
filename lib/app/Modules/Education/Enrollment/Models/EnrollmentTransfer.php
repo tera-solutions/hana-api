@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Enrollment\Models;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Package\Database\Concerns\HasAuditFields;
@@ -10,6 +11,7 @@ use Package\Database\Concerns\HasAuditFields;
 class EnrollmentTransfer extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
 
     protected $table = 'edu_enrollment_transfers';
 

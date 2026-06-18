@@ -8,6 +8,7 @@ use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
 use App\Modules\Education\LessonPlanVersion\Models\LessonPlanVersion;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +18,7 @@ use Package\Database\Concerns\HasAuditFields;
 class LessonPlan extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_lesson_plans';

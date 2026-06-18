@@ -5,6 +5,7 @@ namespace App\Modules\HR\Teacher\Models;
 use App\Models\User;
 use App\Modules\Finance\BankAccount\Models\BankAccount;
 use App\Modules\HR\Teacher\Enums\TeacherStatus;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Teacher extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'hr_teachers';

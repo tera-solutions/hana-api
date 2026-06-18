@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\Teacher\Models;
 
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,6 +11,7 @@ use Package\Database\Concerns\HasAuditFields;
 class TeacherCertificate extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'hr_teacher_certificates';

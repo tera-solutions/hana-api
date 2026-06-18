@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\CRM\Lead\Enums\LeadStatus;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ use Package\Database\Concerns\HasAuditFields;
 class Lead extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'crm_leads';

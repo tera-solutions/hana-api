@@ -11,6 +11,7 @@ use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ use Package\Database\Concerns\HasAuditFields;
 class ClassRoom extends Model
 {
     use HasAuditFields;
+    use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_classes';
