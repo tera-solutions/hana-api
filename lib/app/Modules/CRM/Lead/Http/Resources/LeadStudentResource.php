@@ -25,7 +25,7 @@ class LeadStudentResource extends JsonResource
                 'id' => $this->student?->id,
                 'code' => $this->student?->code,
                 'name' => $this->student?->name,
-                'level' => $this->student?->level,
+                'level_id' => $this->student?->level_id,
                 'status' => $this->student?->status,
             ]),
 

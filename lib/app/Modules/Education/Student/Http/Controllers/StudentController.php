@@ -47,7 +47,7 @@ class StudentController extends Controller
      *   "msg": "Thao tác thành công",
      *   "data": {
      *     "items": [
-     *       {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level": "A1", "status": "active", "email": "a@example.com", "phone": "0900000000", "business_id": 1, "branch_id": 1}
+     *       {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level_id": 1, "status": "active", "email": "a@example.com", "phone": "0900000000", "business_id": 1, "branch_id": 1}
      *     ],
      *     "pagination": {"total": 1, "per_page": 15, "current_page": 1, "last_page": 1}
      *   },
@@ -69,7 +69,7 @@ class StudentController extends Controller
      *   "success": true,
      *   "msg": "Thao tác thành công",
      *   "data": {
-     *     "student": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level": "A1", "status": "active", "business_id": 1, "branch_id": 1},
+     *     "student": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level_id": 1, "status": "active", "business_id": 1, "branch_id": 1},
      *     "statistics": {"classes": 2, "attendance_rate": 0.9}
      *   },
      *   "code": 200,
@@ -92,7 +92,7 @@ class StudentController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Tạo học viên thành công.",
-     *   "data": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level": "A1", "status": "active", "business_id": 1, "branch_id": 1},
+     *   "data": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level_id": 1, "status": "active", "business_id": 1, "branch_id": 1},
      *   "code": 200,
      *   "errors": null
      * }
@@ -112,7 +112,7 @@ class StudentController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Cập nhật học viên thành công.",
-     *   "data": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level": "A2", "status": "active"},
+     *   "data": {"id": 1, "code": "STU001", "name": "Nguyễn Văn A", "level_id": 1, "status": "active"},
      *   "code": 200,
      *   "errors": null
      * }
