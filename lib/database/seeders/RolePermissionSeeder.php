@@ -13,58 +13,76 @@ class RolePermissionSeeder extends Seeder
      * Super Admin is intentionally omitted — those accounts use the `is_admin`
      * flag and bypass the permission checks entirely.
      *
-     * Use '*' to grant every seeded permission.
+     * Each role is described by the modules it can manage:
+     *   - `all`  => every seeded permission (BUSINESS_ADMIN).
+     *   - `full` => every action of the listed module prefixes (e.g. course.* ).
+     *   - `view` => the read actions (`.list` / `.view`) of the listed prefixes.
+     *
+     * Module prefix = the part before the first dot (course, student_level,
+     * fin_invoice, …). New permissions are picked up automatically.
      */
+    private const READ_ACTIONS = ['list', 'view'];
+
     private array $map = [
-        'BUSINESS_ADMIN' => ['*'],
+        'BUSINESS_ADMIN' => ['all' => true],
 
         'BRANCH_MANAGER' => [
-            'business.view',
-            'branch.list', 'branch.view', 'branch.update',
-            'user.list', 'user.view', 'user.create', 'user.update',
-            'teacher.list', 'teacher.view', 'teacher.create', 'teacher.update', 'teacher.suspend', 'teacher.restore', 'teacher.resign',
+            'full' => [
+                'branch', 'user', 'teacher', 'student', 'class', 'enrollment', 'room',
+                'lesson', 'course', 'level', 'student_level', 'lesson_plan', 'material', 'assignment',
+            ],
+            'view' => [
+                'business', 'session', 'crm_lead', 'parent', 'parent_student',
+                'fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'activity_log',
+            ],
         ],
 
         'ACADEMIC_STAFF' => [
-            'business.view', 'branch.list', 'branch.view',
-            'teacher.list', 'teacher.view', 'teacher.create', 'teacher.update',
+            'full' => [
+                'course', 'level', 'student_level', 'class', 'room', 'lesson', 'session',
+                'lesson_plan', 'material', 'assignment', 'student', 'enrollment',
+            ],
+            'view' => ['business', 'branch', 'teacher', 'parent', 'parent_student'],
         ],
 
         'TEACHER' => [
-            'teacher.list', 'teacher.view',
+            'full' => ['assignment', 'material'],
+            'view' => [
+                'student', 'student_level', 'lesson', 'session', 'class', 'course', 'level', 'lesson_plan',
+            ],
         ],
 
         'STAFF' => [
-            'business.view', 'branch.view', 'teacher.list', 'teacher.view',
+            'full' => ['student', 'parent', 'parent_student'],
+            'view' => [
+                'business', 'branch', 'course', 'class', 'room', 'enrollment', 'crm_lead', 'lesson',
+            ],
         ],
 
         'ACCOUNTANT' => [
-            'business.view', 'branch.view', 'user.view',
+            'full' => ['fin_invoice', 'fin_payment', 'fin_account', 'fin_debt'],
+            'view' => ['business', 'branch', 'student', 'enrollment', 'parent'],
         ],
 
         'CRM_STAFF' => [
-            'business.view', 'branch.view', 'user.list', 'user.view',
+            'full' => ['crm_lead', 'parent', 'parent_student'],
+            'view' => ['business', 'branch', 'student', 'enrollment', 'course', 'class'],
         ],
     ];
 
     public function run(): void
     {
         $permissions = DB::table('sys_permissions')->pluck('id', 'code'); // code => id
-        $allCodes = $permissions->keys()->all();
 
-        foreach ($this->map as $roleCode => $permissionCodes) {
+        foreach ($this->map as $roleCode => $config) {
             $roleId = DB::table('sys_roles')->where('code', $roleCode)->value('id');
 
             if (! $roleId) {
                 continue;
             }
 
-            $codes = in_array('*', $permissionCodes, true) ? $allCodes : $permissionCodes;
-
-            foreach ($codes as $code) {
-                $permissionId = $permissions[$code] ?? null;
-
-                if (! $permissionId) {
+            foreach ($permissions as $code => $permissionId) {
+                if (! $this->grants($config, $code)) {
                     continue;
                 }
 
@@ -74,5 +92,24 @@ class RolePermissionSeeder extends Seeder
                 );
             }
         }
+    }
+
+    /**
+     * Whether the role described by $config is granted the given permission code.
+     */
+    private function grants(array $config, string $code): bool
+    {
+        if ($config['all'] ?? false) {
+            return true;
+        }
+
+        [$prefix, $action] = array_pad(explode('.', $code, 2), 2, '');
+
+        if (in_array($prefix, $config['full'] ?? [], true)) {
+            return true;
+        }
+
+        return in_array($prefix, $config['view'] ?? [], true)
+            && in_array($action, self::READ_ACTIONS, true);
     }
 }

@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             ParentPermissionSeeder::class,
             ParentStudentPermissionSeeder::class,
             CoursePermissionSeeder::class,
+            LevelPermissionSeeder::class,
+            StudentLevelPermissionSeeder::class,
             ClassRoomPermissionSeeder::class,
             ClassSessionPermissionSeeder::class,
             RoomPermissionSeeder::class,
@@ -38,7 +40,10 @@ class DatabaseSeeder extends Seeder
             AccountPermissionSeeder::class,
             PaymentPermissionSeeder::class,
             DebtPermissionSeeder::class,
+            ActivityLogPermissionSeeder::class,
             RolePermissionSeeder::class,
+
+            MasterSeeder::class,
         ]);
     }
 }

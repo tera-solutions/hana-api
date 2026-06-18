@@ -29,7 +29,7 @@ class UpdateStudentRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'regex:/^[0-9+\-\s().]{6,20}$/'],
 
-            'level' => ['nullable', 'string', 'max:255'],
+            'level_id' => ['nullable', 'integer', 'exists:edu_levels,id'],
             'admission_source' => ['nullable', 'string', 'max:255'],
 
             'address' => ['nullable', 'string', 'max:1000'],
@@ -91,9 +91,9 @@ class UpdateStudentRequest extends FormRequest
                 'description' => 'Contact phone.',
                 'example' => '0901234567',
             ],
-            'level' => [
-                'description' => 'Current level.',
-                'example' => 'A2',
+            'level_id' => [
+                'description' => 'Proficiency level id (edu_levels).',
+                'example' => 1,
             ],
             'admission_source' => [
                 'description' => 'Admission source.',

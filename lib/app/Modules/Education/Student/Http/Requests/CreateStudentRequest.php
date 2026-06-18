@@ -28,7 +28,7 @@ class CreateStudentRequest extends FormRequest
 
             'business_id' => ['required', 'integer', 'exists:sys_business,id'],
             'branch_id' => ['required', 'integer', 'exists:sys_branches,id'],
-            'level' => ['nullable', 'string', 'max:255'],
+            'level_id' => ['nullable', 'integer', 'exists:edu_levels,id'],
             'enrollment_date' => ['required', 'date'],
             'admission_source' => ['nullable', 'string', 'max:255'],
 
@@ -100,9 +100,9 @@ class CreateStudentRequest extends FormRequest
                 'description' => 'Branch id.',
                 'example' => 1,
             ],
-            'level' => [
-                'description' => 'Current level.',
-                'example' => 'A1',
+            'level_id' => [
+                'description' => 'Proficiency level id (edu_levels).',
+                'example' => 1,
             ],
             'enrollment_date' => [
                 'description' => 'Enrollment date.',

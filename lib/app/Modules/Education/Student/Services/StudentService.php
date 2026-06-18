@@ -40,7 +40,7 @@ class StudentService
         }
 
         // Filters.
-        foreach (['business_id', 'branch_id', 'level', 'status'] as $filter) {
+        foreach (['business_id', 'branch_id', 'level_id', 'status'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
             }

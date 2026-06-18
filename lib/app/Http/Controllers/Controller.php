@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -24,6 +23,7 @@ class Controller extends BaseController
     public function setStatusCode($statusCode)
     {
         $this->statusCode = $statusCode;
+
         return $this;
     }
 
@@ -34,7 +34,7 @@ class Controller extends BaseController
             'msg' => $message,
             'data' => null,
             'code' => $status,
-            'errors' => $errors
+            'errors' => $errors,
         ];
 
         return response()->json($data, 200);
@@ -47,7 +47,7 @@ class Controller extends BaseController
             'msg' => $message,
             'data' => null,
             'code' => $status,
-            'errors' => $errors
+            'errors' => $errors,
         ];
 
         return response()->json($data, $status);
@@ -57,7 +57,7 @@ class Controller extends BaseController
      * Returns a Unauthorized response.
      *
      * @param  string  $message
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function respondUnauthorized($message = 'Unauthorized action.')
     {
@@ -70,15 +70,15 @@ class Controller extends BaseController
     /**
      * Returns a went wrong response.
      *
-     * @param  object  $exception = null
-     * @return \Illuminate\Http\Response
+     * @param  object  $exception  = null
+     * @return Response
      */
     public function respondWentWrong($exception = null)
     {
-        //If debug is enabled then send exception message
-        $message = (config('app.debug') && is_object($exception)) ? "File:" . $exception->getFile() . "Line:" . $exception->getLine() . "Message:" . $exception->getMessage() : __('messages.something_went_wrong');
+        // If debug is enabled then send exception message
+        $message = (config('app.debug') && is_object($exception)) ? 'File:'.$exception->getFile().'Line:'.$exception->getLine().'Message:'.$exception->getMessage() : __('messages.something_went_wrong');
 
-        //TODO: show exception error message when error is enabled.
+        // TODO: show exception error message when error is enabled.
         return $this->setStatusCode(200)
             ->respondWithError($message);
     }
@@ -86,21 +86,21 @@ class Controller extends BaseController
     /**
      * Returns a 200 response.
      *
-     * @param  object  $message = null
-     * @return \Illuminate\Http\Response
+     * @param  object  $message  = null
+     * @return Response
      */
     public function respondSuccess($data = null, $message = null, $additional_data = [])
     {
-        $message = is_null($message) ? "Thao tác thành công" : $message;
+        $message = is_null($message) ? 'Thao tác thành công' : $message;
         $data = [
             'success' => true,
             'msg' => $message,
             'data' => $data,
             'code' => 200,
-            'errors' => null
+            'errors' => null,
         ];
 
-        if (!empty($additional_data)) {
+        if (! empty($additional_data)) {
             $data = array_merge($data, $additional_data);
         }
 
@@ -130,30 +130,46 @@ class Controller extends BaseController
      * Returns a 200 response.
      *
      * @param  array  $data
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function respond($data)
     {
         return response()->json($data);
     }
 
+    /**
+     * Run a callable that may raise a domain RuntimeException, returning a JSON
+     * error response on failure. On success the result is passed through $present
+     * (identity by default) and wrapped in respondSuccess with $message.
+     */
+    protected function tryRespond(callable $run, string $message, ?callable $present = null)
+    {
+        try {
+            $result = $run();
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(($present ?? fn ($r) => $r)($result), $message);
+    }
+
     public function CryptoJSAesDecrypt($data, $passphrase = null)
     {
         try {
-            $salt = hex2bin($data["salt"]);
-            $iv = hex2bin($data["iv"]);
+            $salt = hex2bin($data['salt']);
+            $iv = hex2bin($data['iv']);
         } catch (Exception $e) {
             return null;
         }
 
-        $ciphertext = base64_decode($data["da"]);
-        $iterations = 999; //same as js encrypting
+        $ciphertext = base64_decode($data['da']);
+        $iterations = 999; // same as js encrypting
 
         if (empty($passphrase)) {
-            $passphrase = env("AUTH_PRIVATE_KEY");
+            $passphrase = env('AUTH_PRIVATE_KEY');
         }
 
-        $key = hash_pbkdf2("sha256", $passphrase, $salt, $iterations, 64);
+        $key = hash_pbkdf2('sha256', $passphrase, $salt, $iterations, 64);
 
         $decrypted = openssl_decrypt($ciphertext, 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
 
