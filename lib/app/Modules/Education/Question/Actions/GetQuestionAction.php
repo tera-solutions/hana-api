@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Modules\Education\Question\Actions;
+
+use App\Modules\Education\Question\Services\QuestionService;
+
+class GetQuestionAction
+{
+    public function handle(...$params)
+    {
+        return app(QuestionService::class)->find(...$params);
+    }
+}
