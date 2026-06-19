@@ -35,6 +35,8 @@ class DatabaseSeeder extends Seeder
             LessonPermissionSeeder::class,
             MaterialPermissionSeeder::class,
             AssignmentPermissionSeeder::class,
+            ExamPermissionSeeder::class,
+            QuestionPermissionSeeder::class,
             EnrollmentPermissionSeeder::class,
             InvoicePermissionSeeder::class,
             AccountPermissionSeeder::class,

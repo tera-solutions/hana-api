@@ -59,15 +59,15 @@ class ApiAuthController extends Controller
      *
      * @header Device-code {your-device-code}
      *
-     * @bodyParam username string required The username. Example: jdoe
-     * @bodyParam password string required The password. Example: secret123
+     * @bodyParam username string required The username. Example: super
+     * @bodyParam password string required The password. Example: 12345678
      *
      * @response 200 {
      *   "success": true,
      *   "msg": "Đăng nhập thành công !",
      *   "data": {
      *     "verify_auth": 0,
-     *     "user": {"id": 1, "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com"},
+     *     "user": {"id": 1, "username": "super", "full_name": "John Doe", "email": "super@example.com"},
      *     "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
      *     "access_id": "a1b2c3"
      *   },
@@ -233,7 +233,7 @@ class ApiAuthController extends Controller
      *   "msg": "Thao tác thành công",
      *   "data": {
      *     "verify_auth": 1,
-     *     "user": {"id": 1, "username": "jdoe"},
+     *     "user": {"id": 1, "username": "super"},
      *     "token": "eyJ0eXAiOiJKV1QiLCJhbGci...",
      *     "access_id": 123
      *   },
@@ -471,7 +471,7 @@ class ApiAuthController extends Controller
      *
      * @bodyParam type string required Either "business" or "individual". Example: individual
      * @bodyParam full_name string Required for individual. Example: John Doe
-     * @bodyParam email string required The account email. Example: jdoe@example.com
+     * @bodyParam email string required The account email. Example: super@example.com
      * @bodyParam phone string The phone number. Example: 0900000000
      * @bodyParam password string Required for individual. Example: secret123
      * @bodyParam name string Required for business (business name). Example: Hana English
@@ -481,7 +481,7 @@ class ApiAuthController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Đăng ký tài khoản thành công",
-     *   "data": {"id": 1, "full_name": "John Doe", "email": "jdoe@example.com", "type": "individual", "is_active": 1},
+     *   "data": {"id": 1, "full_name": "John Doe", "email": "super@example.com", "type": "individual", "is_active": 1},
      *   "code": 200,
      *   "errors": null
      * }
@@ -813,7 +813,7 @@ class ApiAuthController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Vui lòng kiểm tra email để kích hoạt tài khoản !",
-     *   "data": {"id": 1, "username": "jdoe", "email": "jdoe@example.com"},
+     *   "data": {"id": 1, "username": "super", "email": "super@example.com"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -913,12 +913,12 @@ class ApiAuthController extends Controller
      *
      * Sends a reset-password link (or activation link if the account is not yet active).
      *
-     * @bodyParam email string required The account email / username. Example: jdoe@example.com
+     * @bodyParam email string required The account email / username. Example: super@example.com
      *
      * @response 200 {
      *   "success": true,
      *   "msg": "Vui lòng kiểm tra email để khôi phục mật khẩu !",
-     *   "data": {"id": 1, "email": "jdoe@example.com"},
+     *   "data": {"id": 1, "email": "super@example.com"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -986,7 +986,7 @@ class ApiAuthController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Đặt lại mật khẩu thành công !",
-     *   "data": {"id": 1, "username": "jdoe", "email": "jdoe@example.com"},
+     *   "data": {"id": 1, "username": "super", "email": "super@example.com"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -1039,7 +1039,7 @@ class ApiAuthController extends Controller
      *   "success": true,
      *   "msg": "Thao tác thành công",
      *   "data": {
-     *     "user": {"id": 1, "username": "jdoe", "full_name": "John Doe"},
+     *     "user": {"id": 1, "username": "super", "full_name": "John Doe"},
      *     "token": "eyJ0eXAiOiJKV1QiLCJhbGci..."
      *   },
      *   "code": 200,
@@ -1195,7 +1195,7 @@ class ApiAuthController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Đặt lại mật khẩu thành công !",
-     *   "data": {"id": 1, "username": "jdoe"},
+     *   "data": {"id": 1, "username": "super"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -1235,7 +1235,7 @@ class ApiAuthController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Thao tác thành công",
-     *   "data": {"user": {"id": 1, "email": "jdoe@example.com"}, "token": "eyJ0eXAiOiJKV1Qi..."},
+     *   "data": {"user": {"id": 1, "email": "super@example.com"}, "token": "eyJ0eXAiOiJKV1Qi..."},
      *   "code": 200,
      *   "errors": null
      * }
