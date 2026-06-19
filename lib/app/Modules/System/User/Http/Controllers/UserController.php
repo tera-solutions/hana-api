@@ -29,7 +29,7 @@ class UserController extends Controller
     /**
      * List users
      *
-     * @queryParam search string Search by code, full name, email or phone. Example: jdoe
+     * @queryParam search string Search by code, full name, email or phone. Example: super
      * @queryParam business_id integer Filter by business id. Example: 1
      * @queryParam branch_id integer Filter by branch id. Example: 1
      * @queryParam role_id integer Filter by role id. Example: 2
@@ -46,7 +46,7 @@ class UserController extends Controller
      *   "msg": "Thao tác thành công",
      *   "data": {
      *     "items": [
-     *       {"id": 1, "user_id": "U001", "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com", "status": "active", "is_active": true, "is_admin": false, "business_id": 1, "branch_id": 1, "role_id": 2}
+     *       {"id": 1, "user_id": "U001", "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "is_active": true, "is_admin": false, "business_id": 1, "branch_id": 1, "role_id": 2}
      *     ],
      *     "pagination": {"total": 1, "per_page": 15, "current_page": 1, "last_page": 1}
      *   },
@@ -67,7 +67,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Thao tác thành công",
-     *   "data": {"id": 1, "user_id": "U001", "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com", "status": "active", "is_active": true, "is_admin": false, "role_id": 2},
+     *   "data": {"id": 1, "user_id": "U001", "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "is_active": true, "is_admin": false, "role_id": 2},
      *   "code": 200,
      *   "errors": null
      * }
@@ -83,7 +83,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Tạo người dùng thành công.",
-     *   "data": {"id": 1, "user_id": "U001", "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com", "status": "active", "is_active": true},
+     *   "data": {"id": 1, "user_id": "U001", "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "is_active": true},
      *   "code": 200,
      *   "errors": null
      * }
@@ -103,7 +103,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Cập nhật người dùng thành công.",
-     *   "data": {"id": 1, "user_id": "U001", "username": "jdoe", "full_name": "John A. Doe", "email": "jdoe@example.com", "status": "active"},
+     *   "data": {"id": 1, "user_id": "U001", "username": "super", "full_name": "John A. Doe", "email": "super@example.com", "status": "active"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -147,7 +147,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Kích hoạt tài khoản thành công.",
-     *   "data": {"id": 1, "username": "jdoe", "status": "active", "is_active": true},
+     *   "data": {"id": 1, "username": "super", "status": "active", "is_active": true},
      *   "code": 200,
      *   "errors": null
      * }
@@ -165,7 +165,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Vô hiệu hóa tài khoản thành công.",
-     *   "data": {"id": 1, "username": "jdoe", "status": "inactive", "is_active": false},
+     *   "data": {"id": 1, "username": "super", "status": "inactive", "is_active": false},
      *   "code": 200,
      *   "errors": null
      * }
@@ -183,7 +183,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Mở khóa tài khoản thành công.",
-     *   "data": {"id": 1, "username": "jdoe", "status": "active", "is_active": true},
+     *   "data": {"id": 1, "username": "super", "status": "active", "is_active": true},
      *   "code": 200,
      *   "errors": null
      * }
@@ -204,7 +204,7 @@ class UserController extends Controller
      *   "success": true,
      *   "msg": "Đặt lại mật khẩu thành công.",
      *   "data": {
-     *     "user": {"id": 1, "username": "jdoe", "full_name": "John Doe"},
+     *     "user": {"id": 1, "username": "super", "full_name": "John Doe"},
      *     "password": "Xy7$kPq2"
      *   },
      *   "code": 200,

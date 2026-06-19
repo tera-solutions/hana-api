@@ -24,7 +24,7 @@ class AuthAuditTest extends TestCase
         $businessId = $this->makeBusinessId();
 
         return $this->makeUser(false, $this->makeRoleId($businessId), $businessId, [
-            'username' => 'jdoe_'.uniqid(),
+            'username' => 'super_'.uniqid(),
         ]);
     }
 
