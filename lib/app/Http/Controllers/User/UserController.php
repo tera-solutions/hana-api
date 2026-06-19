@@ -32,7 +32,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Thao tác thành công",
-     *   "data": {"id": 1, "username": "jdoe", "full_name": "John Doe", "email": "jdoe@example.com", "status": "active", "role": "admin", "role_name": "Administrator", "access_id": 123},
+     *   "data": {"id": 1, "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "role": "admin", "role_name": "Administrator", "access_id": 123},
      *   "code": 200,
      *   "errors": null
      * }
