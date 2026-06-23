@@ -26,7 +26,7 @@
             </style>
 
     <script>
-        var tryItOutBaseUrl = "http://localhost:8086";
+        var tryItOutBaseUrl = "https://api.anhnguhana.com";
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
@@ -106,7 +106,7 @@
     <div class="content">
         <h1 id="introduction">Introduction</h1>
 <aside>
-    <strong>Base URL</strong>: <code>http://localhost:8086</code>
+    <strong>Base URL</strong>: <code>https://api.anhnguhana.com</code>
 </aside>
 <pre><code>This documentation aims to provide all the information you need to work with our API.
 
@@ -133,14 +133,14 @@ You can switch the language used with the tabs at the top right (or from the nav
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost:8086/v1/edu/student/list" \
+    --get "https://api.anhnguhana.com/v1/edu/student/list" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8086/v1/edu/student/list"
+    "https://api.anhnguhana.com/v1/edu/student/list"
 );
 
 const headers = {
@@ -171,10 +171,10 @@ content-type: application/json
 <code class="language-json" style="max-height: 300px;">{
     &quot;current_page&quot;: 1,
     &quot;data&quot;: [],
-    &quot;first_page_url&quot;: &quot;http://localhost:8086/v1/edu/student/list?page=1&quot;,
+    &quot;first_page_url&quot;: &quot;https://api.anhnguhana.com/v1/edu/student/list?page=1&quot;,
     &quot;from&quot;: null,
     &quot;last_page&quot;: 1,
-    &quot;last_page_url&quot;: &quot;http://localhost:8086/v1/edu/student/list?page=1&quot;,
+    &quot;last_page_url&quot;: &quot;https://api.anhnguhana.com/v1/edu/student/list?page=1&quot;,
     &quot;links&quot;: [
         {
             &quot;url&quot;: null,
@@ -183,7 +183,7 @@ content-type: application/json
             &quot;active&quot;: false
         },
         {
-            &quot;url&quot;: &quot;http://localhost:8086/v1/edu/student/list?page=1&quot;,
+            &quot;url&quot;: &quot;https://api.anhnguhana.com/v1/edu/student/list?page=1&quot;,
             &quot;label&quot;: &quot;1&quot;,
             &quot;page&quot;: 1,
             &quot;active&quot;: true
@@ -196,7 +196,7 @@ content-type: application/json
         }
     ],
     &quot;next_page_url&quot;: null,
-    &quot;path&quot;: &quot;http://localhost:8086/v1/edu/student/list&quot;,
+    &quot;path&quot;: &quot;https://api.anhnguhana.com/v1/edu/student/list&quot;,
     &quot;per_page&quot;: 15,
     &quot;prev_page_url&quot;: null,
     &quot;to&quot;: null,
@@ -290,14 +290,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost:8086/v1/edu/student/detail/consequatur" \
+    --get "https://api.anhnguhana.com/v1/edu/student/detail/consequatur" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8086/v1/edu/student/detail/consequatur"
+    "https://api.anhnguhana.com/v1/edu/student/detail/consequatur"
 );
 
 const headers = {
@@ -429,7 +429,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost:8086/v1/edu/student/create" \
+    "https://api.anhnguhana.com/v1/edu/student/create" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -440,7 +440,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8086/v1/edu/student/create"
+    "https://api.anhnguhana.com/v1/edu/student/create"
 );
 
 const headers = {
@@ -561,7 +561,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "http://localhost:8086/v1/edu/student/update/consequatur" \
+    "https://api.anhnguhana.com/v1/edu/student/update/consequatur" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -572,7 +572,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8086/v1/edu/student/update/consequatur"
+    "https://api.anhnguhana.com/v1/edu/student/update/consequatur"
 );
 
 const headers = {
@@ -706,14 +706,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
-    "http://localhost:8086/v1/edu/student/delete/consequatur" \
+    "https://api.anhnguhana.com/v1/edu/student/delete/consequatur" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8086/v1/edu/student/delete/consequatur"
+    "https://api.anhnguhana.com/v1/edu/student/delete/consequatur"
 );
 
 const headers = {
