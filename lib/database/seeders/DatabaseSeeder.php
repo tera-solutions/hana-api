@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             InvoicePermissionSeeder::class,
             AccountPermissionSeeder::class,
             PaymentPermissionSeeder::class,
+            PromotionPermissionSeeder::class,
             DebtPermissionSeeder::class,
             ActivityLogPermissionSeeder::class,
             RolePermissionSeeder::class,

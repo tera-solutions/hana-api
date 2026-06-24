@@ -17,6 +17,9 @@ class PromotionTest extends TestCase
 
     private int $branchId;
 
+    /** @var array<int, string> */
+    private array $tmpFiles = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -25,6 +28,41 @@ class PromotionTest extends TestCase
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId();
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->tmpFiles as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        parent::tearDown();
+    }
+
+    /** Write a CSV under public/ and register it as an uploaded media file. */
+    private function uploadCsv(string $contents): int
+    {
+        $dir = public_path('storage/uploads');
+        if (! is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $name = 'vimport_'.uniqid().'.csv';
+        $relative = 'storage/uploads/'.$name;
+        $absolute = public_path($relative);
+
+        file_put_contents($absolute, $contents);
+        $this->tmpFiles[] = $absolute;
+
+        return DB::table('media')->insertGetId([
+            'file_path' => $relative,
+            'file_name' => $name,
+            'file_type' => 'text/csv',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function makeBranchId(): int
@@ -199,6 +237,49 @@ class PromotionTest extends TestCase
         $this->postJson('/v1/fin/promotion/voucher/validate', ['voucher_code' => $code])
             ->assertJsonPath('success', false)
             ->assertJsonPath('msg', 'Voucher đã được sử dụng hết.');
+    }
+
+    public function test_import_vouchers_persists_valid_rows_and_reports_failures(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createActivePromotion(['promotion_type' => 'voucher']);
+
+        // One valid row, one duplicate of it, one missing the code.
+        $csv = implode("\n", [
+            'Voucher Code,Usage Limit,Expired At',
+            'HANA-A,3,2026-08-31',
+            'HANA-A,1,2026-08-31',
+            ',2,2026-08-31',
+        ]);
+
+        $fileId = $this->uploadCsv($csv);
+
+        $this->postJson("/v1/fin/promotion/import-vouchers/{$id}", ['file_id' => $fileId, 'file_name' => 'vouchers.csv'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.imported', 1)
+            ->assertJsonCount(2, 'data.failed')
+            ->assertJsonPath('data.failed.0.row', 3)
+            ->assertJsonPath('data.failed.1.row', 4);
+
+        $this->assertDatabaseHas('fin_vouchers', [
+            'promotion_id' => $id,
+            'voucher_code' => 'HANA-A',
+            'usage_limit' => 3,
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_import_vouchers_rejects_unknown_file(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createActivePromotion(['promotion_type' => 'voucher']);
+
+        $this->postJson("/v1/fin/promotion/import-vouchers/{$id}", ['file_id' => 999999])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['file_id']);
     }
 
     public function test_referral_create_and_reward(): void
