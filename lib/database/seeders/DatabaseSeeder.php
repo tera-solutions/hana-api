@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             StudentLevelPermissionSeeder::class,
             ClassRoomPermissionSeeder::class,
             ClassSessionPermissionSeeder::class,
+            AttendancePermissionSeeder::class,
             RoomPermissionSeeder::class,
             LessonPlanPermissionSeeder::class,
             LessonPermissionSeeder::class,
