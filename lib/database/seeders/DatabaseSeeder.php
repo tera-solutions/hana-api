@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             ExamPermissionSeeder::class,
             QuestionPermissionSeeder::class,
             EnrollmentPermissionSeeder::class,
+            EvaluationPermissionSeeder::class,
             InvoicePermissionSeeder::class,
             AccountPermissionSeeder::class,
             PaymentPermissionSeeder::class,
