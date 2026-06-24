@@ -9,6 +9,7 @@ use App\Modules\Finance\Promotion\Actions\ClosePromotionAction;
 use App\Modules\Finance\Promotion\Actions\CreatePromotionAction;
 use App\Modules\Finance\Promotion\Actions\GenerateVouchersAction;
 use App\Modules\Finance\Promotion\Actions\GetPromotionAction;
+use App\Modules\Finance\Promotion\Actions\ImportVouchersAction;
 use App\Modules\Finance\Promotion\Actions\ListPromotionAction;
 use App\Modules\Finance\Promotion\Actions\PausePromotionAction;
 use App\Modules\Finance\Promotion\Actions\UpdatePromotionAction;
@@ -16,6 +17,7 @@ use App\Modules\Finance\Promotion\Actions\ValidateVoucherAction;
 use App\Modules\Finance\Promotion\Http\Requests\ApplyPromotionRequest;
 use App\Modules\Finance\Promotion\Http\Requests\CreatePromotionRequest;
 use App\Modules\Finance\Promotion\Http\Requests\GenerateVouchersRequest;
+use App\Modules\Finance\Promotion\Http\Requests\ImportVouchersRequest;
 use App\Modules\Finance\Promotion\Http\Requests\UpdatePromotionRequest;
 use App\Modules\Finance\Promotion\Http\Requests\ValidateVoucherRequest;
 use App\Modules\Finance\Promotion\Http\Resources\PromotionResource;
@@ -159,6 +161,25 @@ class PromotionController extends Controller
         $vouchers = $action->handle($id, $request->validated());
 
         return $this->respondSuccess(VoucherResource::collection($vouchers), 'Sinh voucher thành công.');
+    }
+
+    /**
+     * Import vouchers
+     *
+     * Bulk-create vouchers for a promotion from an uploaded spreadsheet
+     * (Voucher Code | Usage Limit | Expired At). Valid rows are persisted; per-row
+     * errors are reported without rolling back.
+     *
+     * @urlParam id integer required The promotion ID. Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Import voucher hoàn tất.", "data": {"imported": 2, "failed": []}, "code": 200, "errors": null}
+     */
+    public function importVouchers(ImportVouchersRequest $request, $id, ImportVouchersAction $action)
+    {
+        return $this->tryRespond(
+            fn () => $action->handle($id, $request->validated()),
+            'Import voucher hoàn tất.',
+        );
     }
 
     /**

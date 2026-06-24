@@ -19,6 +19,7 @@ Route::prefix('promotion')->middleware('auth.tera')->group(function () {
 
     // Vouchers reuse the promotion's codes (writes → update, apply → apply).
     Route::post('/generate-vouchers/{id}', [PromotionController::class, 'generateVouchers'])->middleware('permission:promotion.update');
+    Route::post('/import-vouchers/{id}', [PromotionController::class, 'importVouchers'])->middleware('permission:promotion.update');
     Route::post('/voucher/validate', [PromotionController::class, 'validateVoucher'])->middleware('permission:promotion.apply');
 
     Route::post('/apply', [PromotionController::class, 'apply'])->middleware('permission:promotion.apply');
