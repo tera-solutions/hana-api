@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             DebtPermissionSeeder::class,
             ActivityLogPermissionSeeder::class,
             TaskPermissionSeeder::class,
+            TimetablePermissionSeeder::class,
             RolePermissionSeeder::class,
 
             MasterSeeder::class,
