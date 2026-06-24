@@ -44,6 +44,7 @@ class MasterSeeder extends Seeder
             $this->attendances($sessions, $students);
             $this->leaveRequests($students, $teachers, $classes, $lessons);
             $this->promotions($businessId, $parents);
+            $this->evaluations($teachers, $students, $parents, $courses, $classes, $lessons);
         });
 
         $this->command?->info('MasterSeeder: demo data seeded.');
@@ -693,5 +694,76 @@ class MasterSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    /**
+     * Evaluations — teacher / student / parent, covering every status and a spread of
+     * classifications. The total score + classification are computed from the criteria
+     * (as the service does), since this seeder writes via the query builder.
+     */
+    private function evaluations(array $teachers, array $students, array $parents, array $courses, array $classes, array $lessons): void
+    {
+        $courseId = $courses[0]['id'];
+        $classId = $classes[0];
+        $lessonId = $lessons[$classId][0] ?? null;
+
+        $criteriaKeys = [
+            'teacher' => ['expertise', 'teaching_method', 'communication', 'attitude'],
+            'student' => ['knowledge', 'pronunciation', 'grammar', 'homework'],
+            'parent' => ['cooperation', 'learning_follow_up', 'on_time_payment', 'feedback'],
+        ];
+
+        // [type, target id, evaluator type, evaluator id, period, criterion scores, status].
+        $rows = [
+            ['teacher', $teachers[0], 'student', $students[0], 'course', [5, 5, 4, 5], 'locked'],
+            ['teacher', $teachers[1], 'parent', $parents[0], 'monthly', [4, 4, 3, 4], 'approved'],
+            ['teacher', $teachers[2], 'manager', 1, 'quarterly', [3, 3, 2, 3], 'submitted'],
+
+            ['student', $students[0], 'teacher', $teachers[0], 'final', [5, 4, 5, 5], 'approved'],
+            ['student', $students[1], 'teacher', $teachers[0], 'midterm', [3, 3, 3, 2], 'draft'],
+            ['student', $students[2], 'teacher', $teachers[1], 'lesson', [2, 2, 1, 2], 'rejected'],
+
+            ['parent', $parents[0], 'manager', 1, 'monthly', [4, 4, 5, 4], 'approved'],
+            ['parent', $parents[1], 'cskh', 1, 'quarterly', [2, 2, 1, 2], 'draft'],
+        ];
+
+        foreach ($rows as $seq => [$type, $targetId, $evaluatorType, $evaluatorId, $period, $scores, $status]) {
+            $keys = $criteriaKeys[$type];
+            $criteria = [];
+            foreach ($scores as $i => $score) {
+                $criteria[] = ['criterion' => $keys[$i % count($keys)], 'score' => $score];
+            }
+            $average = round(array_sum($scores) / count($scores), 2);
+
+            DB::table('edu_evaluations')->insert([
+                'evaluation_code' => 'EVAL'.str_pad((string) ($seq + 1), 6, '0', STR_PAD_LEFT),
+                'evaluation_type' => $type,
+                'target_id' => $targetId,
+                'evaluator_type' => $evaluatorType,
+                'evaluator_id' => $evaluatorId,
+                'course_id' => $courseId,
+                'class_room_id' => $type === 'parent' ? null : $classId,
+                'lesson_id' => $period === 'lesson' ? $lessonId : null,
+                'evaluation_period' => $period,
+                'criteria' => json_encode($criteria),
+                'score' => $average,
+                'classification' => $this->classifyEvaluation($type, $average),
+                'comment' => 'Ghi chú đánh giá '.($seq + 1),
+                'status' => $status,
+                'evaluated_at' => $this->now(),
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+    }
+
+    private function classifyEvaluation(string $type, float $average): string
+    {
+        return match (true) {
+            $average >= 4.5 => 'excellent',
+            $average >= 3.5 => 'good',
+            $average >= 2.5 => 'average',
+            default => $type === 'parent' ? 'warning' : 'weak',
+        };
     }
 }
