@@ -46,6 +46,8 @@ class MasterSeeder extends Seeder
             $this->promotions($businessId, $parents);
             $this->evaluations($teachers, $students, $parents, $courses, $classes, $lessons);
             $this->wallets($businessId, $parents);
+            $this->tasks();
+            $this->timetables($courses, $classes, $teachers, $rooms);
         });
 
         $this->command?->info('MasterSeeder: demo data seeded.');
@@ -835,6 +837,138 @@ class MasterSeeder extends Seeder
                 'created_at' => $this->now(),
                 'updated_at' => $this->now(),
             ]);
+        }
+    }
+
+    /**
+     * Tasks — one per status variant; the first carries a checklist, comment and attachment.
+     */
+    private function tasks(): void
+    {
+        $statuses = ['draft', 'open', 'in_progress', 'pending_review', 'completed', 'rejected', 'cancelled', 'overdue'];
+        $priorities = ['low', 'medium', 'high', 'urgent'];
+        $categories = ['general', 'academic', 'hr', 'finance', 'sales', 'operation'];
+        $progress = ['draft' => 0, 'open' => 0, 'in_progress' => 50, 'pending_review' => 100, 'completed' => 100, 'rejected' => 60, 'cancelled' => 0, 'overdue' => 30];
+
+        $firstTaskId = null;
+        foreach ($statuses as $i => $status) {
+            $id = DB::table('task_tasks')->insertGetId([
+                'task_code' => 'TASK'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'title' => 'Công việc '.($i + 1),
+                'description' => 'Mô tả công việc '.($i + 1),
+                'category' => $categories[$i % count($categories)],
+                'priority' => $priorities[$i % count($priorities)],
+                'status' => $status,
+                'progress' => $progress[$status],
+                'start_date' => now()->toDateString(),
+                'due_date' => now()->addDays(7)->toDateString(),
+                'completed_at' => $status === 'completed' ? $this->now() : null,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+            $firstTaskId ??= $id;
+        }
+
+        DB::table('task_checklists')->insert([
+            ['task_id' => $firstTaskId, 'title' => 'Chuẩn bị tài liệu', 'is_completed' => true, 'completed_at' => $this->now(), 'created_at' => $this->now(), 'updated_at' => $this->now()],
+            ['task_id' => $firstTaskId, 'title' => 'Gửi cho phụ huynh', 'is_completed' => false, 'completed_at' => null, 'created_at' => $this->now(), 'updated_at' => $this->now()],
+        ]);
+
+        DB::table('task_comments')->insert([
+            'task_id' => $firstTaskId,
+            'comment' => 'Đã bắt đầu xử lý công việc.',
+            'created_at' => $this->now(),
+            'updated_at' => $this->now(),
+        ]);
+
+        $mediaId = DB::table('media')->insertGetId([
+            'file_path' => 'storage/uploads/task-demo.pdf',
+            'file_name' => 'task-demo.pdf',
+            'file_type' => 'application/pdf',
+            'created_at' => $this->now(),
+            'updated_at' => $this->now(),
+        ]);
+
+        DB::table('task_attachments')->insert([
+            'task_id' => $firstTaskId,
+            'file_id' => $mediaId,
+            'created_at' => $this->now(),
+            'updated_at' => $this->now(),
+        ]);
+    }
+
+    /**
+     * Timetables — one per status variant with weekly rules; the active one generates a
+     * few class sessions linked back to it.
+     */
+    private function timetables(array $courses, array $classes, array $teachers, array $rooms): void
+    {
+        $statuses = ['draft', 'active', 'completed', 'cancelled'];
+
+        foreach ($statuses as $i => $status) {
+            $classId = $classes[$i % count($classes)];
+            $teacherId = $teachers[$i % count($teachers)];
+            $roomId = $rooms[$i % count($rooms)];
+            $courseId = $courses[$i % count($courses)]['id'];
+
+            $start = now()->addDays($i * 30);
+            $end = $start->copy()->addDays(28);
+
+            $timetableId = DB::table('edu_timetables')->insertGetId([
+                'timetable_code' => 'TKB'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'name' => 'Thời khóa biểu '.($i + 1),
+                'course_id' => $courseId,
+                'class_room_id' => $classId,
+                'teacher_id' => $teacherId,
+                'room_id' => $roomId,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
+                'schedule_pattern' => 'fixed_weekly',
+                'total_sessions' => 0,
+                'status' => $status,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+
+            foreach ([1, 3] as $dayOfWeek) {
+                DB::table('edu_timetable_rules')->insert([
+                    'timetable_id' => $timetableId,
+                    'day_of_week' => $dayOfWeek,
+                    'start_time' => '18:00:00',
+                    'end_time' => '19:30:00',
+                    'created_at' => $this->now(),
+                    'updated_at' => $this->now(),
+                ]);
+            }
+
+            if ($status !== 'active') {
+                continue;
+            }
+
+            $no = 0;
+            $date = $start->copy();
+            while ($no < 4) {
+                if (in_array($date->dayOfWeekIso, [1, 3], true)) {
+                    $no++;
+                    DB::table('edu_sessions')->insert([
+                        'class_id' => $classId,
+                        'timetable_id' => $timetableId,
+                        'session_no' => $no,
+                        'name' => 'Buổi '.$no,
+                        'session_date' => $date->toDateString(),
+                        'start_time' => '18:00:00',
+                        'end_time' => '19:30:00',
+                        'teacher_id' => $teacherId,
+                        'room_id' => $roomId,
+                        'status' => 'upcoming',
+                        'created_at' => $this->now(),
+                        'updated_at' => $this->now(),
+                    ]);
+                }
+                $date->addDay();
+            }
+
+            DB::table('edu_timetables')->where('id', $timetableId)->update(['total_sessions' => $no]);
         }
     }
 }
