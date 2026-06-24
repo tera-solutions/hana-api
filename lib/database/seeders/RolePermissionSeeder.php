@@ -30,10 +30,12 @@ class RolePermissionSeeder extends Seeder
             'full' => [
                 'branch', 'user', 'teacher', 'student', 'class', 'enrollment', 'room',
                 'lesson', 'course', 'level', 'student_level', 'lesson_plan', 'material', 'assignment',
+                'timetable', 'leave', 'evaluation', 'task',
             ],
             'view' => [
                 'business', 'session', 'crm_lead', 'parent', 'parent_student',
                 'fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'activity_log',
+                'exam', 'question', 'attendance', 'promotion', 'wallet',
             ],
         ],
 
@@ -41,32 +43,34 @@ class RolePermissionSeeder extends Seeder
             'full' => [
                 'course', 'level', 'student_level', 'class', 'room', 'lesson', 'session',
                 'lesson_plan', 'material', 'assignment', 'student', 'enrollment',
+                'exam', 'question', 'timetable', 'leave', 'evaluation', 'task',
             ],
-            'view' => ['business', 'branch', 'teacher', 'parent', 'parent_student'],
+            'view' => ['business', 'branch', 'teacher', 'parent', 'parent_student', 'attendance'],
         ],
 
         'TEACHER' => [
-            'full' => ['assignment', 'material'],
+            'full' => ['assignment', 'material', 'evaluation', 'task'],
             'view' => [
                 'student', 'student_level', 'lesson', 'session', 'class', 'course', 'level', 'lesson_plan',
+                'exam', 'question', 'timetable', 'attendance', 'leave',
             ],
         ],
 
         'STAFF' => [
-            'full' => ['student', 'parent', 'parent_student'],
+            'full' => ['student', 'parent', 'parent_student', 'task'],
             'view' => [
-                'business', 'branch', 'course', 'class', 'room', 'enrollment', 'crm_lead', 'lesson',
+                'business', 'branch', 'course', 'class', 'room', 'enrollment', 'crm_lead', 'lesson', 'timetable',
             ],
         ],
 
         'ACCOUNTANT' => [
-            'full' => ['fin_invoice', 'fin_payment', 'fin_account', 'fin_debt'],
+            'full' => ['fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'wallet', 'promotion', 'task'],
             'view' => ['business', 'branch', 'student', 'enrollment', 'parent'],
         ],
 
         'CRM_STAFF' => [
-            'full' => ['crm_lead', 'parent', 'parent_student'],
-            'view' => ['business', 'branch', 'student', 'enrollment', 'course', 'class'],
+            'full' => ['crm_lead', 'parent', 'parent_student', 'task'],
+            'view' => ['business', 'branch', 'student', 'enrollment', 'course', 'class', 'promotion'],
         ],
     ];
 
