@@ -14,6 +14,11 @@ use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Enums\ClassStudentStatus;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
+use App\Modules\Education\Evaluation\Enums\EvaluationClassification;
+use App\Modules\Education\Evaluation\Enums\EvaluationPeriod;
+use App\Modules\Education\Evaluation\Enums\EvaluationStatus;
+use App\Modules\Education\Evaluation\Enums\EvaluationType;
+use App\Modules\Education\Evaluation\Enums\EvaluatorType;
 use App\Modules\Education\Lesson\Enums\LessonStatus;
 use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlanMaterial\Enums\MaterialType;
@@ -77,6 +82,11 @@ class MetadataRegistry
                 'lesson_plan_status' => LessonPlanStatus::options(),
                 'material_type' => MaterialType::options(),
                 'lesson_status' => LessonStatus::options(),
+                'evaluation_type' => EvaluationType::options(),
+                'evaluator_type' => EvaluatorType::options(),
+                'evaluation_period' => EvaluationPeriod::options(),
+                'evaluation_classification' => EvaluationClassification::options(),
+                'evaluation_status' => EvaluationStatus::options(),
             ],
             'hr' => [
                 'teacher_status' => TeacherStatus::options(),
