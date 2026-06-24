@@ -44,6 +44,8 @@ class MasterSeeder extends Seeder
             $this->attendances($sessions, $students);
             $this->leaveRequests($students, $teachers, $classes, $lessons);
             $this->promotions($businessId, $parents);
+            $this->evaluations($teachers, $students, $parents, $courses, $classes, $lessons);
+            $this->wallets($businessId, $parents);
         });
 
         $this->command?->info('MasterSeeder: demo data seeded.');
@@ -692,6 +694,147 @@ class MasterSeeder extends Seeder
                     'updated_at' => $this->now(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Evaluations — teacher / student / parent, covering every status and a spread of
+     * classifications. The total score + classification are computed from the criteria
+     * (as the service does), since this seeder writes via the query builder.
+     */
+    private function evaluations(array $teachers, array $students, array $parents, array $courses, array $classes, array $lessons): void
+    {
+        $courseId = $courses[0]['id'];
+        $classId = $classes[0];
+        $lessonId = $lessons[$classId][0] ?? null;
+
+        $criteriaKeys = [
+            'teacher' => ['expertise', 'teaching_method', 'communication', 'attitude'],
+            'student' => ['knowledge', 'pronunciation', 'grammar', 'homework'],
+            'parent' => ['cooperation', 'learning_follow_up', 'on_time_payment', 'feedback'],
+        ];
+
+        // [type, target id, evaluator type, evaluator id, period, criterion scores, status].
+        $rows = [
+            ['teacher', $teachers[0], 'student', $students[0], 'course', [5, 5, 4, 5], 'locked'],
+            ['teacher', $teachers[1], 'parent', $parents[0], 'monthly', [4, 4, 3, 4], 'approved'],
+            ['teacher', $teachers[2], 'manager', 1, 'quarterly', [3, 3, 2, 3], 'submitted'],
+
+            ['student', $students[0], 'teacher', $teachers[0], 'final', [5, 4, 5, 5], 'approved'],
+            ['student', $students[1], 'teacher', $teachers[0], 'midterm', [3, 3, 3, 2], 'draft'],
+            ['student', $students[2], 'teacher', $teachers[1], 'lesson', [2, 2, 1, 2], 'rejected'],
+
+            ['parent', $parents[0], 'manager', 1, 'monthly', [4, 4, 5, 4], 'approved'],
+            ['parent', $parents[1], 'cskh', 1, 'quarterly', [2, 2, 1, 2], 'draft'],
+        ];
+
+        foreach ($rows as $seq => [$type, $targetId, $evaluatorType, $evaluatorId, $period, $scores, $status]) {
+            $keys = $criteriaKeys[$type];
+            $criteria = [];
+            foreach ($scores as $i => $score) {
+                $criteria[] = ['criterion' => $keys[$i % count($keys)], 'score' => $score];
+            }
+            $average = round(array_sum($scores) / count($scores), 2);
+
+            DB::table('edu_evaluations')->insert([
+                'evaluation_code' => 'EVAL'.str_pad((string) ($seq + 1), 6, '0', STR_PAD_LEFT),
+                'evaluation_type' => $type,
+                'target_id' => $targetId,
+                'evaluator_type' => $evaluatorType,
+                'evaluator_id' => $evaluatorId,
+                'course_id' => $courseId,
+                'class_room_id' => $type === 'parent' ? null : $classId,
+                'lesson_id' => $period === 'lesson' ? $lessonId : null,
+                'evaluation_period' => $period,
+                'criteria' => json_encode($criteria),
+                'score' => $average,
+                'classification' => $this->classifyEvaluation($type, $average),
+                'comment' => 'Ghi chú đánh giá '.($seq + 1),
+                'status' => $status,
+                'evaluated_at' => $this->now(),
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+    }
+
+    private function classifyEvaluation(string $type, float $average): string
+    {
+        return match (true) {
+            $average >= 4.5 => 'excellent',
+            $average >= 3.5 => 'good',
+            $average >= 2.5 => 'average',
+            default => $type === 'parent' ? 'warning' : 'weak',
+        };
+    }
+
+    /**
+     * Wallets — one per parent (BR001), covering each status. The active wallet carries a
+     * coherent ledger trail (deposit → bonus → payment → adjustment) whose final
+     * balance_after matches the wallet's spendable balance, plus an adjustment record.
+     */
+    private function wallets(int $businessId, array $parents): void
+    {
+        // [available, bonus, frozen, status] — the active wallet's available reflects its trail.
+        $configs = [
+            [525000, 0, 0, 'active'],
+            [200000, 0, 0, 'locked'],
+            [0, 0, 0, 'closed'],
+        ];
+
+        $txnSeq = 0;
+        foreach (array_values($parents) as $i => $parentId) {
+            [$available, $bonus, $frozen, $status] = $configs[$i % count($configs)];
+
+            $walletId = DB::table('fin_wallets')->insertGetId([
+                'business_id' => $businessId,
+                'wallet_code' => 'WAL'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'owner_type' => 'parent',
+                'owner_id' => $parentId,
+                'available_balance' => $available,
+                'bonus_balance' => $bonus,
+                'frozen_balance' => $frozen,
+                'currency' => 'VND',
+                'status' => $status,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+
+            if ($status !== 'active') {
+                continue;
+            }
+
+            // deposit 500k → bonus +50k → payment 50k (bonus spent first) → adjustment +25k.
+            $trail = [
+                ['deposit', 500000, 0, 500000],
+                ['bonus', 50000, 500000, 550000],
+                ['payment', 50000, 550000, 500000],
+                ['adjustment', 25000, 500000, 525000],
+            ];
+            foreach ($trail as [$type, $amount, $before, $after]) {
+                $txnSeq++;
+                DB::table('fin_wallet_transactions')->insert([
+                    'business_id' => $businessId,
+                    'wallet_id' => $walletId,
+                    'transaction_code' => 'WTX'.str_pad((string) $txnSeq, 6, '0', STR_PAD_LEFT),
+                    'transaction_type' => $type,
+                    'amount' => $amount,
+                    'balance_before' => $before,
+                    'balance_after' => $after,
+                    'description' => 'Demo '.$type,
+                    'created_at' => $this->now(),
+                    'updated_at' => $this->now(),
+                ]);
+            }
+
+            DB::table('fin_wallet_adjustments')->insert([
+                'wallet_id' => $walletId,
+                'adjustment_type' => 'increase',
+                'amount' => 25000,
+                'reason' => 'Bù trừ đối soát',
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
         }
     }
 }

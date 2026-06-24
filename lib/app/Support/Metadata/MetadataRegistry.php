@@ -29,6 +29,10 @@ use App\Modules\Finance\Invoice\Enums\PartnerType;
 use App\Modules\Finance\Payment\Enums\PaymentDirection;
 use App\Modules\Finance\Payment\Enums\PaymentStatus;
 use App\Modules\Finance\Payment\Enums\PaymentType;
+use App\Modules\Finance\Wallet\Enums\WalletAdjustmentType;
+use App\Modules\Finance\Wallet\Enums\WalletOwnerType;
+use App\Modules\Finance\Wallet\Enums\WalletStatus;
+use App\Modules\Finance\Wallet\Enums\WalletTransactionType;
 use App\Modules\HR\Teacher\Enums\TeacherStatus;
 use App\Modules\HR\Teacher\Enums\TeacherType;
 use App\Modules\System\Branch\Enums\BranchStatus;
@@ -94,6 +98,10 @@ class MetadataRegistry
                 'debt_status' => DebtStatus::options(),
                 'adjustment_type' => AdjustmentType::options(),
                 'refund_status' => RefundStatus::options(),
+                'wallet_owner_type' => WalletOwnerType::options(),
+                'wallet_status' => WalletStatus::options(),
+                'wallet_transaction_type' => WalletTransactionType::options(),
+                'wallet_adjustment_type' => WalletAdjustmentType::options(),
             ],
         ];
     }
