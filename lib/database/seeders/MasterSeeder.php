@@ -32,13 +32,20 @@ class MasterSeeder extends Seeder
             $classes = $this->classes($businessId, $courses, $rooms);
             $this->classStudents($classes, $students);
             $this->enrollments($businessId, $classes, $students);
-            $this->lessons($classes);
+            $lessons = $this->lessons($classes);
             $lessonPlans = $this->lessonPlans($courses);
             $this->materials($courses, $lessonPlans);
             $this->assignments($courses, $classes, $students);
             $this->studentLevels($businessId, $students, $courses, $levels);
-            $this->crm($businessId, $branches, $students);
+            $parents = $this->crm($businessId, $branches, $students);
             $this->accounts($businessId);
+
+            $sessions = $this->sessions($classes, $teachers);
+            $this->attendances($sessions, $students);
+            $this->leaveRequests($students, $teachers, $classes, $lessons);
+            $this->promotions($businessId, $parents);
+            $this->evaluations($teachers, $students, $parents, $courses, $classes, $lessons);
+            $this->wallets($businessId, $parents);
         });
 
         $this->command?->info('MasterSeeder: demo data seeded.');
@@ -250,12 +257,14 @@ class MasterSeeder extends Seeder
         }
     }
 
-    private function lessons(array $classes): void
+    /** @return array<int, int[]> class_id => lesson ids */
+    private function lessons(array $classes): array
     {
         $statuses = ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'locked'];
+        $byClass = [];
         foreach ($classes as $classId) {
             foreach ($statuses as $i => $status) {
-                DB::table('edu_lessons')->insert([
+                $byClass[$classId][] = DB::table('edu_lessons')->insertGetId([
                     'class_room_id' => $classId,
                     'lesson_no' => $i + 1,
                     'lesson_title' => 'Buổi '.($i + 1),
@@ -268,6 +277,8 @@ class MasterSeeder extends Seeder
                 ]);
             }
         }
+
+        return $byClass;
     }
 
     /** @return int[] */
@@ -421,7 +432,8 @@ class MasterSeeder extends Seeder
         }
     }
 
-    private function crm(int $businessId, array $branches, array $students): void
+    /** @return int[] parent ids */
+    private function crm(int $businessId, array $branches, array $students): array
     {
         foreach (['pending', 'verified', 'studying', 'inactive'] as $i => $status) {
             DB::table('crm_leads')->insert([
@@ -459,6 +471,8 @@ class MasterSeeder extends Seeder
                 'updated_at' => $this->now(),
             ]);
         }
+
+        return $parentIds;
     }
 
     private function accounts(int $businessId): void
@@ -469,6 +483,355 @@ class MasterSeeder extends Seeder
                 'code' => 'ACC-'.strtoupper($type),
                 'name' => $name,
                 'type' => $type,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+    }
+
+    /**
+     * Class sessions (buổi học) — one per status variant. @return int[]
+     */
+    private function sessions(array $classes, array $teachers): array
+    {
+        $statuses = ['upcoming', 'ongoing', 'completed', 'cancelled'];
+        $ids = [];
+        foreach ($statuses as $i => $status) {
+            $ids[] = DB::table('edu_sessions')->insertGetId([
+                'class_id' => $classes[$i % count($classes)],
+                'teacher_id' => $teachers[$i % count($teachers)],
+                'session_no' => $i + 1,
+                'code' => 'SES'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT),
+                'name' => 'Buổi học '.($i + 1),
+                'session_date' => now()->addDays($i)->toDateString(),
+                'start_time' => '18:00',
+                'end_time' => '19:30',
+                'status' => $status,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Per-student attendance ("chuyên cần") — one row per status variant. The
+     * (session, student) pair is unique, so each row uses a distinct combination.
+     */
+    private function attendances(array $sessions, array $students): void
+    {
+        $statuses = ['present', 'absent', 'late', 'excused'];
+        foreach ($statuses as $i => $status) {
+            DB::table('edu_attendances')->insert([
+                'session_id' => $sessions[$i % count($sessions)],
+                'student_id' => $students[$i % count($students)],
+                'status' => $status,
+                'checkin_time' => in_array($status, ['present', 'late'], true)
+                    ? now()->setTime(18, $status === 'late' ? 20 : 0)
+                    : null,
+                'checkout_time' => $status === 'present' ? now()->setTime(19, 30) : null,
+                'note' => $status === 'excused' ? 'Vắng có phép' : null,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+    }
+
+    /**
+     * Leave requests — one per status variant (a teacher leave among them). An approved
+     * student leave raises make-up entitlements covering every make-up status, and each
+     * request gets a creation log.
+     */
+    private function leaveRequests(array $students, array $teachers, array $classes, array $lessons): void
+    {
+        $reasonTypes = ['sick', 'family', 'school_activity', 'vacation', 'personal'];
+        $statuses = ['pending', 'approved', 'rejected', 'cancelled', 'completed'];
+
+        foreach ($statuses as $i => $status) {
+            $classId = $classes[$i % count($classes)];
+            $classLessons = $lessons[$classId] ?? [];
+            $lessonId = $classLessons[0] ?? null;
+            $isTeacher = $i === 2; // one teacher_leave variant
+            $requesterId = $isTeacher ? $teachers[0] : $students[$i % count($students)];
+
+            $leaveId = DB::table('edu_leave_requests')->insertGetId([
+                'request_code' => 'LR'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'request_type' => $isTeacher ? 'teacher_leave' : 'student_leave',
+                'requester_type' => $isTeacher ? 'teacher' : 'student',
+                'requester_id' => $requesterId,
+                'class_room_id' => $classId,
+                'lesson_id' => $lessonId,
+                'leave_date' => now()->addDays($i)->toDateString(),
+                'reason_type' => $reasonTypes[$i % count($reasonTypes)],
+                'reason' => 'Lý do nghỉ '.($i + 1),
+                'status' => $status,
+                'approved_at' => in_array($status, ['approved', 'completed'], true) ? $this->now() : null,
+                'rejection_reason' => $status === 'rejected' ? 'Không đủ điều kiện' : null,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+
+            DB::table('edu_leave_request_logs')->insert([
+                'leave_request_id' => $leaveId,
+                'action' => 'created',
+                'old_status' => null,
+                'new_status' => 'pending',
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+
+            // BR007: an approved student leave earns make-up entitlements.
+            if ($status === 'approved' && ! $isTeacher) {
+                foreach (['waiting', 'scheduled', 'completed', 'expired'] as $mStatus) {
+                    DB::table('edu_makeup_lessons')->insert([
+                        'leave_request_id' => $leaveId,
+                        'student_id' => $requesterId,
+                        'original_lesson_id' => $lessonId,
+                        'makeup_lesson_id' => in_array($mStatus, ['scheduled', 'completed'], true)
+                            ? ($classLessons[1] ?? null)
+                            : null,
+                        'status' => $mStatus,
+                        'created_at' => $this->now(),
+                        'updated_at' => $this->now(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Promotion programmes — one per status variant — plus eligibility rules, reward
+     * lines, vouchers (one per status), a usage entry and referrals (one per status)
+     * on the active programme.
+     */
+    private function promotions(int $businessId, array $parents): void
+    {
+        $statuses = ['draft', 'pending', 'active', 'paused', 'expired', 'closed'];
+        $types = ['discount', 'voucher', 'gift_lesson', 'wallet_credit', 'combo', 'referral'];
+
+        $promotionIds = [];
+        foreach ($statuses as $i => $status) {
+            $type = $types[$i % count($types)];
+            $promotionIds[$status] = DB::table('fin_promotions')->insertGetId([
+                'promotion_code' => 'PROMO'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'promotion_name' => 'Khuyến mãi '.($i + 1),
+                'promotion_type' => $type,
+                'start_date' => now()->subDays(10)->toDateString(),
+                'end_date' => now()->addDays(20 + $i)->toDateString(),
+                'status' => $status,
+                'priority' => $i,
+                'discount_type' => 'percent',
+                'discount_value' => 10 + $i,
+                'max_discount' => 500000,
+                'bonus_lesson' => $type === 'gift_lesson' ? 2 : null,
+                'bonus_wallet_amount' => $type === 'wallet_credit' ? 100000 : null,
+                'approved_at' => in_array($status, ['active', 'paused', 'expired', 'closed'], true) ? $this->now() : null,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+
+        $activeId = $promotionIds['active'];
+
+        foreach (['min_order' => '5000000', 'new_customer' => '1', 'first_enrollment' => '1', 'course' => '1', 'level' => '1', 'branch' => '1'] as $ruleType => $ruleValue) {
+            DB::table('fin_promotion_rules')->insert([
+                'promotion_id' => $activeId,
+                'rule_type' => $ruleType,
+                'rule_value' => $ruleValue,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+
+        foreach (['discount' => '10', 'gift_lesson' => '2', 'wallet_credit' => '100000', 'voucher' => '1'] as $rewardType => $rewardValue) {
+            DB::table('fin_promotion_rewards')->insert([
+                'promotion_id' => $activeId,
+                'reward_type' => $rewardType,
+                'reward_value' => $rewardValue,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+
+        $voucherIds = [];
+        foreach (['active', 'used', 'expired', 'locked'] as $i => $vStatus) {
+            $voucherIds[$vStatus] = DB::table('fin_vouchers')->insertGetId([
+                'promotion_id' => $activeId,
+                'voucher_code' => 'HANA'.strtoupper(substr(md5($vStatus.$i), 0, 8)),
+                'usage_limit' => 5,
+                'used_count' => match ($vStatus) {
+                    'used' => 5,
+                    'active' => 1,
+                    default => 0,
+                },
+                'expired_at' => $vStatus === 'expired' ? now()->subDay() : now()->addDays(30),
+                'status' => $vStatus,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+
+        DB::table('fin_promotion_usages')->insert([
+            'promotion_id' => $activeId,
+            'voucher_id' => $voucherIds['used'],
+            'discount_amount' => 200000,
+            'used_at' => $this->now(),
+            'created_at' => $this->now(),
+            'updated_at' => $this->now(),
+        ]);
+
+        if (count($parents) >= 2) {
+            foreach (['pending', 'rewarded', 'cancelled'] as $i => $rStatus) {
+                DB::table('fin_referrals')->insert([
+                    'referrer_parent_id' => $parents[0],
+                    'referred_parent_id' => $parents[1 + ($i % (count($parents) - 1))],
+                    'promotion_id' => $activeId,
+                    'reward_amount' => 100000,
+                    'status' => $rStatus,
+                    'rewarded_at' => $rStatus === 'rewarded' ? $this->now() : null,
+                    'created_at' => $this->now(),
+                    'updated_at' => $this->now(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Evaluations — teacher / student / parent, covering every status and a spread of
+     * classifications. The total score + classification are computed from the criteria
+     * (as the service does), since this seeder writes via the query builder.
+     */
+    private function evaluations(array $teachers, array $students, array $parents, array $courses, array $classes, array $lessons): void
+    {
+        $courseId = $courses[0]['id'];
+        $classId = $classes[0];
+        $lessonId = $lessons[$classId][0] ?? null;
+
+        $criteriaKeys = [
+            'teacher' => ['expertise', 'teaching_method', 'communication', 'attitude'],
+            'student' => ['knowledge', 'pronunciation', 'grammar', 'homework'],
+            'parent' => ['cooperation', 'learning_follow_up', 'on_time_payment', 'feedback'],
+        ];
+
+        // [type, target id, evaluator type, evaluator id, period, criterion scores, status].
+        $rows = [
+            ['teacher', $teachers[0], 'student', $students[0], 'course', [5, 5, 4, 5], 'locked'],
+            ['teacher', $teachers[1], 'parent', $parents[0], 'monthly', [4, 4, 3, 4], 'approved'],
+            ['teacher', $teachers[2], 'manager', 1, 'quarterly', [3, 3, 2, 3], 'submitted'],
+
+            ['student', $students[0], 'teacher', $teachers[0], 'final', [5, 4, 5, 5], 'approved'],
+            ['student', $students[1], 'teacher', $teachers[0], 'midterm', [3, 3, 3, 2], 'draft'],
+            ['student', $students[2], 'teacher', $teachers[1], 'lesson', [2, 2, 1, 2], 'rejected'],
+
+            ['parent', $parents[0], 'manager', 1, 'monthly', [4, 4, 5, 4], 'approved'],
+            ['parent', $parents[1], 'cskh', 1, 'quarterly', [2, 2, 1, 2], 'draft'],
+        ];
+
+        foreach ($rows as $seq => [$type, $targetId, $evaluatorType, $evaluatorId, $period, $scores, $status]) {
+            $keys = $criteriaKeys[$type];
+            $criteria = [];
+            foreach ($scores as $i => $score) {
+                $criteria[] = ['criterion' => $keys[$i % count($keys)], 'score' => $score];
+            }
+            $average = round(array_sum($scores) / count($scores), 2);
+
+            DB::table('edu_evaluations')->insert([
+                'evaluation_code' => 'EVAL'.str_pad((string) ($seq + 1), 6, '0', STR_PAD_LEFT),
+                'evaluation_type' => $type,
+                'target_id' => $targetId,
+                'evaluator_type' => $evaluatorType,
+                'evaluator_id' => $evaluatorId,
+                'course_id' => $courseId,
+                'class_room_id' => $type === 'parent' ? null : $classId,
+                'lesson_id' => $period === 'lesson' ? $lessonId : null,
+                'evaluation_period' => $period,
+                'criteria' => json_encode($criteria),
+                'score' => $average,
+                'classification' => $this->classifyEvaluation($type, $average),
+                'comment' => 'Ghi chú đánh giá '.($seq + 1),
+                'status' => $status,
+                'evaluated_at' => $this->now(),
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+        }
+    }
+
+    private function classifyEvaluation(string $type, float $average): string
+    {
+        return match (true) {
+            $average >= 4.5 => 'excellent',
+            $average >= 3.5 => 'good',
+            $average >= 2.5 => 'average',
+            default => $type === 'parent' ? 'warning' : 'weak',
+        };
+    }
+
+    /**
+     * Wallets — one per parent (BR001), covering each status. The active wallet carries a
+     * coherent ledger trail (deposit → bonus → payment → adjustment) whose final
+     * balance_after matches the wallet's spendable balance, plus an adjustment record.
+     */
+    private function wallets(int $businessId, array $parents): void
+    {
+        // [available, bonus, frozen, status] — the active wallet's available reflects its trail.
+        $configs = [
+            [525000, 0, 0, 'active'],
+            [200000, 0, 0, 'locked'],
+            [0, 0, 0, 'closed'],
+        ];
+
+        $txnSeq = 0;
+        foreach (array_values($parents) as $i => $parentId) {
+            [$available, $bonus, $frozen, $status] = $configs[$i % count($configs)];
+
+            $walletId = DB::table('fin_wallets')->insertGetId([
+                'business_id' => $businessId,
+                'wallet_code' => 'WAL'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
+                'owner_type' => 'parent',
+                'owner_id' => $parentId,
+                'available_balance' => $available,
+                'bonus_balance' => $bonus,
+                'frozen_balance' => $frozen,
+                'currency' => 'VND',
+                'status' => $status,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now(),
+            ]);
+
+            if ($status !== 'active') {
+                continue;
+            }
+
+            // deposit 500k → bonus +50k → payment 50k (bonus spent first) → adjustment +25k.
+            $trail = [
+                ['deposit', 500000, 0, 500000],
+                ['bonus', 50000, 500000, 550000],
+                ['payment', 50000, 550000, 500000],
+                ['adjustment', 25000, 500000, 525000],
+            ];
+            foreach ($trail as [$type, $amount, $before, $after]) {
+                $txnSeq++;
+                DB::table('fin_wallet_transactions')->insert([
+                    'business_id' => $businessId,
+                    'wallet_id' => $walletId,
+                    'transaction_code' => 'WTX'.str_pad((string) $txnSeq, 6, '0', STR_PAD_LEFT),
+                    'transaction_type' => $type,
+                    'amount' => $amount,
+                    'balance_before' => $before,
+                    'balance_after' => $after,
+                    'description' => 'Demo '.$type,
+                    'created_at' => $this->now(),
+                    'updated_at' => $this->now(),
+                ]);
+            }
+
+            DB::table('fin_wallet_adjustments')->insert([
+                'wallet_id' => $walletId,
+                'adjustment_type' => 'increase',
+                'amount' => 25000,
+                'reason' => 'Bù trừ đối soát',
                 'created_at' => $this->now(),
                 'updated_at' => $this->now(),
             ]);
