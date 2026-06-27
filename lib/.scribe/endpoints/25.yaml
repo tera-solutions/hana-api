@@ -1,0 +1,159 @@
+name: 'Education - Lesson Plan Materials'
+description: |-
+
+  Attach and detach learning materials on a lesson template (lesson-plan.md §14).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/lesson/{id}/material/attach'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Materials'
+      groupDescription: |-
+
+        Attach and detach learning materials on a lesson template (lesson-plan.md §14).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Attach a material to a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      file_id:
+        custom: []
+        name: file_id
+        description: 'Reference to the uploaded file. Must be at least 1.'
+        required: true
+        example: 10
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      material_type:
+        custom: []
+        name: material_type
+        description: 'Material type: pdf, video, audio, slide, worksheet, homework.'
+        required: true
+        example: pdf
+        type: string
+        enumValues:
+          - pdf
+          - video
+          - audio
+          - slide
+          - worksheet
+          - homework
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      file_id: 10
+      material_type: pdf
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Gắn tài liệu thành công.",
+            "data": {"id": 1, "lesson_plan_lesson_id": 1, "file_id": 10, "material_type": "pdf"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/lesson-plan/material/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Materials'
+      groupDescription: |-
+
+        Attach and detach learning materials on a lesson template (lesson-plan.md §14).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Detach a material'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Gỡ tài liệu thành công.",
+            "data": null,
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

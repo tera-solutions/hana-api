@@ -1,0 +1,895 @@
+name: 'Education - Course'
+description: |-
+
+  Manage courses (training catalogue).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/course/list
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List courses'
+      description: 'Paginated list of courses for the current business.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by course name or code.'
+        required: false
+        example: IELTS
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status: active or inactive.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      is_active:
+        custom: []
+        name: is_active
+        description: 'Filter by active flag (alternative to status).'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      duration_min:
+        custom: []
+        name: duration_min
+        description: 'Minimum duration in minutes.'
+        required: false
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      duration_max:
+        custom: []
+        name: duration_max
+        description: 'Maximum duration in minutes.'
+        required: false
+        example: 120
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      price_min:
+        custom: []
+        name: price_min
+        description: 'Minimum price per lesson.'
+        required: false
+        example: 100000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      price_max:
+        custom: []
+        name: price_max
+        description: 'Maximum price per lesson.'
+        required: false
+        example: 500000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      created_by:
+        custom: []
+        name: created_by
+        description: 'Filter by creator user id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      created_from:
+        custom: []
+        name: created_from
+        description: 'date Created on or after (Y-m-d).'
+        required: false
+        example: '2026-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      created_to:
+        custom: []
+        name: created_to
+        description: 'date Created on or before (Y-m-d).'
+        required: false
+        example: '2026-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: code, name, duration_minutes, price_per_lesson, created_at.'
+        required: false
+        example: created_at
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_dir:
+        custom: []
+        name: sort_dir
+        description: 'Sort direction: asc or desc (default desc).'
+        required: false
+        example: desc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size: 20, 50 or 100 (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number (default 1).'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: IELTS
+      status: active
+      is_active: true
+      duration_min: 60
+      duration_max: 120
+      price_min: 100000.0
+      price_max: 500000.0
+      created_by: 1
+      created_from: '2026-01-01'
+      created_to: '2026-12-31'
+      sort_by: created_at
+      sort_dir: desc
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "items": [
+                {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "thumbnail": null, "duration_minutes": 90, "price_per_lesson": 200000, "description": "Beginner IELTS course", "is_active": true, "business_id": 1, "created_at": "2026-01-01T00:00:00.000000Z", "updated_at": "2026-01-01T00:00:00.000000Z", "deleted_at": null}
+              ],
+              "pagination": {"total": 1, "per_page": 15, "current_page": 1, "last_page": 1}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/course/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Course detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "course": {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "duration_minutes": 90, "price_per_lesson": 200000, "is_active": true, "business_id": 1},
+              "statistics": {"students": 12, "classes": 3}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/course/create
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create course'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Course name. Must not be greater than 255 characters.'
+        required: true
+        example: 'IELTS Foundation'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      code:
+        custom: []
+        name: code
+        description: 'Unique code (A-Z, 0-9, _). Must match the regex /^[A-Z0-9_]+$/. Must not be greater than 255 characters.'
+        required: true
+        example: IELTS_6_5
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      thumbnail:
+        custom: []
+        name: thumbnail
+        description: 'Thumbnail URL. Must not be greater than 1000 characters.'
+        required: false
+        example: 'https://cdn.hana.edu.vn/c.png'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration_minutes:
+        custom: []
+        name: duration_minutes
+        description: 'Lesson duration in minutes (> 0). Must be at least 1.'
+        required: true
+        example: 90
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      price_per_lesson:
+        custom: []
+        name: price_per_lesson
+        description: 'Price per lesson (>= 0). Must be at least 0.'
+        required: true
+        example: 250000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      is_active:
+        custom: []
+        name: is_active
+        description: 'Active state.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Owning business id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'IELTS Foundation'
+      code: IELTS_6_5
+      thumbnail: 'https://cdn.hana.edu.vn/c.png'
+      duration_minutes: 90
+      price_per_lesson: 250000.0
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+      is_active: true
+      business_id: 1
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạo khóa học thành công.",
+            "data": {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "duration_minutes": 90, "price_per_lesson": 200000, "is_active": true, "business_id": 1},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/course/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update course'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Course name. Must not be greater than 255 characters.'
+        required: false
+        example: 'IELTS Foundation'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      code:
+        custom: []
+        name: code
+        description: 'Unique code (A-Z, 0-9, _). Must match the regex /^[A-Z0-9_]+$/. Must not be greater than 255 characters.'
+        required: false
+        example: IELTS_6_5
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      thumbnail:
+        custom: []
+        name: thumbnail
+        description: 'Thumbnail URL. Must not be greater than 1000 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration_minutes:
+        custom: []
+        name: duration_minutes
+        description: 'Lesson duration in minutes (> 0). Must be at least 1.'
+        required: false
+        example: 90
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      price_per_lesson:
+        custom: []
+        name: price_per_lesson
+        description: 'Price per lesson (>= 0). Must be at least 0.'
+        required: false
+        example: 250000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores molestias ipsam sit.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'IELTS Foundation'
+      code: IELTS_6_5
+      thumbnail: vmqeopfuudtdsufvyvddq
+      duration_minutes: 90
+      price_per_lesson: 250000.0
+      description: 'Dolores molestias ipsam sit.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật khóa học thành công.",
+            "data": {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "is_active": true, "business_id": 1},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/course/suspend/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Suspend course'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for suspending the course. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Tạm dừng tuyển sinh'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Tạm dừng tuyển sinh'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Ngừng khóa học thành công.",
+            "data": {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "is_active": false},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/course/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore course'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khôi phục khóa học thành công.",
+            "data": {"id": 1, "code": "CRS001", "name": "IELTS Foundation", "is_active": true},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/course/statistics/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Course operational statistics'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"students": 12, "classes": 3, "lessons": 48, "completion_rate": 0.85},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/course/financial-summary/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Course financial summary'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"revenue": 24000000, "paid": 18000000, "outstanding": 6000000},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/course/rating-summary/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Course'
+      groupDescription: |-
+
+        Manage courses (training catalogue).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Course rating summary'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The course ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"average": 4.6, "count": 25},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

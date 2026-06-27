@@ -1,0 +1,447 @@
+name: 'Education - Lesson Plan Lessons'
+description: |-
+
+  Manage lesson templates and materials inside a lesson plan.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/lesson/create/{planId}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Lessons'
+      groupDescription: |-
+
+        Manage lesson templates and materials inside a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a lesson to a plan'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      planId:
+        custom: []
+        name: planId
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      planId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lesson_no:
+        custom: []
+        name: lesson_no
+        description: 'Lesson order (must be the next number to stay contiguous; omit to auto-assign). Must be at least 1.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      lesson_title:
+        custom: []
+        name: lesson_title
+        description: 'Lesson title. Must not be greater than 255 characters.'
+        required: true
+        example: 'My Family'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      objective:
+        custom: []
+        name: objective
+        description: 'Learning objective. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Giới thiệu thành viên gia đình'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      vocabulary:
+        custom: []
+        name: vocabulary
+        description: 'Vocabulary. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Father, Mother, Brother, Sister'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      grammar:
+        custom: []
+        name: grammar
+        description: 'Grammar point. Must not be greater than 5000 characters.'
+        required: false
+        example: 'This is my...'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      activities:
+        custom: []
+        name: activities
+        description: 'Activities. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Flashcard, Speaking'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      homework:
+        custom: []
+        name: homework
+        description: 'Homework. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Workbook page 10'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration:
+        custom: []
+        name: duration
+        description: 'Duration in minutes. Must be at least 1.'
+        required: false
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      lesson_no: 1
+      lesson_title: 'My Family'
+      objective: 'Giới thiệu thành viên gia đình'
+      vocabulary: 'Father, Mother, Brother, Sister'
+      grammar: 'This is my...'
+      activities: 'Flashcard, Speaking'
+      homework: 'Workbook page 10'
+      duration: 60
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thêm buổi học thành công.",
+            "data": {"id": 1, "lesson_plan_id": 1, "lesson_no": 1, "lesson_title": "Alphabet"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/lesson-plan/lesson/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Lessons'
+      groupDescription: |-
+
+        Manage lesson templates and materials inside a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lesson_title:
+        custom: []
+        name: lesson_title
+        description: 'Lesson title. Must not be greater than 255 characters.'
+        required: false
+        example: 'My Family'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      objective:
+        custom: []
+        name: objective
+        description: 'Learning objective. Must not be greater than 5000 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      vocabulary:
+        custom: []
+        name: vocabulary
+        description: 'Vocabulary. Must not be greater than 5000 characters.'
+        required: false
+        example: amniihfqcoynlazghdtqt
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      grammar:
+        custom: []
+        name: grammar
+        description: 'Grammar point. Must not be greater than 5000 characters.'
+        required: false
+        example: qxbajwbpilpmufinllwlo
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      activities:
+        custom: []
+        name: activities
+        description: 'Activities. Must not be greater than 5000 characters.'
+        required: false
+        example: auydlsmsjuryvojcybzvr
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      homework:
+        custom: []
+        name: homework
+        description: 'Homework. Must not be greater than 5000 characters.'
+        required: false
+        example: byickznkygloigmkwxphl
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration:
+        custom: []
+        name: duration
+        description: 'Duration in minutes. Must be at least 1.'
+        required: false
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      lesson_title: 'My Family'
+      objective: vmqeopfuudtdsufvyvddq
+      vocabulary: amniihfqcoynlazghdtqt
+      grammar: qxbajwbpilpmufinllwlo
+      activities: auydlsmsjuryvojcybzvr
+      homework: byickznkygloigmkwxphl
+      duration: 60
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật buổi học thành công.",
+            "data": {"id": 1, "lesson_no": 1, "lesson_title": "Alphabet & Numbers"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/lesson-plan/lesson/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Lessons'
+      groupDescription: |-
+
+        Manage lesson templates and materials inside a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a lesson'
+      description: 'Remaining lessons are re-sequenced to stay contiguous.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Xóa buổi học thành công.",
+            "data": null,
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/lesson/reorder/{planId}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan Lessons'
+      groupDescription: |-
+
+        Manage lesson templates and materials inside a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reorder lessons'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      planId:
+        custom: []
+        name: planId
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      planId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lesson_ids:
+        custom: []
+        name: lesson_ids
+        description: ''
+        required: false
+        example:
+          - 17
+        type: 'integer[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      lesson_ids:
+        - 17
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Sắp xếp buổi học thành công.",
+            "data": {"id": 1, "total_lessons": 3},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

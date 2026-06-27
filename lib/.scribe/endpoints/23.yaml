@@ -1,0 +1,711 @@
+name: 'Education - Lesson Plan'
+description: |-
+
+  Manage teaching lesson plans (templates) per course and level.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/lesson-plan/list
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List lesson plans'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by plan code or name.'
+        required: false
+        example: Kids
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Filter by course.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Filter by level.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status: draft, reviewing, published, archived.'
+        required: false
+        example: published
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: plan_code, plan_name, version, total_lessons, status, created_at.'
+        required: false
+        example: created_at
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_dir:
+        custom: []
+        name: sort_dir
+        description: 'Sort direction: asc or desc.'
+        required: false
+        example: desc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: Kids
+      course_id: 1
+      level_id: 1
+      status: published
+      sort_by: created_at
+      sort_dir: desc
+      per_page: 20
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "items": [{"id": 1, "plan_code": "KIDS_STARTER_V1", "plan_name": "Kids Starter", "course_id": 1, "version": 1, "total_lessons": 4, "status": "draft"}],
+              "pagination": {"total": 1, "per_page": 20, "current_page": 1, "last_page": 1}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/lesson-plan/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Lesson plan detail'
+      description: 'Returns the plan with its lessons (and materials), version history and usage.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "plan": {"id": 1, "plan_code": "KIDS_STARTER_V1", "plan_name": "Kids Starter", "version": 1, "total_lessons": 1, "status": "draft", "lessons": [{"id": 1, "lesson_no": 1, "lesson_title": "Alphabet"}], "versions": []},
+              "usage": {"classes": 0}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/lesson-plan/create
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create lesson plan'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      plan_code:
+        custom: []
+        name: plan_code
+        description: 'Unique lesson-plan code. Must not be greater than 255 characters.'
+        required: true
+        example: KIDS_STARTER_V1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      plan_name:
+        custom: []
+        name: plan_name
+        description: 'Lesson-plan name. Must not be greater than 255 characters.'
+        required: true
+        example: 'Kids Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Owning course id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Level id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      plan_code: KIDS_STARTER_V1
+      plan_name: 'Kids Starter'
+      course_id: 1
+      level_id: 1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạo giáo án thành công.",
+            "data": {"id": 1, "plan_code": "KIDS_STARTER_V1", "plan_name": "Kids Starter", "version": 1, "status": "draft", "total_lessons": 0},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/lesson-plan/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update lesson plan'
+      description: 'Blocked once published or used by a class (must clone instead).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      plan_code:
+        custom: []
+        name: plan_code
+        description: 'Unique lesson-plan code. Must not be greater than 255 characters.'
+        required: false
+        example: KIDS_STARTER_V1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      plan_name:
+        custom: []
+        name: plan_name
+        description: 'Lesson-plan name. Must not be greater than 255 characters.'
+        required: false
+        example: 'Kids Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Level id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      plan_code: KIDS_STARTER_V1
+      plan_name: 'Kids Starter'
+      level_id: 1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật giáo án thành công.",
+            "data": {"id": 1, "plan_name": "Kids Starter Updated", "status": "draft"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/clone/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Clone lesson plan'
+      description: 'Creates a new draft plan (next version) copying lessons and materials.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The source lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      plan_code:
+        custom: []
+        name: plan_code
+        description: 'Code for the cloned plan. Must not be greater than 255 characters.'
+        required: true
+        example: KIDS_STARTER_V2
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      plan_name:
+        custom: []
+        name: plan_name
+        description: 'Name for the cloned plan (defaults to source). Must not be greater than 255 characters.'
+        required: false
+        example: 'Kids Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      plan_code: KIDS_STARTER_V2
+      plan_name: 'Kids Starter'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Sao chép giáo án thành công.",
+            "data": {"id": 2, "plan_code": "KIDS_STARTER_V2", "version": 2, "status": "draft"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/publish/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Publish lesson plan'
+      description: 'Requires at least one valid lesson; records a version entry.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      change_summary:
+        custom: []
+        name: change_summary
+        description: 'Summary of what changed in this version. Must not be greater than 2000 characters.'
+        required: false
+        example: 'Cập nhật từ vựng buổi 5'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      change_summary: 'Cập nhật từ vựng buổi 5'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Xuất bản giáo án thành công.",
+            "data": {"id": 1, "status": "published", "published_at": "2026-06-16T00:00:00.000000Z"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/archive/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Archive lesson plan'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Ngừng sử dụng giáo án thành công.",
+            "data": {"id": 1, "status": "archived"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson-plan/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson Plan'
+      groupDescription: |-
+
+        Manage teaching lesson plans (templates) per course and level.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore lesson plan'
+      description: 'Brings an archived plan back to draft so it can be edited and re-published.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson plan ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khôi phục giáo án thành công.",
+            "data": {"id": 1, "status": "draft"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

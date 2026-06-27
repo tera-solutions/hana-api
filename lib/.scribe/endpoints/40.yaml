@@ -1,0 +1,1172 @@
+name: 'Finance - Payment'
+description: |-
+
+  Record and manage real cash-flow transactions — receipts (IN) and disbursements
+  (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/fin/payment/list
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List payments'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by payment no, reference or description.'
+        required: false
+        example: PAY
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      payment_direction:
+        custom: []
+        name: payment_direction
+        description: 'Filter: in|out.'
+        required: false
+        example: in
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      payment_type:
+        custom: []
+        name: payment_type
+        description: 'Filter by type.'
+        required: false
+        example: tuition_payment
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter: draft|pending|confirmed|cancelled|reversed|refunded.'
+        required: false
+        example: confirmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      account_id:
+        custom: []
+        name: account_id
+        description: 'Filter by fund id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      partner_type:
+        custom: []
+        name: partner_type
+        description: 'Filter by partner type.'
+        required: false
+        example: student
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Filter by business id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Filter by branch id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      invoice_id:
+        custom: []
+        name: invoice_id
+        description: 'Filter by linked invoice id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_from:
+        custom: []
+        name: date_from
+        description: 'date Payment date on/after (Y-m-d).'
+        required: false
+        example: '2026-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_to:
+        custom: []
+        name: date_to
+        description: 'date Payment date on/before (Y-m-d).'
+        required: false
+        example: '2026-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size: 20, 50 or 100.'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: PAY
+      payment_direction: in
+      payment_type: tuition_payment
+      status: confirmed
+      account_id: 1
+      partner_type: student
+      business_id: 1
+      branch_id: 1
+      invoice_id: 1
+      date_from: '2026-01-01'
+      date_to: '2026-12-31'
+      per_page: 20
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Thao tác thành công", "data": {"items": [], "pagination": {"total": 0, "per_page": 20, "current_page": 1, "last_page": 1}}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/fin/payment/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Payment detail'
+      description: 'Returns the payment with allocations and its status history.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Thao tác thành công", "data": {"payment": {"id": 1, "payment_no": "PAY2026/000001"}, "histories": []}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/fin/payment/receipt/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Payment receipt'
+      description: 'Returns the payment data used to render a receipt/voucher (payment.md §II).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Thao tác thành công", "data": {"id": 1, "payment_no": "PAY2026/000001"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/fin/payment/create
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create payment'
+      description: |-
+        Creates a transaction in `draft` (or `pending`). It does not move any balance
+        until confirmed (payment.md §VIII, BR-03).
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Business id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Branch id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      payment_direction:
+        custom: []
+        name: payment_direction
+        description: 'in (thu) | out (chi).'
+        required: true
+        example: in
+        type: string
+        enumValues:
+          - in
+          - out
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      payment_type:
+        custom: []
+        name: payment_type
+        description: tuition_payment|service_payment|debt_collection|other_income|salary_payment|teacher_payment|supplier_payment|rent_payment|marketing_payment|utility_payment|other_expense.
+        required: false
+        example: tuition_payment
+        type: string
+        enumValues:
+          - tuition_payment
+          - service_payment
+          - debt_collection
+          - other_income
+          - salary_payment
+          - teacher_payment
+          - supplier_payment
+          - rent_payment
+          - marketing_payment
+          - utility_payment
+          - other_expense
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      partner_type:
+        custom: []
+        name: partner_type
+        description: student|parent|company|teacher|staff|supplier|landlord|partner.
+        required: false
+        example: student
+        type: string
+        enumValues:
+          - student
+          - parent
+          - company
+          - teacher
+          - staff
+          - supplier
+          - landlord
+          - partner
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      partner_id:
+        custom: []
+        name: partner_id
+        description: 'Id of the partner within its type.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      invoice_id:
+        custom: []
+        name: invoice_id
+        description: 'Primary linked invoice (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      account_id:
+        custom: []
+        name: account_id
+        description: 'Fund (quỹ) id whose balance moves on confirm. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      amount:
+        custom: []
+        name: amount
+        description: 'Transaction amount.'
+        required: true
+        example: 1000000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Currency code (default VND). Must not be greater than 10 characters.'
+        required: false
+        example: VND
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      method:
+        custom: []
+        name: method
+        description: cash|transfer|card|wallet|other.
+        required: false
+        example: transfer
+        type: string
+        enumValues:
+          - cash
+          - transfer
+          - card
+          - wallet
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      reference_no:
+        custom: []
+        name: reference_no
+        description: 'Bank/e-wallet reference. Must not be greater than 255 characters.'
+        required: false
+        example: FT24001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      payment_date:
+        custom: []
+        name: payment_date
+        description: 'Transaction date (default today). Must be a valid date.'
+        required: false
+        example: '2026-06-15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Initial status: draft (default) or pending.'
+        required: false
+        example: draft
+        type: string
+        enumValues:
+          - draft
+          - pending
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Free-text description. Must not be greater than 2000 characters.'
+        required: false
+        example: 'Thu học phí tháng 6'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      allocations:
+        custom: []
+        name: allocations
+        description: 'Split across invoices (BR-07).'
+        required: false
+        example: []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'allocations[].invoice_id':
+        custom: []
+        name: 'allocations[].invoice_id'
+        description: 'Must match an existing stored value.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'allocations[].allocated_amount':
+        custom: []
+        name: 'allocations[].allocated_amount'
+        description: ''
+        required: true
+        example: 11613.31890586
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      business_id: 1
+      branch_id: 1
+      payment_direction: in
+      payment_type: tuition_payment
+      partner_type: student
+      partner_id: 1
+      invoice_id: 1
+      account_id: 1
+      amount: 1000000.0
+      currency: VND
+      method: transfer
+      reference_no: FT24001
+      payment_date: '2026-06-15'
+      status: draft
+      description: 'Thu học phí tháng 6'
+      allocations:
+        -
+          invoice_id: 17
+          allocated_amount: 11613.31890586
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Tạo giao dịch thành công.", "data": {"id": 1, "payment_no": "PAY2026/000001", "status": "draft"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/fin/payment/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update payment'
+      description: 'Only draft/pending payments can be edited (BR-04).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Branch id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      payment_type:
+        custom: []
+        name: payment_type
+        description: 'Payment type.'
+        required: false
+        example: tuition_payment
+        type: string
+        enumValues:
+          - tuition_payment
+          - service_payment
+          - debt_collection
+          - other_income
+          - salary_payment
+          - teacher_payment
+          - supplier_payment
+          - rent_payment
+          - marketing_payment
+          - utility_payment
+          - other_expense
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      partner_type:
+        custom: []
+        name: partner_type
+        description: 'Partner type.'
+        required: false
+        example: student
+        type: string
+        enumValues:
+          - student
+          - parent
+          - company
+          - teacher
+          - staff
+          - supplier
+          - landlord
+          - partner
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      partner_id:
+        custom: []
+        name: partner_id
+        description: 'Partner id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      invoice_id:
+        custom: []
+        name: invoice_id
+        description: 'Primary linked invoice. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      account_id:
+        custom: []
+        name: account_id
+        description: 'Fund id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      amount:
+        custom: []
+        name: amount
+        description: 'Transaction amount.'
+        required: false
+        example: 1000000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Currency code. Must not be greater than 10 characters.'
+        required: false
+        example: VND
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      method:
+        custom: []
+        name: method
+        description: cash|transfer|card|wallet|other.
+        required: false
+        example: transfer
+        type: string
+        enumValues:
+          - cash
+          - transfer
+          - card
+          - wallet
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      reference_no:
+        custom: []
+        name: reference_no
+        description: 'Bank reference. Must not be greater than 255 characters.'
+        required: false
+        example: FT24001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      payment_date:
+        custom: []
+        name: payment_date
+        description: 'Transaction date. Must be a valid date.'
+        required: false
+        example: '2026-06-15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 2000 characters.'
+        required: false
+        example: 'Cập nhật diễn giải'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      allocations:
+        custom: []
+        name: allocations
+        description: 'Replacement allocations (omit to keep).'
+        required: false
+        example: []
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'allocations[].invoice_id':
+        custom: []
+        name: 'allocations[].invoice_id'
+        description: 'Must match an existing stored value.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'allocations[].allocated_amount':
+        custom: []
+        name: 'allocations[].allocated_amount'
+        description: ''
+        required: true
+        example: 11613.31890586
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      branch_id: 1
+      payment_type: tuition_payment
+      partner_type: student
+      partner_id: 1
+      invoice_id: 1
+      account_id: 1
+      amount: 1000000.0
+      currency: VND
+      method: transfer
+      reference_no: FT24001
+      payment_date: '2026-06-15'
+      description: 'Cập nhật diễn giải'
+      allocations:
+        -
+          invoice_id: 17
+          allocated_amount: 11613.31890586
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Cập nhật giao dịch thành công.", "data": {"id": 1}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: '{"success": false, "msg": "Chỉ có thể chỉnh sửa giao dịch ở trạng thái nháp hoặc chờ xác nhận.", "data": null, "code": 200, "errors": null}'
+        headers: []
+        description: 'Not editable'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/fin/payment/confirm/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Confirm payment'
+      description: 'Moves the fund balance and applies allocations to invoices (payment.md §VIII).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Xác nhận giao dịch thành công.", "data": {"id": 1, "status": "confirmed"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/fin/payment/cancel/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel payment'
+      description: 'Allowed only before confirmation (payment.md §XI).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for the action. Must not be greater than 500 characters.'
+        required: true
+        example: 'Giao dịch nhầm'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Optional note. Must not be greater than 2000 characters.'
+        required: false
+        example: ''
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Giao dịch nhầm'
+      note: ''
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Hủy giao dịch thành công.", "data": {"id": 1, "status": "cancelled"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/fin/payment/reverse/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reverse payment'
+      description: 'Books an equal, opposite transaction undoing a confirmed payment (BR-06).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for the action. Must not be greater than 500 characters.'
+        required: true
+        example: 'Giao dịch nhầm'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Optional note. Must not be greater than 2000 characters.'
+        required: false
+        example: ''
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Giao dịch nhầm'
+      note: ''
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Đảo giao dịch thành công.", "data": {"id": 1, "status": "reversed"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/fin/payment/refund/{id}'
+    metadata:
+      custom: []
+      groupName: 'Finance - Payment'
+      groupDescription: |-
+
+        Record and manage real cash-flow transactions — receipts (IN) and disbursements
+        (OUT) — with confirm/cancel/reverse/refund and fund-balance effects (payment.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Refund payment'
+      description: 'Books a refund transaction for part or all of a confirmed payment (payment.md §X).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The payment ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Refund amount (defaults to the full payment amount).'
+        required: false
+        example: 500000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for the refund. Must not be greater than 500 characters.'
+        required: true
+        example: 'Học viên đóng dư'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Optional note. Must not be greater than 2000 characters.'
+        required: false
+        example: ''
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      amount: 500000.0
+      reason: 'Học viên đóng dư'
+      note: ''
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success": true, "msg": "Hoàn tiền thành công.", "data": {"id": 1, "status": "refunded"}, "code": 200, "errors": null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

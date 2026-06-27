@@ -1,0 +1,237 @@
+name: 'Education - Question Tag'
+description: |-
+
+  Manage the question bank tags (question.md §IV, §XV).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/question-tag/list
+    metadata:
+      custom: []
+      groupName: 'Education - Question Tag'
+      groupDescription: |-
+
+        Manage the question bank tags (question.md §IV, §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List tags'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/question-tag/create
+    metadata:
+      custom: []
+      groupName: 'Education - Question Tag'
+      groupDescription: |-
+
+        Manage the question bank tags (question.md §IV, §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create tag'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      tag_name:
+        custom: []
+        name: tag_name
+        description: 'Unique tag name. Must not be greater than 100 characters.'
+        required: true
+        example: colors
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      tag_name: colors
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/question-tag/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Question Tag'
+      groupDescription: |-
+
+        Manage the question bank tags (question.md §IV, §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update tag'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The tag ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      tag_name:
+        custom: []
+        name: tag_name
+        description: 'Unique tag name. Must not be greater than 100 characters.'
+        required: true
+        example: colors
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      tag_name: colors
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/question-tag/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Question Tag'
+      groupDescription: |-
+
+        Manage the question bank tags (question.md §IV, §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete tag'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The tag ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

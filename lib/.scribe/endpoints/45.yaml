@@ -1,0 +1,314 @@
+name: 'System - Activity Log'
+description: |-
+
+  Read-only system audit trail (spec 028). Logs are immutable — there is no
+  create/update/delete endpoint (BR-02, BR-03, BR-06).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/sys/activity-log/list
+    metadata:
+      custom: []
+      groupName: 'System - Activity Log'
+      groupDescription: |-
+
+        Read-only system audit trail (spec 028). Logs are immutable — there is no
+        create/update/delete endpoint (BR-02, BR-03, BR-06).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List activity logs'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Match description or entity_id.'
+        required: false
+        example: Student
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      module:
+        custom: []
+        name: module
+        description: 'Filter by module.'
+        required: false
+        example: education
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      entity:
+        custom: []
+        name: entity
+        description: 'Filter by entity.'
+        required: false
+        example: Student
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      action:
+        custom: []
+        name: action
+        description: 'Filter by action.'
+        required: false
+        example: update
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status.'
+        required: false
+        example: success
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      user_id:
+        custom: []
+        name: user_id
+        description: 'Filter by actor.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      period:
+        custom: []
+        name: period
+        description: 'Relative range: today, 7d, 30d.'
+        required: false
+        example: 7d
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_from:
+        custom: []
+        name: date_from
+        description: 'date Range start (Y-m-d).'
+        required: false
+        example: '2026-06-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_to:
+        custom: []
+        name: date_to
+        description: 'date Range end (Y-m-d).'
+        required: false
+        example: '2026-06-18'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: Student
+      module: education
+      entity: Student
+      action: update
+      status: success
+      user_id: 1
+      period: 7d
+      date_from: '2026-06-01'
+      date_to: '2026-06-18'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/sys/activity-log/statistics
+    metadata:
+      custom: []
+      groupName: 'System - Activity Log'
+      groupDescription: |-
+
+        Read-only system audit trail (spec 028). Logs are immutable — there is no
+        create/update/delete endpoint (BR-02, BR-03, BR-06).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Activity log statistics'
+      description: 'Counters by module/action plus top users and failed logins (spec 028 §XII).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/sys/activity-log/export
+    metadata:
+      custom: []
+      groupName: 'System - Activity Log'
+      groupDescription: |-
+
+        Read-only system audit trail (spec 028). Logs are immutable — there is no
+        create/update/delete endpoint (BR-02, BR-03, BR-06).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Export activity logs'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/sys/activity-log/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'System - Activity Log'
+      groupDescription: |-
+
+        Read-only system audit trail (spec 028). Logs are immutable — there is no
+        create/update/delete endpoint (BR-02, BR-03, BR-06).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Activity log detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The log ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
