@@ -2,7 +2,10 @@
 
 namespace App\Modules\Education\Timetable\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\Room\Models\Room;
+use App\Modules\Education\Support\TeacherScope;
 use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\Education\Timetable\Models\TimetableRule;
 use Illuminate\Database\Eloquent\Builder;
@@ -105,7 +108,13 @@ class TimetableService
      */
     public function calendar(array $params = [])
     {
-        return $this->sessionQuery($params)->orderBy('session_date')->orderBy('start_time')->get();
+        $query = $this->sessionQuery($params);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainSessions($query);
+        }
+
+        return $query->orderBy('session_date')->orderBy('start_time')->get();
     }
 
     public function teacherSchedule($teacherId, array $params = [])
@@ -122,7 +131,7 @@ class TimetableService
 
     public function studentSchedule($studentId, array $params = [])
     {
-        $classIds = DB::table('edu_class_students')->where('student_id', $studentId)->pluck('class_id');
+        $classIds = ClassStudent::where('student_id', $studentId)->pluck('class_id');
 
         return $this->sessionQuery($params)->whereIn('class_id', $classIds)
             ->orderBy('session_date')->orderBy('start_time')->get();
@@ -130,7 +139,7 @@ class TimetableService
 
     private function sessionQuery(array $params): Builder
     {
-        $query = ClassSession::query();
+        $query = ClassSession::query()->with(['classRoom', 'teacher', 'room', 'timetable']);
 
         foreach (['class_id', 'teacher_id', 'room_id', 'timetable_id', 'status'] as $filter) {
             if (! empty($params[$filter])) {
@@ -243,9 +252,8 @@ class TimetableService
             return;
         }
 
-        $capacity = (int) DB::table('edu_rooms')->where('id', $data['room_id'])->value('capacity');
-        $students = DB::table('edu_class_students')
-            ->where('class_id', $data['class_room_id'])
+        $capacity = (int) Room::where('id', $data['room_id'])->value('capacity');
+        $students = ClassStudent::where('class_id', $data['class_room_id'])
             ->where('status', 'active')
             ->count();
 

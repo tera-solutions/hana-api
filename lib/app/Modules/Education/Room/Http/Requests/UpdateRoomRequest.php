@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Room\Http\Requests;
 
 use App\Modules\Education\Room\Enums\RoomType;
+use App\Modules\Education\Room\Models\Room;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,7 @@ class UpdateRoomRequest extends FormRequest
     public function rules(): array
     {
         $id = $this->route('id');
-        $branchId = DB::table('edu_rooms')->where('id', $id)->value('branch_id');
+        $branchId = Room::where('id', $id)->value('branch_id');
 
         return [
             'room_code' => [

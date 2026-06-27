@@ -10,6 +10,7 @@ use App\Modules\Education\LessonPlan\Actions\GetLessonPlanAction;
 use App\Modules\Education\LessonPlan\Actions\ListLessonPlanAction;
 use App\Modules\Education\LessonPlan\Actions\PublishLessonPlanAction;
 use App\Modules\Education\LessonPlan\Actions\RestoreLessonPlanAction;
+use App\Modules\Education\LessonPlan\Actions\SummaryLessonPlanAction;
 use App\Modules\Education\LessonPlan\Actions\UpdateLessonPlanAction;
 use App\Modules\Education\LessonPlan\Http\Requests\CloneLessonPlanRequest;
 use App\Modules\Education\LessonPlan\Http\Requests\CreateLessonPlanRequest;
@@ -52,6 +53,35 @@ class LessonPlanController extends Controller
     public function list(Request $request, ListLessonPlanAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), LessonPlanResource::class);
+    }
+
+    /**
+     * Lesson plan summary
+     *
+     * Aggregate counters for the (teacher-scoped) lesson-plan list. Honours the same
+     * filters as the list endpoint.
+     *
+     * @queryParam search string Search by plan code or name. Example: Kids
+     * @queryParam course_id integer Filter by course. Example: 1
+     * @queryParam level_id integer Filter by level. Example: 1
+     * @queryParam status string Filter by status: draft, reviewing, published, archived. Example: published
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "total": 9,
+     *     "by_status": {"draft": 2, "reviewing": 1, "published": 5, "archived": 1},
+     *     "total_lessons": 96,
+     *     "in_use": 4
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function summary(Request $request, SummaryLessonPlanAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**

@@ -2,9 +2,12 @@
 
 namespace App\Modules\Education\Lesson\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Lesson\Models\LessonHistory;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
+use App\Modules\Education\Support\TeacherScope;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +54,10 @@ class LessonService
             $query->whereHas('room', fn ($q) => $q->where('branch_id', $params['branch_id']));
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_room_id');
+        }
+
         $this->applySort($query, $params, ['lesson_no', 'lesson_date', 'start_time', 'status', 'created_at']);
 
         return $query->with(['classRoom', 'teacher', 'room'])->paginate($this->resolvePerPage($params));
@@ -64,6 +71,10 @@ class LessonService
     public function detail($id): array
     {
         $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories'])->findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $lesson->class_room_id);
+        }
 
         return ['lesson' => $lesson];
     }
@@ -79,7 +90,7 @@ class LessonService
     public function generate($classId, array $data): array
     {
         return DB::transaction(function () use ($classId, $data) {
-            $class = DB::table('edu_classes')->where('id', $classId)->first();
+            $class = ClassRoom::where('id', $classId)->first();
 
             if (! $class) {
                 throw new \RuntimeException('Lớp học không tồn tại.');
@@ -97,7 +108,7 @@ class LessonService
                 throw new \RuntimeException('Giáo án không có buổi học để sinh.');
             }
 
-            $schedules = DB::table('edu_class_schedules')->where('class_id', $classId)->get();
+            $schedules = ClassSchedule::where('class_id', $classId)->get();
             if ($schedules->isEmpty()) {
                 throw new \RuntimeException('Lớp học chưa có lịch học để sinh buổi học.');
             }

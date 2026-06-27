@@ -11,6 +11,7 @@ use App\Modules\Education\Enrollment\Models\EnrollmentTransfer;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Services\InvoiceService;
+use App\Modules\Finance\Payment\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -266,10 +267,10 @@ class EnrollmentService
         $amount = round((int) $enrollment->remaining_lessons * (float) $enrollment->price_per_lesson, 2);
 
         return DB::transaction(function () use ($enrollment, $amount) {
-            $invoiceId = $this->guard(fn () => DB::table('fin_invoices')
-                ->where('enrollment_id', $enrollment->id)
+            $invoiceId = $this->guard(fn () => Invoice::where('enrollment_id', $enrollment->id)
                 ->orderByDesc('id')
-                ->value('id'));
+                ->value('id')
+            );
 
             if ($invoiceId) {
                 $this->guard(fn () => DB::table('fin_refunds')->insert([
@@ -533,10 +534,10 @@ class EnrollmentService
 
     private function payments($enrollmentId): array
     {
-        $rows = $this->guard(fn () => DB::table('fin_payments')
-            ->where('enrollment_id', $enrollmentId)
+        $rows = $this->guard(fn () => Payment::where('enrollment_id', $enrollmentId)
             ->orderByDesc('id')
-            ->get());
+            ->get()
+        );
 
         return is_iterable($rows) ? collect($rows)->toArray() : [];
     }
@@ -558,17 +559,5 @@ class EnrollmentService
         $user = Auth::guard('api')->user() ?? Auth::user();
 
         return $user?->business_id;
-    }
-
-    /**
-     * Execute a query, treating any DB error as null (missing/partial schema).
-     */
-    private function guard(callable $fn): mixed
-    {
-        try {
-            return $fn();
-        } catch (\Throwable) {
-            return null;
-        }
     }
 }

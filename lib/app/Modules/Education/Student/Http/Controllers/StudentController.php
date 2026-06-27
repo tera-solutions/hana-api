@@ -9,6 +9,7 @@ use App\Modules\Education\Student\Actions\ExportStudentAction;
 use App\Modules\Education\Student\Actions\GetStudentAction;
 use App\Modules\Education\Student\Actions\ListStudentAction;
 use App\Modules\Education\Student\Actions\RestoreStudentAction;
+use App\Modules\Education\Student\Actions\SummaryStudentAction;
 use App\Modules\Education\Student\Actions\SuspendStudentAction;
 use App\Modules\Education\Student\Actions\UpdateStudentAction;
 use App\Modules\Education\Student\Http\Requests\CreateStudentRequest;
@@ -34,6 +35,7 @@ class StudentController extends Controller
      * @queryParam business_id integer Filter by business id. Example: 1
      * @queryParam branch_id integer Filter by branch id. Example: 1
      * @queryParam level string Filter by level. Example: A1
+     * @queryParam class_id integer Filter by class — only students enrolled in this class. Example: 1
      * @queryParam status string Filter by status. Example: active
      * @queryParam enrolled_from date Enrolled on or after (Y-m-d). Example: 2026-01-01
      * @queryParam enrolled_to date Enrolled on or before (Y-m-d). Example: 2026-12-31
@@ -58,6 +60,35 @@ class StudentController extends Controller
     public function list(Request $request, ListStudentAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), StudentResource::class);
+    }
+
+    /**
+     * Student summary
+     *
+     * Aggregate counters for the (teacher-scoped) student list. Honours the same
+     * filters as the list endpoint.
+     *
+     * @queryParam search string Search by code, name, email, phone or parent name. Example: alice
+     * @queryParam business_id integer Filter by business id. Example: 1
+     * @queryParam branch_id integer Filter by branch id. Example: 1
+     * @queryParam level_id integer Filter by level id. Example: 1
+     * @queryParam status string Filter by status. Example: active
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "total": 72,
+     *     "by_status": {"active": 64, "suspended": 5, "graduated": 2, "dropped": 1},
+     *     "new_this_month": 8
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function summary(Request $request, SummaryStudentAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**

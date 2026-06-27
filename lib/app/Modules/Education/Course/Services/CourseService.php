@@ -2,9 +2,11 @@
 
 namespace App\Modules\Education\Course\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\Course\Events\CourseCreated;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Course\Models\CourseHistory;
+use App\Modules\Education\Enrollment\Models\Enrollment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -95,10 +97,10 @@ class CourseService
     {
         return [
             'total_classes' => $this->countLinked('edu_classes', $id, 'course_id'),
-            'active_classes' => $this->guard(fn () => DB::table('edu_classes')
-                ->where('course_id', $id)
+            'active_classes' => $this->guard(fn () => ClassRoom::where('course_id', $id)
                 ->whereIn('status', ['opening', 'running'])
-                ->count()),
+                ->count()
+            ),
             'total_students' => $this->countStudents($id),
             'studying_students' => $this->countStudents($id, 'studying'),
             'reserved_students' => 0, // not modelled on enrollments yet
@@ -219,8 +221,7 @@ class CourseService
     private function countStudents($id, ?string $status = null): int
     {
         return $this->guard(function () use ($id, $status) {
-            $query = DB::table('edu_enrollments')
-                ->join('edu_classes', 'edu_enrollments.class_id', '=', 'edu_classes.id')
+            $query = Enrollment::join('edu_classes', 'edu_enrollments.class_id', '=', 'edu_classes.id')
                 ->where('edu_classes.course_id', $id);
 
             if ($status !== null) {
@@ -229,18 +230,6 @@ class CourseService
 
             return $query->distinct('edu_enrollments.student_id')->count('edu_enrollments.student_id');
         });
-    }
-
-    /**
-     * Run a count query, treating a missing table/column as 0.
-     */
-    private function guard(callable $fn): int
-    {
-        try {
-            return (int) $fn();
-        } catch (\Throwable $e) {
-            return 0;
-        }
     }
 
     private function log(Course $course, string $action, $fromActive = null, $toActive = null, $reason = null, $note = null): void
