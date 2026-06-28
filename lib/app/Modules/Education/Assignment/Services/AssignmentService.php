@@ -3,12 +3,17 @@
 namespace App\Modules\Education\Assignment\Services;
 
 use App\Helpers\Task;
+use App\Modules\Education\Assignment\Enums\AssignmentStatus;
 use App\Modules\Education\Assignment\Models\Assignment;
 use App\Modules\Education\Assignment\Models\AssignmentSubmission;
 use App\Modules\Education\Assignment\Models\AssignmentSubmissionFile;
 use App\Modules\Education\Assignment\Models\AssignmentTarget;
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +22,59 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class AssignmentService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /**
      * Paginated, searchable, filterable list (assignment.md §XIII).
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['assignment_code', 'assignment_name', 'assignment_type', 'due_date', 'status', 'created_at']);
+
+        return $query->with(['course', 'classRoom'])->withCount('submissions')->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, pending_grading: int, due_this_week: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $assignmentIds = (clone $this->baseQuery($params))->pluck('id');
+
+        $pendingGrading = AssignmentSubmission::whereIn('assignment_id', $assignmentIds)
+            ->whereIn('status', [
+                AssignmentSubmission::STATUS_SUBMITTED,
+                AssignmentSubmission::STATUS_LATE_SUBMITTED,
+            ])
+            ->count();
+
+        $dueThisWeek = (clone $this->baseQuery($params))
+            ->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, AssignmentStatus::cases()),
+            'pending_grading' => $pendingGrading,
+            'due_this_week' => $dueThisWeek,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = Assignment::query();
 
@@ -39,9 +92,11 @@ class AssignmentService
             }
         }
 
-        $this->applySort($query, $params, ['assignment_code', 'assignment_name', 'assignment_type', 'due_date', 'status', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainAssignments($query);
+        }
 
-        return $query->with(['course', 'classRoom'])->withCount('submissions')->paginate($this->resolvePerPage($params));
+        return $query;
     }
 
     public function find($id): Assignment
@@ -189,8 +244,7 @@ class AssignmentService
      */
     private function activeClassStudents(int $classId): Collection
     {
-        return DB::table('edu_class_students')
-            ->where('class_id', $classId)
+        return ClassStudent::where('class_id', $classId)
             ->where('status', 'active')
             ->pluck('student_id');
     }

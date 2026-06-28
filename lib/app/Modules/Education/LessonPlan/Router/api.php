@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('lesson-plan')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [LessonPlanController::class, 'list'])->middleware('permission:lesson_plan.list');
+    Route::get('/summary', [LessonPlanController::class, 'summary'])->middleware('permission:lesson_plan.list');
     Route::get('/detail/{id}', [LessonPlanController::class, 'detail'])->middleware('permission:lesson_plan.view');
 
     Route::post('/create', [LessonPlanController::class, 'create'])->middleware('permission:lesson_plan.create');

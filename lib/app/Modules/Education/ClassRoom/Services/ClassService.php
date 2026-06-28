@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\ClassRoom\Services;
 
+use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use Illuminate\Support\Facades\DB;
@@ -11,11 +13,59 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class ClassService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /**
      * Paginated, searchable, filterable list (spec §2).
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['code', 'name', 'start_date', 'status', 'created_at']);
+
+        $result = $query
+            ->withCount('enrollments')
+            ->with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])
+            ->paginate($this->resolvePerPage($params));
+
+        $this->attachCurrentStudents($result->getCollection());
+
+        return $result;
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, total_students: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $classIds = (clone $this->baseQuery($params))->pluck('id');
+
+        $totalStudents = ClassStudent::whereIn('class_id', $classIds)
+            ->where('status', 'active')
+            ->distinct()
+            ->count('student_id');
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, ClassStatus::cases()),
+            'total_students' => $totalStudents,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = ClassRoom::query();
 
@@ -72,15 +122,11 @@ class ClassService
             $query->whereDate('start_date', '<=', $params['start_to']);
         }
 
-        $this->applySort($query, $params, ['code', 'name', 'start_date', 'status', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainClasses($query);
+        }
 
-        $result = $query
-            ->with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])
-            ->paginate($this->resolvePerPage($params));
-
-        $this->attachCurrentStudents($result->getCollection());
-
-        return $result;
+        return $query;
     }
 
     public function find($id): ClassRoom
@@ -107,6 +153,10 @@ class ClassService
      */
     public function detail($id): array
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $id);
+        }
+
         $class = $this->findWithStats($id);
 
         return [
@@ -243,11 +293,11 @@ class ClassService
 
     public function studentStats($classId): array
     {
-        $counts = $this->guard(fn () => DB::table('edu_class_students')
-            ->where('class_id', $classId)
+        $counts = $this->guard(fn () => ClassStudent::where('class_id', $classId)
             ->groupBy('status')
             ->selectRaw('status, COUNT(*) as aggregate')
-            ->pluck('aggregate', 'status'));
+            ->pluck('aggregate', 'status')
+        );
 
         $counts = is_iterable($counts) ? collect($counts) : collect();
 
@@ -336,7 +386,8 @@ class ClassService
 
     private function hasSessions($classId): bool
     {
-        return $this->guard(fn () => DB::table('edu_sessions')->where('class_id', $classId)->exists());
+        return $this->guard(fn () => ClassSession::where('class_id', $classId)->exists()
+        );
     }
 
     /**
@@ -379,29 +430,17 @@ class ClassService
 
         $ids = $classes->pluck('id')->all();
 
-        $counts = $this->guard(fn () => DB::table('edu_class_students')
-            ->whereIn('class_id', $ids)
+        $counts = $this->guard(fn () => ClassStudent::whereIn('class_id', $ids)
             ->where('status', 'active')
             ->groupBy('class_id')
             ->selectRaw('class_id, COUNT(*) as aggregate')
-            ->pluck('aggregate', 'class_id'));
+            ->pluck('aggregate', 'class_id')
+        );
 
         $counts = is_iterable($counts) ? collect($counts) : collect();
 
         foreach ($classes as $class) {
             $class->current_students = (int) ($counts[$class->id] ?? 0);
-        }
-    }
-
-    /**
-     * Execute a query, treating any DB error as 0 / false.
-     */
-    private function guard(callable $fn): mixed
-    {
-        try {
-            return $fn();
-        } catch (\Throwable) {
-            return 0;
         }
     }
 }

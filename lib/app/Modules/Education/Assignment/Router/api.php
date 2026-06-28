@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('assignment')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [AssignmentController::class, 'list'])->middleware('permission:assignment.list');
+    Route::get('/summary', [AssignmentController::class, 'summary'])->middleware('permission:assignment.list');
     Route::get('/detail/{id}', [AssignmentController::class, 'detail'])->middleware('permission:assignment.view');
 
     Route::post('/create', [AssignmentController::class, 'create'])->middleware('permission:assignment.create');

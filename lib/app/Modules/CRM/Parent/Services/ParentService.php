@@ -6,6 +6,7 @@ use App\Helpers\Task;
 use App\Modules\CRM\Parent\Events\ParentCreated;
 use App\Modules\CRM\Parent\Models\ParentHistory;
 use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\CRM\ParentStudent\Models\ParentStudent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -87,7 +88,7 @@ class ParentService
 
     public function statistics($id): array
     {
-        $studentIds = DB::table('crm_parent_student')->where('parent_id', $id)->pluck('student_id')->all();
+        $studentIds = ParentStudent::where('parent_id', $id)->pluck('student_id')->all();
 
         return [
             'total_students' => count($studentIds),

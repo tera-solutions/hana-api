@@ -7,7 +7,9 @@ use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
+use App\Modules\Education\Room\Models\Room;
 use App\Modules\Education\SessionFeedback\Models\SessionFeedback;
+use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -49,6 +51,16 @@ class ClassSession extends Model
     public function schedule(): BelongsTo
     {
         return $this->belongsTo(ClassSchedule::class, 'schedule_id');
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'room_id');
+    }
+
+    public function timetable(): BelongsTo
+    {
+        return $this->belongsTo(Timetable::class, 'timetable_id');
     }
 
     public function teacher(): BelongsTo
