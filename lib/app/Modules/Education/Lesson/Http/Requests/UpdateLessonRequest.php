@@ -19,6 +19,7 @@ class UpdateLessonRequest extends FormRequest
     {
         return [
             'teacher_id' => ['sometimes', 'nullable', 'integer', 'exists:hr_teachers,id'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'lesson_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
@@ -27,6 +28,9 @@ class UpdateLessonRequest extends FormRequest
     {
         return [
             'teacher_id' => ['description' => 'Teacher id.', 'example' => 2],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+            ],
             'lesson_note' => ['description' => 'Lesson note.', 'example' => 'Học viên tiếp thu tốt.'],
         ];
     }

@@ -13,6 +13,7 @@ use App\Modules\Education\Assignment\Actions\GetAssignmentAction;
 use App\Modules\Education\Assignment\Actions\ListAssignmentAction;
 use App\Modules\Education\Assignment\Actions\PublishAssignmentAction;
 use App\Modules\Education\Assignment\Actions\SubmitAssignmentAction;
+use App\Modules\Education\Assignment\Actions\SummaryAssignmentAction;
 use App\Modules\Education\Assignment\Actions\UpdateAssignmentAction;
 use App\Modules\Education\Assignment\Http\Requests\AssignByClassRequest;
 use App\Modules\Education\Assignment\Http\Requests\AssignByGroupRequest;
@@ -40,6 +41,36 @@ class AssignmentController extends Controller
     public function list(Request $request, ListAssignmentAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), AssignmentResource::class);
+    }
+
+    /**
+     * Assignment summary
+     *
+     * Aggregate counters for the (teacher-scoped) assignment list. Honours the same
+     * filters as the list endpoint.
+     *
+     * @queryParam search string Search by code or name. Example: Unit 01
+     * @queryParam assignment_type string Filter by type. Example: homework
+     * @queryParam course_id integer Filter by course ID. Example: 1
+     * @queryParam class_room_id integer Filter by class ID. Example: 10
+     * @queryParam status string Filter by status: draft, published, closed. Example: published
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "total": 20,
+     *     "by_status": {"draft": 4, "published": 14, "closed": 2},
+     *     "pending_grading": 7,
+     *     "due_this_week": 3
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function summary(Request $request, SummaryAssignmentAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**

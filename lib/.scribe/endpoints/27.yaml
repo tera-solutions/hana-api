@@ -1,0 +1,556 @@
+name: 'Education - Level'
+description: |-
+
+  Level master: the learning-path catalogue of proficiency levels per course
+  (student-level.md §V).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/level/list
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List levels'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Match level code or name.'
+        required: false
+        example: Starter
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Filter by course.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      cefr_level:
+        custom: []
+        name: cefr_level
+        description: 'Filter by CEFR mapping.'
+        required: false
+        example: A1
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter: active or inactive.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: Starter
+      course_id: 1
+      cefr_level: A1
+      status: active
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/level/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Level detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/level/create
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create level'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      level_code:
+        custom: []
+        name: level_code
+        description: 'Unique level code. Must not be greater than 255 characters.'
+        required: true
+        example: KIDS-STARTER
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_name:
+        custom: []
+        name: level_name
+        description: 'Level name. Must not be greater than 255 characters.'
+        required: true
+        example: Starter
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Owning course id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_order:
+        custom: []
+        name: level_order
+        description: 'Position in the learning path (1-based). Must be at least 1.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      cefr_level:
+        custom: []
+        name: cefr_level
+        description: 'CEFR mapping. Must not be greater than 50 characters.'
+        required: false
+        example: Pre-A1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Status: active or inactive (default active).'
+        required: false
+        example: active
+        type: string
+        enumValues:
+          - active
+          - inactive
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      level_code: KIDS-STARTER
+      level_name: Starter
+      course_id: 1
+      level_order: 1
+      cefr_level: Pre-A1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+      status: active
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/level/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update level'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      level_code:
+        custom: []
+        name: level_code
+        description: 'Unique level code. Must not be greater than 255 characters.'
+        required: false
+        example: KIDS-STARTER
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_name:
+        custom: []
+        name: level_name
+        description: 'Level name. Must not be greater than 255 characters.'
+        required: false
+        example: Starter
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Owning course id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_order:
+        custom: []
+        name: level_order
+        description: 'Position in the learning path (1-based). Must be at least 1.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      cefr_level:
+        custom: []
+        name: cefr_level
+        description: 'CEFR mapping. Must not be greater than 50 characters.'
+        required: false
+        example: Pre-A1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Status: active or inactive.'
+        required: false
+        example: active
+        type: string
+        enumValues:
+          - active
+          - inactive
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      level_code: KIDS-STARTER
+      level_name: Starter
+      course_id: 1
+      level_order: 1
+      cefr_level: Pre-A1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+      status: active
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/level/suspend/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Suspend level'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/level/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Level'
+      groupDescription: |-
+
+        Level master: the learning-path catalogue of proficiency levels per course
+        (student-level.md §V).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore level'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

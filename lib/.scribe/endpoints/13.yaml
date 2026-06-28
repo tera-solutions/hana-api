@@ -1,0 +1,1083 @@
+name: 'Education - Class'
+description: |-
+
+  Manage classes (lớp học) — the core operational unit linking courses, students,
+  teachers, rooms, curriculum and attendance.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/class-room/list
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List classes'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by class name or code.'
+        required: false
+        example: IELTS
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Filter by course ID.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      teacher_id:
+        custom: []
+        name: teacher_id
+        description: 'Filter by teacher ID.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      assignee_id:
+        custom: []
+        name: assignee_id
+        description: 'Filter by assignee (staff) user ID.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      weekday:
+        custom: []
+        name: weekday
+        description: 'Filter by schedule weekday (1=Mon … 7=Sun).'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      shift:
+        custom: []
+        name: shift
+        description: 'Filter by shift (schedule start time): morning, afternoon, evening.'
+        required: false
+        example: evening
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status: draft, upcoming, active, suspended, completed.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      start_from:
+        custom: []
+        name: start_from
+        description: 'date Classes starting on or after (Y-m-d).'
+        required: false
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      start_to:
+        custom: []
+        name: start_to
+        description: 'date Classes starting on or before (Y-m-d).'
+        required: false
+        example: '2026-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: code, name, start_date, status, created_at.'
+        required: false
+        example: start_date
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_dir:
+        custom: []
+        name: sort_dir
+        description: 'Sort direction: asc or desc (default desc).'
+        required: false
+        example: asc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size: 20, 50 or 100 (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number (default 1).'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: IELTS
+      course_id: 1
+      teacher_id: 2
+      assignee_id: 5
+      weekday: 2
+      shift: evening
+      status: active
+      start_from: '2026-07-01'
+      start_to: '2026-12-31'
+      sort_by: start_date
+      sort_dir: asc
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "items": [
+                {
+                  "id": 1, "code": "IELTS-F-2026-07", "name": "IELTS Foundation - Khai giảng tháng 7",
+                  "course_id": 1, "course": {"id": 1, "code": "IELTS_F", "name": "IELTS Foundation"},
+                  "teacher_id": 2, "teacher": {"id": 2, "full_name": "Nguyễn Văn A", "avatar": null},
+                  "assignee_id": 5, "assignee": {"id": 5, "name": "Trần Thị B"},
+                  "room_id": null, "learning_type": "scheduled",
+                  "start_date": "2026-07-01", "end_date": "2026-09-30",
+                  "status": "upcoming",
+                  "min_warning_capacity": 5, "min_capacity": 8,
+                  "max_warning_capacity": 18, "max_capacity": 20,
+                  "capacity_warning": null,
+                  "use_course_curriculum": true, "description": null,
+                  "schedules": [
+                    {"id": 1, "class_id": 1, "weekday": 2, "start_time": "19:00:00", "end_time": "20:30:00"},
+                    {"id": 2, "class_id": 1, "weekday": 5, "start_time": "19:00:00", "end_time": "20:30:00"}
+                  ],
+                  "business_id": 1,
+                  "created_by": 1, "updated_by": null, "deleted_by": null,
+                  "created_at": "2026-06-13T08:00:00.000000Z", "updated_at": "2026-06-13T08:00:00.000000Z", "deleted_at": null
+                }
+              ],
+              "pagination": {"total": 1, "per_page": 20, "current_page": 1, "last_page": 1}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/class-room/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Class detail'
+      description: 'Returns full class information plus student, operational and financial statistics.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "class": {
+                "id": 1, "code": "IELTS-F-2026-07", "name": "IELTS Foundation - Khai giảng tháng 7",
+                "course_id": 1, "course": {"id": 1, "code": "IELTS_F", "name": "IELTS Foundation"},
+                "teacher_id": 2, "teacher": {"id": 2, "full_name": "Nguyễn Văn A", "avatar": null},
+                "assignee_id": 5, "assignee": {"id": 5, "name": "Trần Thị B"},
+                "learning_type": "scheduled", "status": "upcoming",
+                "start_date": "2026-07-01", "end_date": "2026-09-30",
+                "min_warning_capacity": 5, "min_capacity": 8, "max_warning_capacity": 18, "max_capacity": 20,
+                "schedules": [
+                  {"id": 1, "class_id": 1, "weekday": 2, "start_time": "19:00:00", "end_time": "20:30:00"}
+                ],
+                "created_at": "2026-06-13T08:00:00.000000Z", "updated_at": "2026-06-13T08:00:00.000000Z", "deleted_at": null
+              },
+              "statistics": {
+                "students": {"total": 12, "active": 10, "reserved": 1, "completed": 1, "dropped": 0},
+                "operational": {"total_sessions": 24, "completed_sessions": 0, "pending_sessions": 24, "completion_rate": 0, "avg_attendance_rate": 0},
+                "financial": {"total_revenue": 0, "recognized_revenue": 0, "debt": 0, "refunds": 0}
+              }
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/class-room/create
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create class'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Tên lớp học. Must not be greater than 255 characters.'
+        required: true
+        example: 'IELTS Foundation - Khai giảng tháng 7'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      code:
+        custom: []
+        name: code
+        description: 'Mã lớp (duy nhất). Must not be greater than 255 characters.'
+        required: true
+        example: IELTS-F-2026-07
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'ID khóa học. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lesson_plan_id:
+        custom: []
+        name: lesson_plan_id
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      assignee_id:
+        custom: []
+        name: assignee_id
+        description: 'ID nhân viên phụ trách (optional). Must match an existing stored value.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      teacher_id:
+        custom: []
+        name: teacher_id
+        description: 'ID giáo viên phụ trách (optional). Must match an existing stored value.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      room_id:
+        custom: []
+        name: room_id
+        description: 'ID phòng học (optional).'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      learning_type:
+        custom: []
+        name: learning_type
+        description: 'Hình thức học: scheduled | self_learning | flexible.'
+        required: true
+        example: scheduled
+        type: string
+        enumValues:
+          - scheduled
+          - self_learning
+          - flexible
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: 'Ngày khai giảng (Y-m-d). Must be a valid date.'
+        required: true
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'Ngày kết thúc dự kiến (Y-m-d, optional). Must be a valid date. Must be a date after <code>start_date</code>.'
+        required: false
+        example: '2026-09-30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      min_warning_capacity:
+        custom: []
+        name: min_warning_capacity
+        description: 'Sĩ số cảnh báo tối thiểu. Must be at least 0.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      min_capacity:
+        custom: []
+        name: min_capacity
+        description: 'Sĩ số tối thiểu. Must be at least 0.'
+        required: false
+        example: 8
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      max_warning_capacity:
+        custom: []
+        name: max_warning_capacity
+        description: 'Sĩ số cảnh báo tối đa. Must be at least 0.'
+        required: false
+        example: 18
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      max_capacity:
+        custom: []
+        name: max_capacity
+        description: 'Sĩ số tối đa. Must be at least 1.'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      use_course_curriculum:
+        custom: []
+        name: use_course_curriculum
+        description: 'Sao chép chương trình học từ khóa học mẫu.'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Mô tả lớp học. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      schedules:
+        custom: []
+        name: schedules
+        description: 'Danh sách lịch học (array).'
+        required: false
+        example:
+          -
+            weekday: 2
+            start_time: '19:00'
+            end_time: '20:30'
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'schedules[].weekday':
+        custom: []
+        name: 'schedules[].weekday'
+        description: 'Must be between 1 and 7.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'schedules[].start_time':
+        custom: []
+        name: 'schedules[].start_time'
+        description: 'Must be a valid date in the format <code>H:i</code>.'
+        required: true
+        example: '00:32'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'schedules[].end_time':
+        custom: []
+        name: 'schedules[].end_time'
+        description: 'Must be a valid date in the format <code>H:i</code>. Must be a date after <code>schedules.*.start_time</code>.'
+        required: true
+        example: '2107-07-23'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'IELTS Foundation - Khai giảng tháng 7'
+      code: IELTS-F-2026-07
+      course_id: 1
+      lesson_plan_id: 17
+      assignee_id: 5
+      teacher_id: 2
+      room_id: 3
+      learning_type: scheduled
+      start_date: '2026-07-01'
+      end_date: '2026-09-30'
+      min_warning_capacity: 5
+      min_capacity: 8
+      max_warning_capacity: 18
+      max_capacity: 20
+      use_course_curriculum: true
+      description: 'Dolorum amet iste laborum eius est dolor.'
+      business_id: 17
+      schedules:
+        -
+          weekday: 2
+          start_time: '19:00'
+          end_time: '20:30'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạo lớp học thành công.",
+            "data": {
+              "id": 1, "code": "IELTS-F-2026-07", "name": "IELTS Foundation - Khai giảng tháng 7",
+              "course_id": 1, "teacher_id": 2, "learning_type": "scheduled",
+              "start_date": "2026-07-01", "end_date": "2026-09-30",
+              "status": "upcoming", "max_capacity": 20,
+              "schedules": [
+                {"id": 1, "class_id": 1, "weekday": 2, "start_time": "19:00:00", "end_time": "20:30:00"}
+              ],
+              "created_at": "2026-06-13T08:00:00.000000Z", "updated_at": "2026-06-13T08:00:00.000000Z", "deleted_at": null
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/class-room/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update class'
+      description: |-
+        Partial update — only send fields to change. Code and course_id are immutable
+        once sessions exist.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Tên lớp học. Must not be greater than 255 characters.'
+        required: false
+        example: 'IELTS Foundation - Khai giảng tháng 7'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      lesson_plan_id:
+        custom: []
+        name: lesson_plan_id
+        description: 'Must match an existing stored value.'
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      assignee_id:
+        custom: []
+        name: assignee_id
+        description: 'ID nhân viên phụ trách. Must match an existing stored value.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      teacher_id:
+        custom: []
+        name: teacher_id
+        description: 'ID giáo viên phụ trách. Must match an existing stored value.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      room_id:
+        custom: []
+        name: room_id
+        description: ''
+        required: false
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      learning_type:
+        custom: []
+        name: learning_type
+        description: ''
+        required: false
+        example: scheduled
+        type: string
+        enumValues:
+          - scheduled
+          - self_learning
+          - flexible
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-06-24T00:32:32'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'Must be a valid date. Must be a date after <code>start_date</code>.'
+        required: false
+        example: '2107-07-23'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      min_warning_capacity:
+        custom: []
+        name: min_warning_capacity
+        description: 'Must be at least 0.'
+        required: false
+        example: 45
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      min_capacity:
+        custom: []
+        name: min_capacity
+        description: 'Must be at least 0.'
+        required: false
+        example: 56
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      max_warning_capacity:
+        custom: []
+        name: max_warning_capacity
+        description: 'Must be at least 0.'
+        required: false
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      max_capacity:
+        custom: []
+        name: max_capacity
+        description: 'Must be at least 1.'
+        required: false
+        example: 51
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Must not be greater than 5000 characters.'
+        required: false
+        example: 'Eius est dolor dolores minus voluptatem quisquam.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      schedules:
+        custom: []
+        name: schedules
+        description: 'Toàn bộ lịch học mới (thay thế lịch cũ). Null = giữ nguyên.'
+        required: false
+        example:
+          -
+            weekday: 2
+            start_time: '19:00'
+            end_time: '20:30'
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'schedules[].weekday':
+        custom: []
+        name: 'schedules[].weekday'
+        description: 'Must be between 1 and 7.'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'schedules[].start_time':
+        custom: []
+        name: 'schedules[].start_time'
+        description: 'Must be a valid date in the format <code>H:i</code>.'
+        required: true
+        example: '00:32'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'schedules[].end_time':
+        custom: []
+        name: 'schedules[].end_time'
+        description: 'Must be a valid date in the format <code>H:i</code>. Must be a date after <code>schedules.*.start_time</code>.'
+        required: true
+        example: '2107-07-23'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'IELTS Foundation - Khai giảng tháng 7'
+      lesson_plan_id: 17
+      assignee_id: 5
+      teacher_id: 2
+      room_id: 17
+      learning_type: scheduled
+      start_date: '2026-06-24T00:32:32'
+      end_date: '2107-07-23'
+      min_warning_capacity: 45
+      min_capacity: 56
+      max_warning_capacity: 16
+      max_capacity: 51
+      description: 'Eius est dolor dolores minus voluptatem quisquam.'
+      schedules:
+        -
+          weekday: 2
+          start_time: '19:00'
+          end_time: '20:30'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật lớp học thành công.",
+            "data": {
+              "id": 1, "code": "IELTS-F-2026-07", "name": "IELTS Foundation (cập nhật)",
+              "status": "upcoming", "updated_at": "2026-06-13T09:00:00.000000Z"
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/class-room/suspend/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Suspend class'
+      description: 'Moves the class to "suspended" status and records the reason.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Lý do tạm ngừng lớp học. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Giáo viên nghỉ bệnh dài hạn.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Giáo viên nghỉ bệnh dài hạn.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạm ngừng lớp học thành công.",
+            "data": {"id": 1, "code": "IELTS-F-2026-07", "status": "suspended"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": false,
+            "msg": "Lớp học đang ở trạng thái tạm ngừng.",
+            "data": null,
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: 'Already suspended'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/class-room/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class'
+      groupDescription: |-
+
+        Manage classes (lớp học) — the core operational unit linking courses, students,
+        teachers, rooms, curriculum and attendance.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore class'
+      description: 'Reactivates a suspended class back to upcoming or active based on start date.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khôi phục lớp học thành công.",
+            "data": {"id": 1, "code": "IELTS-F-2026-07", "status": "upcoming"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": false,
+            "msg": "Chỉ có thể khôi phục lớp học đang tạm ngừng.",
+            "data": null,
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: 'Not suspended'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

@@ -1,0 +1,656 @@
+name: 'Education - Room'
+description: |-
+
+  Manage classrooms (physical rooms) used for scheduling classes and sessions.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/room/list
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List rooms'
+      description: 'Paginated, filterable list of rooms.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by room code or name.'
+        required: false
+        example: A101
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Filter by branch.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      room_code:
+        custom: []
+        name: room_code
+        description: 'Filter by room code (partial).'
+        required: false
+        example: A1
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      room_name:
+        custom: []
+        name: room_name
+        description: 'Filter by room name (partial).'
+        required: false
+        example: Phòng
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      room_type:
+        custom: []
+        name: room_type
+        description: 'Filter by room type.'
+        required: false
+        example: classroom
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status: active, inactive, maintenance.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      floor:
+        custom: []
+        name: floor
+        description: 'Filter by floor.'
+        required: false
+        example: '1'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: room_code, room_name, capacity, floor, status, created_at.'
+        required: false
+        example: room_code
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_dir:
+        custom: []
+        name: sort_dir
+        description: 'Sort direction: asc or desc (default desc).'
+        required: false
+        example: asc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size: 20, 50 or 100 (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number (default 1).'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: A101
+      branch_id: 1
+      room_code: A1
+      room_name: Phòng
+      room_type: classroom
+      status: active
+      floor: '1'
+      sort_by: room_code
+      sort_dir: asc
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "items": [
+                {"id": 1, "room_code": "A101", "room_name": "Phòng A101", "floor": "1", "capacity": 25, "room_type": "classroom", "status": "active", "branch_id": 1, "active_classes_count": 2}
+              ],
+              "pagination": {"total": 1, "per_page": 20, "current_page": 1, "last_page": 1}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/room/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Room detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The room ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "room": {"id": 1, "room_code": "A101", "room_name": "Phòng A101", "capacity": 25, "room_type": "classroom", "status": "active", "branch_id": 1},
+              "statistics": {"total_classes": 5, "active_classes": 2, "total_sessions": 40, "completed_sessions": 30, "last_used_at": "2026-06-10"},
+              "classes_in_use": [{"id": 3, "code": "KIDS01", "name": "Kids Basic 01", "teacher_id": 4, "max_capacity": 20}]
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/room/create
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create room'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Owning branch id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      room_code:
+        custom: []
+        name: room_code
+        description: 'Room code, unique within the branch. Must not be greater than 255 characters.'
+        required: true
+        example: A101
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      room_name:
+        custom: []
+        name: room_name
+        description: 'Room name. Must not be greater than 255 characters.'
+        required: true
+        example: 'Phòng A101'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      floor:
+        custom: []
+        name: floor
+        description: 'Floor. Must not be greater than 50 characters.'
+        required: false
+        example: '1'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      capacity:
+        custom: []
+        name: capacity
+        description: 'Maximum capacity (> 0). Must be at least 1.'
+        required: true
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      room_type:
+        custom: []
+        name: room_type
+        description: 'Room type: classroom, computer_room, speaking_room, exam_room, meeting_room, other.'
+        required: true
+        example: classroom
+        type: string
+        enumValues:
+          - classroom
+          - computer_room
+          - speaking_room
+          - exam_room
+          - meeting_room
+          - other
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Notes. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      branch_id: 1
+      room_code: A101
+      room_name: 'Phòng A101'
+      floor: '1'
+      capacity: 25
+      room_type: classroom
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạo phòng học thành công.",
+            "data": {"id": 1, "room_code": "A101", "room_name": "Phòng A101", "capacity": 25, "room_type": "classroom", "status": "active", "branch_id": 1},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/room/suspend/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Suspend room'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The room ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for suspending the room. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Phòng đang sửa chữa'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      force:
+        custom: []
+        name: force
+        description: 'Confirm suspension even when future sessions are scheduled (room.md BR005).'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Phòng đang sửa chữa'
+      force: false
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Ngừng sử dụng phòng học thành công.",
+            "data": {"id": 1, "room_code": "A101", "status": "inactive"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/room/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore room'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The room ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khôi phục phòng học thành công.",
+            "data": {"id": 1, "room_code": "A101", "status": "active"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/room/schedule/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Room'
+      groupDescription: |-
+
+        Manage classrooms (physical rooms) used for scheduling classes and sessions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Check room schedule conflict'
+      description: 'Detects sessions in the room that overlap the given slot (room.md §11, BR006).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The room ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters:
+      lesson_date:
+        custom: []
+        name: lesson_date
+        description: 'Date to check (Y-m-d). Must be a valid date.'
+        required: true
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_time:
+        custom: []
+        name: start_time
+        description: 'Start time (H:i). Must be a valid date in the format <code>H:i</code>.'
+        required: true
+        example: '08:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_time:
+        custom: []
+        name: end_time
+        description: 'End time (H:i). Must be a valid date in the format <code>H:i</code>. Must be a date after <code>start_time</code>.'
+        required: true
+        example: '10:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      ignore_session_id:
+        custom: []
+        name: ignore_session_id
+        description: 'Session id to exclude (e.g. when rescheduling itself).'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanQueryParameters:
+      lesson_date: '2026-07-01'
+      start_time: '08:00'
+      end_time: '10:00'
+      ignore_session_id: 5
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"has_conflict": true, "conflicts": [{"id": 9, "class_id": 3, "session_date": "2026-07-01", "start_time": "08:00:00", "end_time": "10:00:00"}]},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

@@ -2,8 +2,13 @@
 
 namespace App\Modules\Education\LessonPlan\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanVersion\Services\LessonPlanVersionService;
+use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -11,11 +16,52 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class LessonPlanService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /**
      * Paginated, searchable, filterable, sortable list (lesson-plan.md §4).
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['plan_code', 'plan_name', 'version', 'total_lessons', 'status', 'created_at']);
+
+        return $query->with('course')->withCount('lessons')->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, total_lessons: int, in_use: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $planIds = (clone $this->baseQuery($params))->pluck('id');
+
+        $inUse = ClassRoom::whereIn('lesson_plan_id', $planIds)
+            ->distinct()
+            ->count('lesson_plan_id');
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, LessonPlanStatus::cases()),
+            'total_lessons' => (int) (clone $this->baseQuery($params))->sum('total_lessons'),
+            'in_use' => $inUse,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = LessonPlan::query();
 
@@ -37,9 +83,11 @@ class LessonPlanService
             $query->where('status', $params['status']);
         }
 
-        $this->applySort($query, $params, ['plan_code', 'plan_name', 'version', 'total_lessons', 'status', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainLessonPlans($query);
+        }
 
-        return $query->with('course')->withCount('lessons')->paginate($this->resolvePerPage($params));
+        return $query;
     }
 
     public function find($id): LessonPlan

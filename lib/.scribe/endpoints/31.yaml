@@ -1,0 +1,285 @@
+name: 'Education - Question Category'
+description: |-
+
+  Manage the question bank category hierarchy (question.md §XV).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/question-category/list
+    metadata:
+      custom: []
+      groupName: 'Education - Question Category'
+      groupDescription: |-
+
+        Manage the question bank category hierarchy (question.md §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List categories'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/question-category/create
+    metadata:
+      custom: []
+      groupName: 'Education - Question Category'
+      groupDescription: |-
+
+        Manage the question bank category hierarchy (question.md §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create category'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      category_code:
+        custom: []
+        name: category_code
+        description: 'Unique category code. Must not be greater than 100 characters.'
+        required: true
+        example: GRAMMAR
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category_name:
+        custom: []
+        name: category_name
+        description: 'Category name. Must not be greater than 255 characters.'
+        required: true
+        example: Grammar
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      parent_id:
+        custom: []
+        name: parent_id
+        description: 'Parent category (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      category_code: GRAMMAR
+      category_name: Grammar
+      parent_id: 1
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/question-category/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Question Category'
+      groupDescription: |-
+
+        Manage the question bank category hierarchy (question.md §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update category'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The category ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      category_code:
+        custom: []
+        name: category_code
+        description: 'Unique category code. Must not be greater than 100 characters.'
+        required: false
+        example: GRAMMAR
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category_name:
+        custom: []
+        name: category_name
+        description: 'Category name. Must not be greater than 255 characters.'
+        required: false
+        example: Grammar
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      parent_id:
+        custom: []
+        name: parent_id
+        description: 'Parent category (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      category_code: GRAMMAR
+      category_name: Grammar
+      parent_id: 1
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/question-category/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Question Category'
+      groupDescription: |-
+
+        Manage the question bank category hierarchy (question.md §XV).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete category'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The category ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

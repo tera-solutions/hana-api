@@ -1,0 +1,390 @@
+name: 'Education - Class Schedule'
+description: |-
+
+  Manage schedules (lịch học) attached to a class.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/class-room/{classId}/schedule/list'
+    metadata:
+      custom: []
+      groupName: 'Education - Class Schedule'
+      groupDescription: |-
+
+        Manage schedules (lịch học) attached to a class.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List schedules for a class'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      classId:
+        custom: []
+        name: classId
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      classId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": [
+              {"id": 1, "class_id": 1, "weekday": 2, "start_time": "19:00:00", "end_time": "20:30:00"},
+              {"id": 2, "class_id": 1, "weekday": 5, "start_time": "19:00:00", "end_time": "20:30:00"}
+            ],
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/class-room/{classId}/schedule/create'
+    metadata:
+      custom: []
+      groupName: 'Education - Class Schedule'
+      groupDescription: |-
+
+        Manage schedules (lịch học) attached to a class.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add schedule to a class'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      classId:
+        custom: []
+        name: classId
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      classId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      weekday:
+        custom: []
+        name: weekday
+        description: 'Thứ trong tuần (1=T2, 2=T3, …, 7=CN). Must be between 1 and 7.'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_time:
+        custom: []
+        name: start_time
+        description: 'Giờ bắt đầu (HH:MM). Must be a valid date in the format <code>H:i</code>.'
+        required: true
+        example: '19:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_time:
+        custom: []
+        name: end_time
+        description: 'Giờ kết thúc (HH:MM). Must be a valid date in the format <code>H:i</code>. Must be a date after <code>start_time</code>.'
+        required: true
+        example: '20:30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      weekday: 2
+      start_time: '19:00'
+      end_time: '20:30'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thêm lịch học thành công.",
+            "data": {"id": 3, "class_id": 1, "weekday": 3, "start_time": "18:00:00", "end_time": "19:30:00"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/class-schedule/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class Schedule'
+      groupDescription: |-
+
+        Manage schedules (lịch học) attached to a class.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Schedule detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The schedule ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"id": 1, "class_id": 1, "weekday": 2, "start_time": "19:00:00", "end_time": "20:30:00"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/class-schedule/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class Schedule'
+      groupDescription: |-
+
+        Manage schedules (lịch học) attached to a class.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a schedule'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The schedule ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      weekday:
+        custom: []
+        name: weekday
+        description: 'Thứ trong tuần (1=T2 … 7=CN). Must be between 1 and 7.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_time:
+        custom: []
+        name: start_time
+        description: 'Giờ bắt đầu (HH:MM). Must be a valid date in the format <code>H:i</code>.'
+        required: false
+        example: '19:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_time:
+        custom: []
+        name: end_time
+        description: 'Giờ kết thúc (HH:MM). Must be a valid date in the format <code>H:i</code>.'
+        required: false
+        example: '20:30'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      weekday: 5
+      start_time: '19:00'
+      end_time: '20:30'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật lịch học thành công.",
+            "data": {"id": 1, "class_id": 1, "weekday": 2, "start_time": "18:30:00", "end_time": "20:00:00"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/class-schedule/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Class Schedule'
+      groupDescription: |-
+
+        Manage schedules (lịch học) attached to a class.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a schedule'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The schedule ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Xóa lịch học thành công.",
+            "data": null,
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

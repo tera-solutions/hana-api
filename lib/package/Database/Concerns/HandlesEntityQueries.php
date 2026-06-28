@@ -63,4 +63,22 @@ trait HandlesEntityQueries
 
         return in_array($perPage, $allowed, true) ? $perPage : $default;
     }
+
+    /**
+     * Execute $fn, returning $fallback if it throws. Used to keep summary/stat
+     * queries resilient to a missing or partial schema.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $fn
+     * @return T|mixed
+     */
+    protected function guard(callable $fn, mixed $fallback = 0): mixed
+    {
+        try {
+            return $fn();
+        } catch (\Throwable) {
+            return $fallback;
+        }
+    }
 }

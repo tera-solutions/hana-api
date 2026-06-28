@@ -1,0 +1,741 @@
+name: 'Education - Lesson'
+description: |-
+
+  Manage the actual per-class lessons generated from a lesson plan.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/lesson/list
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List lessons'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by lesson title.'
+        required: false
+        example: Family
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      class_room_id:
+        custom: []
+        name: class_room_id
+        description: 'Filter by class.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      teacher_id:
+        custom: []
+        name: teacher_id
+        description: 'Filter by teacher.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      room_id:
+        custom: []
+        name: room_id
+        description: 'Filter by room.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Filter by branch (via room).'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status.'
+        required: false
+        example: scheduled
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      lesson_date:
+        custom: []
+        name: lesson_date
+        description: 'date Filter by exact date (Y-m-d).'
+        required: false
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_from:
+        custom: []
+        name: date_from
+        description: 'date Lessons on or after (Y-m-d).'
+        required: false
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      date_to:
+        custom: []
+        name: date_to
+        description: 'date Lessons on or before (Y-m-d).'
+        required: false
+        example: '2026-07-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: lesson_no, lesson_date, start_time, status, created_at.'
+        required: false
+        example: lesson_date
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: Family
+      class_room_id: 1
+      teacher_id: 1
+      room_id: 1
+      branch_id: 1
+      status: scheduled
+      lesson_date: '2026-07-01'
+      date_from: '2026-07-01'
+      date_to: '2026-07-31'
+      sort_by: lesson_date
+      per_page: 20
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"items": [{"id": 1, "class_room_id": 1, "lesson_no": 1, "lesson_title": "Alphabet", "lesson_date": "2026-07-01", "status": "scheduled"}], "pagination": {"total": 1, "per_page": 20, "current_page": 1, "last_page": 1}},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/lesson/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Lesson detail'
+      description: 'Returns the lesson with teaching content and change history.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"lesson": {"id": 1, "lesson_no": 1, "lesson_title": "Alphabet", "status": "scheduled", "histories": []}},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson/generate/{classId}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Generate lessons for a class from its lesson plan'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      classId:
+        custom: []
+        name: classId
+        description: 'The class ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      classId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      from_date:
+        custom: []
+        name: from_date
+        description: 'Generate lessons starting from this date (Y-m-d). Must be a valid date.'
+        required: true
+        example: '2026-07-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      override:
+        custom: []
+        name: override
+        description: 'Delete existing non-completed/locked lessons before generating.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      from_date: '2026-07-01'
+      override: false
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Sinh buổi học thành công.",
+            "data": {"created": 20, "skipped": 0},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/lesson/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      teacher_id:
+        custom: []
+        name: teacher_id
+        description: 'Teacher id. Must match an existing stored value.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      lesson_note:
+        custom: []
+        name: lesson_note
+        description: 'Lesson note. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Học viên tiếp thu tốt.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      teacher_id: 2
+      lesson_note: 'Học viên tiếp thu tốt.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật buổi học thành công.",
+            "data": {"id": 1, "teacher_id": 2, "lesson_note": "Học viên tiếp thu tốt."},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson/reschedule/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reschedule a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      lesson_date:
+        custom: []
+        name: lesson_date
+        description: 'New date (Y-m-d). Must be a valid date.'
+        required: true
+        example: '2026-07-05'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_time:
+        custom: []
+        name: start_time
+        description: 'New start time (H:i). Must be a valid date in the format <code>H:i</code>.'
+        required: true
+        example: '09:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_time:
+        custom: []
+        name: end_time
+        description: 'New end time (H:i). Must be a valid date in the format <code>H:i</code>. Must be a date after <code>start_time</code>.'
+        required: true
+        example: '11:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      room_id:
+        custom: []
+        name: room_id
+        description: 'New room id (defaults to current). Must match an existing stored value.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      lesson_date: '2026-07-05'
+      start_time: '09:00'
+      end_time: '11:00'
+      room_id: 2
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Đổi lịch buổi học thành công.",
+            "data": {"id": 1, "lesson_date": "2026-07-05", "start_time": "09:00:00", "end_time": "11:00:00"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson/cancel/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Cancel a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for cancelling. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Giáo viên nghỉ ốm'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Giáo viên nghỉ ốm'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Hủy buổi học thành công.",
+            "data": {"id": 1, "status": "cancelled"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson/lock/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Lock a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khóa buổi học thành công.",
+            "data": {"id": 1, "status": "locked"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/lesson/unlock/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Lesson'
+      groupDescription: |-
+
+        Manage the actual per-class lessons generated from a lesson plan.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Unlock a lesson'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The lesson ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for unlocking. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Cần sửa điểm danh'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      reason: 'Cần sửa điểm danh'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Mở khóa buổi học thành công.",
+            "data": {"id": 1, "status": "completed"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

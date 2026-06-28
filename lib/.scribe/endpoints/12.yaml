@@ -1,0 +1,145 @@
+name: 'Education - Assignment Submission'
+description: |-
+
+  Grade and publish results of student submissions (assignment.md §9, §10).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/submission/grade/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Assignment Submission'
+      groupDescription: |-
+
+        Grade and publish results of student submissions (assignment.md §9, §10).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Grade a submission'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The submission ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      score:
+        custom: []
+        name: score
+        description: 'Score (must not exceed the assignment max score). Must be at least 0.'
+        required: true
+        example: 9.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      comment:
+        custom: []
+        name: comment
+        description: 'Teacher comment. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Làm tốt, cần chú ý ngữ pháp.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      score: 9.0
+      comment: 'Làm tốt, cần chú ý ngữ pháp.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/submission/publish/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Assignment Submission'
+      groupDescription: |-
+
+        Grade and publish results of student submissions (assignment.md §9, §10).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Publish a submission result'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The submission ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

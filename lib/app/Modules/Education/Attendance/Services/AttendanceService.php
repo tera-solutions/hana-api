@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Attendance\Services;
 
 use App\Modules\Education\Attendance\Models\Attendance;
+use App\Modules\Education\Support\TeacherScope;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 class AttendanceService
@@ -44,6 +45,10 @@ class AttendanceService
         }
         if (! empty($params['date_to'])) {
             $query->whereHas('session', fn ($q) => $q->whereDate('session_date', '<=', $params['date_to']));
+        }
+
+        if ($scope = TeacherScope::current()) {
+            $query->whereHas('session', fn ($q) => $scope->constrainSessions($q));
         }
 
         $this->applySort($query, $params, ['status', 'checkin_time', 'created_at']);

@@ -1,0 +1,940 @@
+name: 'Education - Material'
+description: |-
+
+  Central learning-resource library: documents, versioning and links to courses,
+  lesson plans, lessons and assignments (material.md).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/material/list
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List materials'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/material/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Material detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/material/create
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create material'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      material_name:
+        custom: []
+        name: material_name
+        description: 'Material name. Must not be greater than 255 characters.'
+        required: true
+        example: 'Workbook Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      material_type:
+        custom: []
+        name: material_type
+        description: 'Type: pdf, document, image, video, audio, presentation, worksheet, homework, exam, other.'
+        required: true
+        example: pdf
+        type: string
+        enumValues:
+          - pdf
+          - document
+          - image
+          - video
+          - audio
+          - presentation
+          - worksheet
+          - homework
+          - exam
+          - other
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category_id:
+        custom: []
+        name: category_id
+        description: 'Category id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      access_type:
+        custom: []
+        name: access_type
+        description: 'Access audience: teacher, student, parent, internal.'
+        required: true
+        example: student
+        type: string
+        enumValues:
+          - teacher
+          - student
+          - parent
+          - internal
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      file_id:
+        custom: []
+        name: file_id
+        description: 'Reference to the uploaded file (optional first version). Must be at least 1.'
+        required: false
+        example: 10
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      file_name:
+        custom: []
+        name: file_name
+        description: 'Original file name. Must not be greater than 255 characters.'
+        required: false
+        example: workbook-starter.pdf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      file_size:
+        custom: []
+        name: file_size
+        description: 'File size in bytes. Must be at least 0.'
+        required: false
+        example: 1048576
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      mime_type:
+        custom: []
+        name: mime_type
+        description: 'File mime type. Must not be greater than 255 characters.'
+        required: false
+        example: application/pdf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      change_log:
+        custom: []
+        name: change_log
+        description: 'Change note for this version. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Bản phát hành đầu tiên'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      material_name: 'Workbook Starter'
+      material_type: pdf
+      category_id: 1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+      access_type: student
+      file_id: 10
+      file_name: workbook-starter.pdf
+      file_size: 1048576
+      mime_type: application/pdf
+      change_log: 'Bản phát hành đầu tiên'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/material/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update material'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      material_name:
+        custom: []
+        name: material_name
+        description: 'Material name. Must not be greater than 255 characters.'
+        required: false
+        example: 'Workbook Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      material_type:
+        custom: []
+        name: material_type
+        description: 'Material type.'
+        required: false
+        example: pdf
+        type: string
+        enumValues:
+          - pdf
+          - document
+          - image
+          - video
+          - audio
+          - presentation
+          - worksheet
+          - homework
+          - exam
+          - other
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      category_id:
+        custom: []
+        name: category_id
+        description: 'Category id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Description. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Dolores dolorum amet iste laborum eius est dolor.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      access_type:
+        custom: []
+        name: access_type
+        description: 'Access audience: teacher, student, parent, internal.'
+        required: false
+        example: student
+        type: string
+        enumValues:
+          - teacher
+          - student
+          - parent
+          - internal
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      material_name: 'Workbook Starter'
+      material_type: pdf
+      category_id: 1
+      description: 'Dolores dolorum amet iste laborum eius est dolor.'
+      access_type: student
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/material/upload/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Upload a new version'
+      description: 'Real file storage is not implemented; the file is referenced by id + metadata.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      file_id:
+        custom: []
+        name: file_id
+        description: 'Reference to the uploaded file. Must be at least 1.'
+        required: false
+        example: 11
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      file_name:
+        custom: []
+        name: file_name
+        description: 'Original file name. Must not be greater than 255 characters.'
+        required: true
+        example: workbook-starter-v2.pdf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      file_size:
+        custom: []
+        name: file_size
+        description: 'File size in bytes. Must be at least 0.'
+        required: false
+        example: 2097152
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      mime_type:
+        custom: []
+        name: mime_type
+        description: 'File mime type. Must not be greater than 255 characters.'
+        required: false
+        example: application/pdf
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      change_log:
+        custom: []
+        name: change_log
+        description: 'What changed in this version. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Bổ sung chương 5'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      file_id: 11
+      file_name: workbook-starter-v2.pdf
+      file_size: 2097152
+      mime_type: application/pdf
+      change_log: 'Bổ sung chương 5'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/material/rollback/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Roll back to a previous version'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      version:
+        custom: []
+        name: version
+        description: 'Version number to roll back to. Must be at least 1.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      version: 1
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/material/publish/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Publish material'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/material/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete material'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/material/attach/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Attach material to an entity'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      entity_type:
+        custom: []
+        name: entity_type
+        description: 'Linked entity: course, lesson_plan, lesson, assignment, evaluation.'
+        required: true
+        example: lesson
+        type: string
+        enumValues:
+          - course
+          - lesson_plan
+          - lesson
+          - assignment
+          - evaluation
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      entity_id:
+        custom: []
+        name: entity_id
+        description: 'Id of the linked entity. Must be at least 1.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      entity_type: lesson
+      entity_id: 1
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/material/mapping/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Detach a material link'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The mapping ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/material/mappings/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Material'
+      groupDescription: |-
+
+        Central learning-resource library: documents, versioning and links to courses,
+        lesson plans, lessons and assignments (material.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List where a material is used'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The material ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

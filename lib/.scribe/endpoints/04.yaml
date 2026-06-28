@@ -1,0 +1,67 @@
+name: 'Core - Metadata'
+description: |-
+
+  Frontend bootstrap data: every model enumeration (status, type, gender, …) as
+  `{ key, value, label }` lists, grouped by domain. `key` is the UPPER_SNAKE enum
+  identifier (stable), `value` the wire value, `label` the Vietnamese display text.
+  Fetch once after login to populate dropdowns, status badges and filters without
+  hardcoding option lists.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/auth/metadata
+    metadata:
+      custom: []
+      groupName: 'Core - Metadata'
+      groupDescription: |-
+
+        Frontend bootstrap data: every model enumeration (status, type, gender, …) as
+        `{ key, value, label }` lists, grouped by domain. `key` is the UPPER_SNAKE enum
+        identifier (stable), `value` the wire value, `label` the Vietnamese display text.
+        Fetch once after login to populate dropdowns, status badges and filters without
+        hardcoding option lists.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Init metadata'
+      description: 'Returns the full enum catalog. Labels are in Vietnamese.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "shared": {
+                "gender": [{"key": "MALE", "value": "male", "label": "Nam"}, {"key": "FEMALE", "value": "female", "label": "Nữ"}, {"key": "OTHER", "value": "other", "label": "Khác"}]
+              }
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

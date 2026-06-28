@@ -1,0 +1,961 @@
+name: 'CRM - Parent'
+description: |-
+
+  Manage parents / guardians.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/crm/parent/list
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List parents'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      search:
+        custom: []
+        name: search
+        description: 'Search by parent code, name, email or phone.'
+        required: false
+        example: robert
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Filter by business id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Filter by branch id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status.'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      relation:
+        custom: []
+        name: relation
+        description: 'Filter by relation to a student (father, mother, ...).'
+        required: false
+        example: father
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      student_id:
+        custom: []
+        name: student_id
+        description: 'Filter parents linked to this student id.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      created_from:
+        custom: []
+        name: created_from
+        description: 'date Created on or after (Y-m-d).'
+        required: false
+        example: '2026-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      created_to:
+        custom: []
+        name: created_to
+        description: 'date Created on or before (Y-m-d).'
+        required: false
+        example: '2026-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_by:
+        custom: []
+        name: sort_by
+        description: 'Sort column: code, name, created_at.'
+        required: false
+        example: created_at
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort_dir:
+        custom: []
+        name: sort_dir
+        description: 'Sort direction: asc or desc (default desc).'
+        required: false
+        example: desc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Page size: 20, 50 or 100 (default 20).'
+        required: false
+        example: 20
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page number (default 1).'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      search: robert
+      business_id: 1
+      branch_id: 1
+      status: active
+      relation: father
+      student_id: 1
+      created_from: '2026-01-01'
+      created_to: '2026-12-31'
+      sort_by: created_at
+      sort_dir: desc
+      per_page: 20
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "items": [
+                {"id": 1, "code": "PAR001", "name": "Trần Thị B", "gender": "female", "email": "b@example.com", "phone": "0900000000", "status": "active", "business_id": 1, "branch_id": 1}
+              ],
+              "pagination": {"total": 1, "per_page": 15, "current_page": 1, "last_page": 1}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/crm/parent/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Parent detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The parent ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "parent": {"id": 1, "code": "PAR001", "name": "Trần Thị B", "phone": "0900000000", "email": "b@example.com", "status": "active"},
+              "statistics": {"students": 2}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/crm/parent/create
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create parent'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Full name. Must not be greater than 255 characters.'
+        required: true
+        example: 'Robert Smith'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      gender:
+        custom: []
+        name: gender
+        description: male|female|other.
+        required: false
+        example: male
+        type: string
+        enumValues:
+          - male
+          - female
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: 'Date of birth (<= today). Must be a valid date. Must be a date before or equal to <code>today</code>.'
+        required: false
+        example: '1985-03-20'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      avatar:
+        custom: []
+        name: avatar
+        description: 'Avatar URL. Must not be greater than 1000 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Contact email. Must be a valid email address. Must not be greater than 255 characters.'
+        required: false
+        example: robert@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'Contact phone. Must match the regex /^[0-9+\-\s().]{6,20}$/.'
+        required: true
+        example: '0922222222'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: 'Address. Must not be greater than 1000 characters.'
+        required: false
+        example: '123 Le Loi'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      province:
+        custom: []
+        name: province
+        description: 'Province / city. Must not be greater than 255 characters.'
+        required: false
+        example: 'Ho Chi Minh'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      district:
+        custom: []
+        name: district
+        description: 'District. Must not be greater than 255 characters.'
+        required: false
+        example: 'District 7'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      business_id:
+        custom: []
+        name: business_id
+        description: 'Business id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Branch id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      occupation:
+        custom: []
+        name: occupation
+        description: 'Occupation. Must not be greater than 255 characters.'
+        required: false
+        example: Engineer
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      company:
+        custom: []
+        name: company
+        description: 'Company. Must not be greater than 255 characters.'
+        required: false
+        example: 'ABC Corp'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Note. Must not be greater than 2000 characters.'
+        required: false
+        example: amniihfqcoynlazghdtqt
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      students:
+        custom: []
+        name: students
+        description: 'Students to link.'
+        required: false
+        example: null
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'students[].student_id':
+        custom: []
+        name: 'students[].student_id'
+        description: 'Must match an existing stored value.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'students[].relation':
+        custom: []
+        name: 'students[].relation'
+        description: ''
+        required: false
+        example: mother
+        type: string
+        enumValues:
+          - father
+          - mother
+          - guardian
+          - grandfather
+          - grandmother
+          - uncle
+          - aunt
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Robert Smith'
+      gender: male
+      dob: '1985-03-20'
+      avatar: vmqeopfuudtdsufvyvddq
+      email: robert@example.com
+      phone: '0922222222'
+      address: '123 Le Loi'
+      province: 'Ho Chi Minh'
+      district: 'District 7'
+      business_id: 1
+      branch_id: 1
+      occupation: Engineer
+      company: 'ABC Corp'
+      note: amniihfqcoynlazghdtqt
+      students:
+        -
+          student_id: 17
+          relation: mother
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạo phụ huynh thành công.",
+            "data": {"id": 1, "code": "PAR001", "name": "Trần Thị B", "phone": "0900000000", "email": "b@example.com", "status": "active"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/crm/parent/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update parent'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The parent ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Full name. Must not be greater than 255 characters.'
+        required: false
+        example: 'Robert Smith'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      gender:
+        custom: []
+        name: gender
+        description: male|female|other.
+        required: false
+        example: male
+        type: string
+        enumValues:
+          - male
+          - female
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: 'Date of birth (<= today). Must be a valid date. Must be a date before or equal to <code>today</code>.'
+        required: false
+        example: '1985-03-20'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      avatar:
+        custom: []
+        name: avatar
+        description: 'Avatar URL. Must not be greater than 1000 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Contact email. Must be a valid email address. Must not be greater than 255 characters.'
+        required: false
+        example: robert@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'Contact phone. Must match the regex /^[0-9+\-\s().]{6,20}$/.'
+        required: false
+        example: '0922222222'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: 'Address. Must not be greater than 1000 characters.'
+        required: false
+        example: '123 Le Loi'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      province:
+        custom: []
+        name: province
+        description: 'Province / city. Must not be greater than 255 characters.'
+        required: false
+        example: 'Ho Chi Minh'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      district:
+        custom: []
+        name: district
+        description: 'District. Must not be greater than 255 characters.'
+        required: false
+        example: 'District 7'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      branch_id:
+        custom: []
+        name: branch_id
+        description: 'Branch id. Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      occupation:
+        custom: []
+        name: occupation
+        description: 'Occupation. Must not be greater than 255 characters.'
+        required: false
+        example: Engineer
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      company:
+        custom: []
+        name: company
+        description: 'Company. Must not be greater than 255 characters.'
+        required: false
+        example: 'ABC Corp'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Note. Must not be greater than 2000 characters.'
+        required: false
+        example: amniihfqcoynlazghdtqt
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      students:
+        custom: []
+        name: students
+        description: 'Students to link (replaces existing links).'
+        required: false
+        example: null
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'students[].student_id':
+        custom: []
+        name: 'students[].student_id'
+        description: 'Must match an existing stored value.'
+        required: true
+        example: 17
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'students[].relation':
+        custom: []
+        name: 'students[].relation'
+        description: ''
+        required: false
+        example: grandfather
+        type: string
+        enumValues:
+          - father
+          - mother
+          - guardian
+          - grandfather
+          - grandmother
+          - uncle
+          - aunt
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      name: 'Robert Smith'
+      gender: male
+      dob: '1985-03-20'
+      avatar: vmqeopfuudtdsufvyvddq
+      email: robert@example.com
+      phone: '0922222222'
+      address: '123 Le Loi'
+      province: 'Ho Chi Minh'
+      district: 'District 7'
+      branch_id: 1
+      occupation: Engineer
+      company: 'ABC Corp'
+      note: amniihfqcoynlazghdtqt
+      students:
+        -
+          student_id: 17
+          relation: grandfather
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Cập nhật phụ huynh thành công.",
+            "data": {"id": 1, "code": "PAR001", "name": "Trần Thị B", "phone": "0900000001", "status": "active"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/crm/parent/suspend/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Suspend parent'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The parent ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      suspend_date:
+        custom: []
+        name: suspend_date
+        description: 'Suspension date. Must be a valid date.'
+        required: true
+        example: '2026-06-12'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for suspension. Must not be greater than 1000 characters.'
+        required: true
+        example: 'Ngừng liên hệ'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      note:
+        custom: []
+        name: note
+        description: 'Additional note. Must not be greater than 2000 characters.'
+        required: false
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      suspend_date: '2026-06-12'
+      reason: 'Ngừng liên hệ'
+      note: vmqeopfuudtdsufvyvddq
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Tạm ngừng phụ huynh thành công.",
+            "data": {"id": 1, "code": "PAR001", "name": "Trần Thị B", "status": "suspended"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/crm/parent/restore/{id}'
+    metadata:
+      custom: []
+      groupName: 'CRM - Parent'
+      groupDescription: |-
+
+        Manage parents / guardians.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Restore parent'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The parent ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Khôi phục phụ huynh thành công.",
+            "data": {"id": 1, "code": "PAR001", "name": "Trần Thị B", "status": "active"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

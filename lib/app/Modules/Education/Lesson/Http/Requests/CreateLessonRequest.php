@@ -16,6 +16,7 @@ class CreateLessonRequest extends FormRequest
         return [
             'class_room_id' => ['required', 'integer', 'exists:edu_classes,id'],
             'lesson_title' => ['required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'lesson_date' => ['required', 'date'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
@@ -46,6 +47,10 @@ class CreateLessonRequest extends FormRequest
         return [
             'class_room_id' => ['description' => 'Class id.', 'example' => 1],
             'lesson_title' => ['description' => 'Lesson title.', 'example' => 'My Family'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+                'example' => 'https://cdn.hana.edu.vn/a.png',
+            ],
             'lesson_date' => ['description' => 'Lesson date (Y-m-d).', 'example' => '2026-07-01'],
             'start_time' => ['description' => 'Start time (H:i).', 'example' => '08:00'],
             'end_time' => ['description' => 'End time (H:i).', 'example' => '10:00'],

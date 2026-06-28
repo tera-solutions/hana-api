@@ -1,0 +1,411 @@
+name: 'Education - Student Level'
+description: |-
+
+  A student's current proficiency level: placement, promotion, manual adjustment
+  and change history (student-level.md).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/student-level/detail/{studentId}'
+    metadata:
+      custom: []
+      groupName: 'Education - Student Level'
+      groupDescription: |-
+
+        A student's current proficiency level: placement, promotion, manual adjustment
+        and change history (student-level.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Student level detail'
+      description: 'Current level with progress indicators and change history.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      studentId:
+        custom: []
+        name: studentId
+        description: 'The student ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      studentId: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/student-level/history/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Student Level'
+      groupDescription: |-
+
+        A student's current proficiency level: placement, promotion, manual adjustment
+        and change history (student-level.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Level history'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The student-level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/student-level/placement
+    metadata:
+      custom: []
+      groupName: 'Education - Student Level'
+      groupDescription: |-
+
+        A student's current proficiency level: placement, promotion, manual adjustment
+        and change history (student-level.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: Placement
+      description: 'Records a placement assessment and assigns the resulting level (BR001/BR002).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      student_id:
+        custom: []
+        name: student_id
+        description: 'Student id. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Course the level belongs to. Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Assigned level id (must belong to the course). Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      assessment_type:
+        custom: []
+        name: assessment_type
+        description: 'Assessment source: placement_test or teacher_evaluation.'
+        required: false
+        example: placement_test
+        type: string
+        enumValues:
+          - placement_test
+          - teacher_evaluation
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      score:
+        custom: []
+        name: score
+        description: 'Placement score (0–100). Must be between 0 and 100.'
+        required: false
+        example: 45.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      comment:
+        custom: []
+        name: comment
+        description: 'Assessor note. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Good speaking, weak grammar.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      student_id: 1
+      course_id: 1
+      level_id: 1
+      assessment_type: placement_test
+      score: 45.0
+      comment: 'Good speaking, weak grammar.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/student-level/promote/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Student Level'
+      groupDescription: |-
+
+        A student's current proficiency level: placement, promotion, manual adjustment
+        and change history (student-level.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: Promote
+      description: 'Promotes the student to the next level (or an explicit target).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The student-level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      target_level_id:
+        custom: []
+        name: target_level_id
+        description: 'Explicit target level; defaults to the next level in the path. Must match an existing stored value.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      reason:
+        custom: []
+        name: reason
+        description: 'Promotion note. Must not be greater than 5000 characters.'
+        required: false
+        example: 'Đạt yêu cầu lên cấp.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      target_level_id: 2
+      reason: 'Đạt yêu cầu lên cấp.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/student-level/adjust/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Student Level'
+      groupDescription: |-
+
+        A student's current proficiency level: placement, promotion, manual adjustment
+        and change history (student-level.md).
+      subgroup: ''
+      subgroupDescription: ''
+      title: Adjust
+      description: 'Manually moves the student to another level in the same course (BR002).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The student-level ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      target_level_id:
+        custom: []
+        name: target_level_id
+        description: 'Target level id (must belong to the same course). Must match an existing stored value.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      reason:
+        custom: []
+        name: reason
+        description: 'Reason for the manual adjustment. Must not be greater than 5000 characters.'
+        required: true
+        example: 'Đánh giá đầu vào chưa chính xác.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      target_level_id: 1
+      reason: 'Đánh giá đầu vào chưa chính xác.'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

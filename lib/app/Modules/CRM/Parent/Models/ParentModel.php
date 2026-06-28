@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 /**
  * Parent / guardian record (table `crm_parents`).
@@ -24,12 +25,15 @@ use Package\Database\Concerns\HasAuditFields;
 class ParentModel extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'crm_parents';
 
     protected $guarded = [];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_ACTIVE = ParentStatus::Active->value;
 
