@@ -4,6 +4,7 @@ namespace App\Modules\Education\ClassRoom\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
@@ -261,8 +262,15 @@ class ClassService
 
     public function operationalStats($classId): array
     {
-        $total = $this->guard(fn () => DB::table('edu_sessions')->where('class_id', $classId)->count());
-        $completed = $this->guard(fn () => DB::table('edu_sessions')->where('class_id', $classId)->where('status', 'completed')->count());
+        $total = $this->guard(fn () =>
+            ClassSession::where('class_id', $classId)->count()
+        );
+
+        $completed = $this->guard(fn () =>
+            ClassSession::where('class_id', $classId)
+                ->where('status', 'completed')
+                ->count()
+        );
 
         // Every lesson is either completed or pending, so pending is derivable.
         $pending = max(0, $total - $completed);
