@@ -416,4 +416,105 @@ class AssignmentTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('success', false);
     }
+
+    public function test_submitted_lists_all_students_who_have_submitted(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createAssignment(['max_score' => 10]);
+        $submitted = $this->makeStudentId();
+        $graded = $this->makeStudentId();
+        $assignedOnly = $this->makeStudentId();
+        $this->publish($id)->assertStatus(200);
+        $this->assignByStudent($id, [$submitted, $graded, $assignedOnly])->assertStatus(200);
+        $this->submit($id, $submitted)->assertStatus(200);
+        $this->submit($id, $graded)->assertStatus(200);
+        $this->postJson('/v1/edu/submission/grade/'.$this->submissionId($id, $graded), ['score' => 8])
+            ->assertStatus(200);
+
+        // Everyone who submitted appears — including the already-graded student;
+        // only the merely-assigned, never-submitted student is excluded.
+        $response = $this->getJson("/v1/edu/submission/submitted/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(2, 'data.items');
+
+        $studentIds = collect($response->json('data.items'))->pluck('student_id')->all();
+        $this->assertEqualsCanonicalizing([$submitted, $graded], $studentIds);
+    }
+
+    public function test_graded_lists_only_graded_submissions(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createAssignment(['max_score' => 10]);
+        $graded = $this->makeStudentId();
+        $submittedOnly = $this->makeStudentId();
+        $this->publish($id)->assertStatus(200);
+        $this->assignByStudent($id, [$graded, $submittedOnly])->assertStatus(200);
+        $this->submit($id, $graded)->assertStatus(200);
+        $this->submit($id, $submittedOnly)->assertStatus(200);
+
+        $this->postJson('/v1/edu/submission/grade/'.$this->submissionId($id, $graded), ['score' => 8])
+            ->assertStatus(200);
+
+        // Only the graded submission appears — the still-submitted one is excluded.
+        $this->getJson("/v1/edu/submission/graded/{$id}")
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.student_id', $graded)
+            ->assertJsonPath('data.items.0.status', 'graded');
+    }
+
+    public function test_submission_detail_includes_assignment(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createAssignment();
+        $studentId = $this->makeStudentId();
+        $this->publish($id)->assertStatus(200);
+        $this->assignByStudent($id, [$studentId])->assertStatus(200);
+        $this->submit($id, $studentId)->assertStatus(200);
+
+        $submissionId = $this->submissionId($id, $studentId);
+
+        $this->getJson("/v1/edu/submission/detail/{$submissionId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.id', $submissionId)
+            ->assertJsonPath('data.assignment.id', $id);
+    }
+
+    public function test_update_grade_edits_an_already_graded_submission(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createAssignment(['max_score' => 10]);
+        $studentId = $this->makeStudentId();
+        $this->publish($id)->assertStatus(200);
+        $this->assignByStudent($id, [$studentId])->assertStatus(200);
+        $this->submit($id, $studentId)->assertStatus(200);
+
+        $submissionId = $this->submissionId($id, $studentId);
+
+        // Cannot update a grade before the submission has been graded.
+        $this->putJson("/v1/edu/submission/update/{$submissionId}", ['score' => 7])
+            ->assertStatus(200)
+            ->assertJsonPath('success', false);
+
+        $this->postJson("/v1/edu/submission/grade/{$submissionId}", ['score' => 6, 'comment' => 'Khá'])
+            ->assertStatus(200);
+
+        // Editing the existing grade keeps the graded status.
+        $this->putJson("/v1/edu/submission/update/{$submissionId}", ['score' => 9, 'comment' => 'Phúc khảo'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.score', '9.00')
+            ->assertJsonPath('data.comment', 'Phúc khảo')
+            ->assertJsonPath('data.status', 'graded');
+
+        // BR008 is still enforced on update.
+        $this->putJson("/v1/edu/submission/update/{$submissionId}", ['score' => 99])
+            ->assertStatus(200)
+            ->assertJsonPath('success', false);
+    }
 }

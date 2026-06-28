@@ -27,10 +27,16 @@ Route::prefix('assignment')->middleware('auth.tera')->group(function () {
 
 });
 
-// Submissions — grade & publish results (assignment.md §9, §10).
+// Submissions — grading queue, results, grade & publish (assignment.md §9, §10, §XII).
 Route::prefix('submission')->middleware('auth.tera')->group(function () {
 
+    // Danh sách học viên nộp bài (chờ chấm) / Danh sách bài tập đã chấm / Chi tiết bài đã chấm.
+    Route::get('/submitted/{assignmentId}', [SubmissionController::class, 'submitted'])->middleware('permission:assignment.grade');
+    Route::get('/graded/{assignmentId}', [SubmissionController::class, 'graded'])->middleware('permission:assignment.result');
+    Route::get('/detail/{id}', [SubmissionController::class, 'detail'])->middleware('permission:assignment.result');
+
     Route::post('/grade/{id}', [SubmissionController::class, 'grade'])->middleware('permission:assignment.grade');
+    Route::put('/update/{id}', [SubmissionController::class, 'update'])->middleware('permission:assignment.grade');
     Route::post('/publish/{id}', [SubmissionController::class, 'publish'])->middleware('permission:assignment.result');
 
 });
