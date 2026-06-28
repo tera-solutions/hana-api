@@ -22,6 +22,7 @@ class UpdateLessonPlanRequest extends FormRequest
         return [
             'plan_code' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('edu_lesson_plans', 'plan_code')->ignore($id)],
             'plan_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'level_id' => ['nullable', 'integer', 'exists:edu_levels,id'],
             'description' => ['nullable', 'string', 'max:5000'],
         ];
@@ -41,6 +42,9 @@ class UpdateLessonPlanRequest extends FormRequest
         return [
             'plan_code' => ['description' => 'Unique lesson-plan code.', 'example' => 'KIDS_STARTER_V1'],
             'plan_name' => ['description' => 'Lesson-plan name.', 'example' => 'Kids Starter'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+            ],
             'level_id' => ['description' => 'Level id.', 'example' => 1],
             'description' => ['description' => 'Description.'],
         ];

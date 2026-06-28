@@ -21,6 +21,7 @@ class UpdateAssignmentRequest extends FormRequest
         return [
             'assignment_name' => ['sometimes', 'required', 'string', 'max:255'],
             'assignment_type' => ['sometimes', 'required', Rule::in(AssignmentType::values())],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'course_id' => ['nullable', 'integer', 'exists:edu_courses,id'],
             'level_id' => ['nullable', 'integer'],
             'lesson_id' => ['nullable', 'integer', 'exists:edu_lessons,id'],
@@ -49,6 +50,9 @@ class UpdateAssignmentRequest extends FormRequest
         return [
             'assignment_name' => ['description' => 'Assignment name.', 'example' => 'Unit 1 Homework'],
             'assignment_type' => ['description' => 'Assignment type.', 'example' => 'homework'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+            ],
             'instruction' => ['description' => 'Instruction for students.', 'example' => 'Hoàn thành bài tập trang 10.'],
             'max_score' => ['description' => 'Maximum score (> 0).', 'example' => 10],
             'due_date' => ['description' => 'Due date (Y-m-d H:i:s).', 'example' => '2026-07-10 23:59:00'],

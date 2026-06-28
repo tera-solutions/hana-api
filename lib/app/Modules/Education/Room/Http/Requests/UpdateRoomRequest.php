@@ -5,7 +5,6 @@ namespace App\Modules\Education\Room\Http\Requests;
 use App\Modules\Education\Room\Enums\RoomType;
 use App\Modules\Education\Room\Models\Room;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -30,6 +29,7 @@ class UpdateRoomRequest extends FormRequest
                 Rule::unique('edu_rooms', 'room_code')->where('branch_id', $branchId)->ignore($id),
             ],
             'room_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'floor' => ['nullable', 'string', 'max:50'],
             'capacity' => ['sometimes', 'required', 'integer', 'min:1'],
             'room_type' => ['sometimes', 'required', Rule::in(RoomType::values())],
@@ -57,6 +57,9 @@ class UpdateRoomRequest extends FormRequest
             'room_name' => [
                 'description' => 'Room name.',
                 'example' => 'Phòng A101',
+            ],
+            'avatar' => [
+                'description' => 'Avatar URL.',
             ],
             'floor' => [
                 'description' => 'Floor.',

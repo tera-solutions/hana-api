@@ -13,6 +13,7 @@ class ClassResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
+            'avatar' => $this->avatar,
             'avatar_url' => $this->avatar_url,
 
             'course_id' => $this->course_id,

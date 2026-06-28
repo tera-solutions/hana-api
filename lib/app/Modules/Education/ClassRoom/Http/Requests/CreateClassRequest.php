@@ -17,7 +17,7 @@ class CreateClassRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'avatar_url' => ['nullable', 'string', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'code' => ['required', 'string', 'max:255', 'unique:edu_classes,code'],
             'course_id' => ['required', 'integer', 'exists:edu_courses,id'],
             'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
@@ -88,7 +88,10 @@ class CreateClassRequest extends FormRequest
     {
         return [
             'name' => ['description' => 'Tên lớp học.', 'example' => 'IELTS Foundation - Khai giảng tháng 7'],
-            'avatar_url' => ['description' => 'URL ảnh đại diện lớp học.', 'example' => 'https://cdn.hana.edu/classes/ielts-f.png'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+                'example' => 'https://cdn.hana.edu.vn/a.png',
+            ],
             'code' => ['description' => 'Mã lớp (duy nhất).', 'example' => 'IELTS-F-2026-07'],
             'course_id' => ['description' => 'ID khóa học.', 'example' => 1],
             'assignee_id' => ['description' => 'ID nhân viên phụ trách (optional).', 'example' => 5],

@@ -11,6 +11,8 @@ class AttendanceResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
 
             'session_id' => $this->session_id,
             'session' => $this->whenLoaded('session', fn () => $this->session ? [

@@ -13,6 +13,8 @@ class AssignmentResource extends JsonResource
             'assignment_code' => $this->assignment_code,
             'assignment_name' => $this->assignment_name,
             'assignment_type' => $this->assignment_type,
+            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
 
             'course_id' => $this->course_id,
             'course' => $this->whenLoaded('course', fn () => $this->course ? [

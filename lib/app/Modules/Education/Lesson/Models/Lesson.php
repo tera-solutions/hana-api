@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class Lesson extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
 
     protected $table = 'edu_lessons';
@@ -29,6 +31,8 @@ class Lesson extends Model
         'completed_at' => 'datetime',
         'locked_at' => 'datetime',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_SCHEDULED = LessonStatus::Scheduled->value;
 
