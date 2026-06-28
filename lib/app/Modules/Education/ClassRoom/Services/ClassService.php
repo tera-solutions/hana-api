@@ -7,9 +7,6 @@ use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
-use App\Modules\Education\Support\SummarizesByStatus;
-use App\Modules\Education\Support\TeacherScope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
@@ -315,12 +312,14 @@ class ClassService
 
     public function operationalStats($classId): array
     {
-        $total = $this->guard(fn () => ClassSession::where('class_id', $classId)->count()
+        $total = $this->guard(fn () =>
+            ClassSession::where('class_id', $classId)->count()
         );
 
-        $completed = $this->guard(fn () => ClassSession::where('class_id', $classId)
-            ->where('status', 'completed')
-            ->count()
+        $completed = $this->guard(fn () =>
+            ClassSession::where('class_id', $classId)
+                ->where('status', 'completed')
+                ->count()
         );
 
         // Every lesson is either completed or pending, so pending is derivable.
