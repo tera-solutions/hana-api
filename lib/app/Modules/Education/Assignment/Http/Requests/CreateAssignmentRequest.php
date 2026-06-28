@@ -22,6 +22,7 @@ class CreateAssignmentRequest extends FormRequest
         return [
             'assignment_name' => ['required', 'string', 'max:255'],
             'assignment_type' => ['required', Rule::in(AssignmentType::values())],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'instruction' => ['required', 'string', 'max:10000'],
             'max_score' => ['required', 'numeric', 'gt:0'],          // BR003
             'due_date' => ['required', 'date', 'after:now'],         // BR002
@@ -45,6 +46,10 @@ class CreateAssignmentRequest extends FormRequest
         return [
             'assignment_name' => ['description' => 'Assignment name.', 'example' => 'Unit 1 Homework'],
             'assignment_type' => ['description' => 'Type: homework, worksheet, quiz, writing, speaking, listening, reading, project, exam_practice.', 'example' => 'homework'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+                'example' => 'https://cdn.hana.edu.vn/a.png',
+            ],
             'instruction' => ['description' => 'Instruction for students.', 'example' => 'Hoàn thành bài tập trang 10.'],
             'max_score' => ['description' => 'Maximum score (> 0).', 'example' => 10],
             'due_date' => ['description' => 'Due date (Y-m-d H:i:s), must be in the future.', 'example' => '2026-07-10 23:59:00'],

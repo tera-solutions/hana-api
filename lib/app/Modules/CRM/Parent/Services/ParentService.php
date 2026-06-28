@@ -65,7 +65,7 @@ class ParentService
         $this->applySort($query, $params, ['code', 'name', 'created_at']);
 
         return $query->withCount('students')
-            ->with(['business', 'branch'])
+            ->with(['business', 'branch', 'students'])
             ->paginate($this->resolvePerPage($params));
     }
 

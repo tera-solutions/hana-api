@@ -13,6 +13,7 @@ class ParentResource extends JsonResource
             'code' => $this->code,
             'name' => $this->name,
             'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'gender' => $this->gender,
             'dob' => $this->dob,
 
@@ -41,10 +42,12 @@ class ParentResource extends JsonResource
                 'name' => $this->branch?->name,
             ]),
 
-            'students' => $this->whenLoaded('students', fn () => $this->students->map(fn ($student) => [
+            'children' => $this->whenLoaded('students', fn () => $this->students->map(fn ($student) => [
                 'id' => $student->id,
                 'code' => $student->code,
                 'name' => $student->name,
+                'avatar' => $student->avatar,
+                'avatar_url' => $student->avatar_url,
                 'relation' => $student->pivot->relation,
             ])),
 

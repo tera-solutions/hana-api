@@ -18,10 +18,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class ClassRoom extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -38,6 +40,8 @@ class ClassRoom extends Model
         'max_warning_capacity' => 'integer',
         'max_capacity' => 'integer',
     ];
+
+    protected $appends = ['avatar_url'];
 
     const STATUS_DRAFT = ClassStatus::Draft->value;
 

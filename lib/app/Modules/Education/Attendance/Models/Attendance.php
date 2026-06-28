@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class Attendance extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -25,6 +27,8 @@ class Attendance extends Model
         'checkin_time' => 'datetime',
         'checkout_time' => 'datetime',
     ];
+
+    protected $appends = ['avatar_url'];
 
     const STATUS_PRESENT = AttendanceStatus::Present->value;
 
