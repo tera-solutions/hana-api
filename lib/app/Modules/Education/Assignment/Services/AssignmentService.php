@@ -420,4 +420,95 @@ class AssignmentService
 
         return $submission->fresh(['files', 'student']);
     }
+
+    // ── Grading queue & results (assignment.md §XI, §XII) ─────────────────────────
+
+    /**
+     * Students who have submitted this assignment (assignment.md §XII "Tab Danh sách
+     * học viên"). Anyone who has actually turned the work in — whatever its grading
+     * status (submitted / late / graded / reviewed) — so only the merely-assigned,
+     * never-submitted students are excluded. Teacher-scoped via the parent assignment.
+     */
+    public function submittedStudents($assignmentId, array $params = [])
+    {
+        $assignment = $this->scopedAssignment($assignmentId);
+
+        $query = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->whereNotNull('submitted_at')
+            ->with(['student', 'files']);
+
+        $this->applySort($query, $params, ['submitted_at', 'status', 'created_at'], 'submitted_at');
+
+        return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Graded submissions of an assignment — GRADED / REVIEWED (assignment.md §XII
+     * "Tab Kết quả"). Teacher-scoped via the parent assignment.
+     */
+    public function gradedSubmissions($assignmentId, array $params = [])
+    {
+        $assignment = $this->scopedAssignment($assignmentId);
+
+        $query = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->whereIn('status', [
+                AssignmentSubmission::STATUS_GRADED,
+                AssignmentSubmission::STATUS_REVIEWED,
+            ])
+            ->with(['student', 'files']);
+
+        $this->applySort($query, $params, ['score', 'submitted_at', 'updated_at', 'created_at'], 'updated_at');
+
+        return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * A single graded submission with its assignment, student and files.
+     */
+    public function submissionDetail($id): AssignmentSubmission
+    {
+        return AssignmentSubmission::with(['assignment', 'student', 'files'])->findOrFail($id);
+    }
+
+    /**
+     * Update the score/comment of an already-graded submission (BR008). Unlike
+     * {@see grade()} this edits an existing grade and does not change status.
+     *
+     * @throws \RuntimeException
+     */
+    public function updateGrade($id, array $data): AssignmentSubmission
+    {
+        $submission = AssignmentSubmission::with('assignment')->findOrFail($id);
+
+        if (! in_array($submission->status, [AssignmentSubmission::STATUS_GRADED, AssignmentSubmission::STATUS_REVIEWED], true)) {
+            throw new \RuntimeException('Chỉ có thể cập nhật điểm cho bài đã chấm.');
+        }
+
+        // BR008: score cannot exceed the assignment's max score.
+        if ((float) $data['score'] > (float) $submission->assignment->max_score) {
+            throw new \RuntimeException('Điểm không được vượt quá điểm tối đa.');
+        }
+
+        $submission->update([
+            'score' => $data['score'],
+            'comment' => $data['comment'] ?? $submission->comment,
+        ]);
+
+        return $submission->fresh(['assignment', 'student', 'files']);
+    }
+
+    /**
+     * Resolve an assignment within the caller's teacher scope, 404-ing when the
+     * assignment is out of scope (a teacher may only grade their own classes' work).
+     */
+    private function scopedAssignment($assignmentId): Assignment
+    {
+        $query = Assignment::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainAssignments($query);
+        }
+
+        return $query->findOrFail($assignmentId);
+    }
 }
