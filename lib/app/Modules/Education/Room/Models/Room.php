@@ -13,10 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class Room extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -27,6 +29,8 @@ class Room extends Model
     protected $casts = [
         'capacity' => 'integer',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_ACTIVE = RoomStatus::Active->value;
 

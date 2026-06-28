@@ -14,6 +14,8 @@ class LessonPlanResource extends JsonResource
             'id' => $this->id,
             'plan_code' => $this->plan_code,
             'plan_name' => $this->plan_name,
+            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'course_id' => $this->course_id,
             'level_id' => $this->level_id,
             'version' => $this->version,

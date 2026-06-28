@@ -12,10 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class Assignment extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -29,6 +31,8 @@ class Assignment extends Model
         'allow_late_submission' => 'boolean',
         'allow_multiple_submission' => 'boolean',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_DRAFT = AssignmentStatus::Draft->value;
 

@@ -14,10 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class LessonPlan extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -30,6 +32,8 @@ class LessonPlan extends Model
         'total_lessons' => 'integer',
         'published_at' => 'datetime',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_DRAFT = LessonPlanStatus::Draft->value;
 

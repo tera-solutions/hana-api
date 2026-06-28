@@ -16,6 +16,8 @@ class LessonResource extends JsonResource
             'lesson_plan_lesson_id' => $this->lesson_plan_lesson_id,
             'lesson_no' => $this->lesson_no,
             'lesson_title' => $this->lesson_title,
+            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'lesson_date' => $this->lesson_date,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
