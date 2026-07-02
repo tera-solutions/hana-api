@@ -14,6 +14,7 @@ Route::prefix('lesson')->middleware('auth.tera')->group(function () {
     Route::post('/reschedule/{id}', [LessonController::class, 'reschedule'])->middleware('permission:lesson.reschedule');
     Route::post('/cancel/{id}', [LessonController::class, 'cancel'])->middleware('permission:lesson.cancel');
 
+    Route::post('/complete/{id}', [LessonController::class, 'complete'])->middleware('permission:lesson.update');
     Route::post('/lock/{id}', [LessonController::class, 'lock'])->middleware('permission:lesson.update');
     Route::post('/unlock/{id}', [LessonController::class, 'unlock'])->middleware('permission:lesson.unlock');
 

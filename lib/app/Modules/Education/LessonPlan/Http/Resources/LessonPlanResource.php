@@ -30,6 +30,12 @@ class LessonPlanResource extends JsonResource
                 'name' => $this->course?->name,
                 'code' => $this->course?->code,
             ]),
+            'level' => $this->whenLoaded('level', fn () => $this->level ? [
+                'id' => $this->level->id,
+                'level_code' => $this->level->level_code,
+                'level_name' => $this->level->level_name,
+                'cefr_level' => $this->level->cefr_level,
+            ] : null),
             'lessons' => LessonPlanLessonResource::collection($this->whenLoaded('lessons')),
             'versions' => LessonPlanVersionResource::collection($this->whenLoaded('versions')),
             'lessons_count' => $this->whenCounted('lessons'),

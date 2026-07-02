@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Lesson\Http\Resources;
 
 use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\LessonPlanMaterial\Http\Resources\LessonPlanMaterialResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class LessonResource extends JsonResource
@@ -50,6 +51,7 @@ class LessonResource extends JsonResource
                 'name' => $this->room?->room_name,
             ]),
             'histories' => LessonHistoryResource::collection($this->whenLoaded('histories')),
+            'materials' => $this->whenLoaded('lessonPlanLesson', fn ($lessonPlanLesson) => LessonPlanMaterialResource::collection($lessonPlanLesson?->materials ?? collect())),
 
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
