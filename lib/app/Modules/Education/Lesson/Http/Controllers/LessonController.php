@@ -4,6 +4,7 @@ namespace App\Modules\Education\Lesson\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Education\Lesson\Actions\CancelLessonAction;
+use App\Modules\Education\Lesson\Actions\CompleteLessonAction;
 use App\Modules\Education\Lesson\Actions\GenerateLessonAction;
 use App\Modules\Education\Lesson\Actions\GetLessonAction;
 use App\Modules\Education\Lesson\Actions\ListLessonAction;
@@ -33,6 +34,7 @@ class LessonController extends Controller
      *
      * @queryParam search string Search by lesson title. Example: Family
      * @queryParam class_room_id integer Filter by class. Example: 1
+     * @queryParam lesson_plan_id integer Filter by lesson plan. Example: 1
      * @queryParam teacher_id integer Filter by teacher. Example: 1
      * @queryParam room_id integer Filter by room. Example: 1
      * @queryParam branch_id integer Filter by branch (via room). Example: 1
@@ -66,7 +68,7 @@ class LessonController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Thao tác thành công",
-     *   "data": {"lesson": {"id": 1, "lesson_no": 1, "lesson_title": "Alphabet", "status": "scheduled", "histories": []}},
+     *   "data": {"lesson": {"id": 1, "lesson_no": 1, "lesson_title": "Alphabet", "status": "scheduled", "histories": [], "materials": [{"id": 1, "lesson_plan_lesson_id": 1, "file_id": 3, "material_type": "pdf"}]}},
      *   "code": 200,
      *   "errors": null
      * }
@@ -110,7 +112,7 @@ class LessonController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Cập nhật buổi học thành công.",
-     *   "data": {"id": 1, "teacher_id": 2, "lesson_note": "Học viên tiếp thu tốt."},
+     *   "data": {"id": 1, "teacher_id": 2, "lesson_note": "Học viên tiếp thu tốt.", "status": "confirmed"},
      *   "code": 200,
      *   "errors": null
      * }
@@ -172,6 +174,30 @@ class LessonController extends Controller
         }
 
         return $this->respondSuccess(new LessonResource($lesson), 'Hủy buổi học thành công.');
+    }
+
+    /**
+     * Manually complete a lesson before its scheduled end time
+     *
+     * @urlParam id integer required The lesson ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Hoàn thành buổi học thành công.",
+     *   "data": {"id": 1, "status": "completed"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function complete($id, CompleteLessonAction $action)
+    {
+        try {
+            $lesson = $action->handle($id);
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new LessonResource($lesson), 'Hoàn thành buổi học thành công.');
     }
 
     /**

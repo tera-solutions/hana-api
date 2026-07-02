@@ -100,7 +100,7 @@ class LessonPlanService
      */
     public function detail($id): array
     {
-        $plan = LessonPlan::with(['course', 'lessons.materials', 'versions'])->findOrFail($id);
+        $plan = LessonPlan::with(['course', 'level', 'lessons.materials', 'versions'])->findOrFail($id);
 
         return [
             'plan' => $plan,
@@ -124,7 +124,10 @@ class LessonPlanService
     }
 
     /**
-     * Update plan metadata. Blocked once published or used by a class (§9, BR004).
+     * Update plan metadata, including course_id and status. Blocked once published
+     * or used by a class (§9, BR004). Setting status keeps published_at/published_by
+     * coherent; it does not run the publish lesson checks (BR005/BR006) — use the
+     * publish endpoint for that.
      *
      * @throws \RuntimeException
      */
@@ -135,7 +138,17 @@ class LessonPlanService
 
             $this->assertEditable($plan);
 
-            unset($data['id'], $data['status'], $data['version'], $data['course_id'], $data['total_lessons'], $data['published_at'], $data['published_by']);
+            unset($data['id'], $data['version'], $data['total_lessons'], $data['published_at'], $data['published_by']);
+
+            if (array_key_exists('status', $data)) {
+                if ($data['status'] === LessonPlan::STATUS_PUBLISHED) {
+                    $data['published_at'] = now();
+                    $data['published_by'] = Auth::guard('api')->id() ?? Auth::id();
+                } else {
+                    $data['published_at'] = null;
+                    $data['published_by'] = null;
+                }
+            }
 
             $plan->update($data);
 
