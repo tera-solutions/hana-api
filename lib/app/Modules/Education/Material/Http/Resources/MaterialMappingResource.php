@@ -11,6 +11,11 @@ class MaterialMappingResource extends JsonResource
         return [
             'id' => $this->id,
             'material_id' => $this->material_id,
+            'material' => $this->whenLoaded('material', fn () => $this->material ? [
+                'id' => $this->material->id,
+                'name' => $this->material->name,
+                'type' => $this->material->type,
+            ] : null),
             'entity_type' => $this->entity_type,
             'entity_id' => $this->entity_id,
             'created_at' => $this->created_at,

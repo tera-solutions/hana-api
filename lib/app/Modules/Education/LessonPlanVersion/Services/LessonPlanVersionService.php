@@ -21,7 +21,7 @@ class LessonPlanVersionService
 
     public function find($id): LessonPlanVersion
     {
-        return LessonPlanVersion::findOrFail($id);
+        return LessonPlanVersion::with('plan')->findOrFail($id);
     }
 
     /**

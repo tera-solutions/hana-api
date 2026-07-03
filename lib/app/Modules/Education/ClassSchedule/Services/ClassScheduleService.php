@@ -16,6 +16,7 @@ class ClassScheduleService
         ClassRoom::findOrFail($classId);
 
         return ClassSchedule::where('class_id', $classId)
+            ->with('eduClass')
             ->orderBy('weekday')
             ->orderBy('start_time')
             ->get();
@@ -23,7 +24,7 @@ class ClassScheduleService
 
     public function find($scheduleId): ClassSchedule
     {
-        return ClassSchedule::findOrFail($scheduleId);
+        return ClassSchedule::with('eduClass')->findOrFail($scheduleId);
     }
 
     public function create($classId, array $data): ClassSchedule

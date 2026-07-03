@@ -126,7 +126,9 @@ class DashboardService
     }
 
     /**
-     * One entry per day of the ISO week (Mon→Sun, always 7), with the session count.
+     * One entry per day of the ISO week (Mon→Sun, always 7), with the session count
+     * and how many of those are completed — lets the dashboard show a weekly
+     * teaching-progress rate, not just today's.
      */
     private function scheduleWeek(?TeacherScope $scope, Carbon $weekStart, Carbon $weekEnd): array
     {
@@ -134,15 +136,19 @@ class DashboardService
             ->whereDate('session_date', '>=', $weekStart->toDateString())
             ->whereDate('session_date', '<=', $weekEnd->toDateString())
             ->where('status', '!=', ClassSession::STATUS_CANCELLED)
-            ->get(['session_date'])
-            ->groupBy(fn (ClassSession $s) => $s->session_date?->toDateString())
-            ->map->count();
+            ->get(['session_date', 'status'])
+            ->groupBy(fn (ClassSession $s) => $s->session_date?->toDateString());
 
         $week = [];
 
         for ($d = $weekStart->copy(); $d->lte($weekEnd); $d->addDay()) {
             $ds = $d->toDateString();
-            $week[] = ['date' => $ds, 'count' => (int) ($byDate[$ds] ?? 0)];
+            $daySessions = $byDate->get($ds) ?? collect();
+            $week[] = [
+                'date' => $ds,
+                'count' => $daySessions->count(),
+                'completed' => $daySessions->where('status', ClassSession::STATUS_COMPLETED)->count(),
+            ];
         }
 
         return $week;
@@ -195,7 +201,7 @@ class DashboardService
         }
 
         return $query->orderByDesc('updated_at')
-            ->limit(3)
+            ->limit(5)
             ->get()
             ->map(fn (LessonPlan $p) => [
                 'id' => $p->id,

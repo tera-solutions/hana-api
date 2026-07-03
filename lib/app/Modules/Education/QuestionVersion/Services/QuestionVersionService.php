@@ -22,7 +22,7 @@ class QuestionVersionService
 
     public function find($id): QuestionVersion
     {
-        return QuestionVersion::findOrFail($id);
+        return QuestionVersion::with('question')->findOrFail($id);
     }
 
     /**
