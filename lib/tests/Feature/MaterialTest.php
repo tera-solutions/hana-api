@@ -181,6 +181,26 @@ class MaterialTest extends TestCase
         $this->assertDatabaseMissing('edu_material_mappings', ['id' => $mappingId]);
     }
 
+    public function test_list_filters_by_linked_entity(): void
+    {
+        $this->actingAsAdmin();
+
+        $courseId = $this->makeCourseId();
+        $otherCourseId = $this->makeCourseId();
+
+        $linked = $this->createMaterial(['material_name' => 'Linked to course']);
+        $this->attach($linked, $courseId);
+
+        $unlinked = $this->createMaterial(['material_name' => 'Not linked']);
+        $this->attach($unlinked, $otherCourseId);
+
+        $res = $this->getJson("/v1/edu/material/list?entity_type=course&entity_id={$courseId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 1);
+
+        $this->assertSame($linked, $res->json('data.items.0.id'));
+    }
+
     public function test_delete(): void
     {
         $this->actingAsAdmin();

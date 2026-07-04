@@ -48,8 +48,14 @@ class TimetableService
 
     public function find($id): Timetable
     {
-        return Timetable::with(['course', 'classRoom', 'rules', 'sessions' => fn ($q) => $q->orderBy('session_date')->orderBy('start_time')])
+        $timetable = Timetable::with(['course', 'classRoom', 'rules', 'sessions' => fn ($q) => $q->orderBy('session_date')->orderBy('start_time')])
             ->findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $timetable->class_room_id);
+        }
+
+        return $timetable;
     }
 
     /**
@@ -58,6 +64,10 @@ class TimetableService
     public function create(array $data): Timetable
     {
         return DB::transaction(function () use ($data) {
+            if (($scope = TeacherScope::current()) && ! empty($data['class_room_id'])) {
+                $scope->authorizeClass((int) $data['class_room_id']);
+            }
+
             $plan = $this->planSessions($data);
 
             if ($plan === []) {
@@ -91,7 +101,7 @@ class TimetableService
     public function update($id, array $data): Timetable
     {
         return DB::transaction(function () use ($id, $data) {
-            $timetable = Timetable::findOrFail($id);
+            $timetable = $this->find($id);
             $timetable->update($data);
 
             return $this->find($id);
@@ -100,7 +110,7 @@ class TimetableService
 
     public function delete($id): void
     {
-        Timetable::findOrFail($id)->delete();
+        $this->find($id)->delete();
     }
 
     /**

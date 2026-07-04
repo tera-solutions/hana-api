@@ -32,8 +32,9 @@ class AuthAuditTest extends TestCase
     {
         $user = $this->makeUserWithPassword();
 
+        // The login identifier resolves by email or phone only, not username.
         $this->postJson('/api/auth/login', [
-            'username' => $user->username,
+            'username' => $user->email,
             'password' => 'definitely-wrong',
         ], ['device-code' => 'test-device'])
             ->assertJsonPath('success', false);

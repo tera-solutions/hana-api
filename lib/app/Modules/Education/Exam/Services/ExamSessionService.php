@@ -6,6 +6,7 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Exam\Models\ExamRegistration;
 use App\Modules\Education\Exam\Models\ExamSession;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,10 @@ class ExamSessionService
             $query->whereDate('exam_date', $params['exam_date']);
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainExamSessions($query);
+        }
+
         $this->applySort($query, $params, ['exam_date', 'start_time', 'status', 'created_at']);
 
         return $query->with(['exam', 'classRoom', 'room', 'teacher'])
@@ -44,7 +49,13 @@ class ExamSessionService
      */
     public function detail($id): ExamSession
     {
-        return ExamSession::with([
+        $query = ExamSession::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainExamSessions($query);
+        }
+
+        return $query->with([
             'exam', 'classRoom', 'room', 'teacher',
             'registrations.student', 'results.student',
         ])->findOrFail($id);
@@ -77,7 +88,7 @@ class ExamSessionService
     public function update($id, array $data): ExamSession
     {
         return DB::transaction(function () use ($id, $data) {
-            $session = ExamSession::findOrFail($id);
+            $session = $this->scopedSession($id);
 
             unset($data['id'], $data['exam_id']);
 
@@ -91,7 +102,7 @@ class ExamSessionService
 
     public function delete($id): void
     {
-        ExamSession::findOrFail($id)->delete();
+        $this->scopedSession($id)->delete();
     }
 
     // ── Registration (exam.md §IX) ───────────────────────────────────────────────
@@ -135,7 +146,7 @@ class ExamSessionService
     private function seedRegistrations($sessionId, Collection $studentIds): array
     {
         return DB::transaction(function () use ($sessionId, $studentIds) {
-            $session = ExamSession::findOrFail($sessionId);
+            $session = $this->scopedSession($sessionId);
 
             // BR005: no registration once the sitting is closed.
             if ($session->status === ExamSession::STATUS_CLOSED) {
@@ -174,6 +185,21 @@ class ExamSessionService
 
             return ['registered' => $newStudentIds->count()];
         });
+    }
+
+    /**
+     * Resolve a sitting within the caller's teacher scope, 404-ing when the
+     * sitting is out of scope (a teacher may only manage their own sittings).
+     */
+    private function scopedSession($id): ExamSession
+    {
+        $query = ExamSession::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainExamSessions($query);
+        }
+
+        return $query->findOrFail($id);
     }
 
     /**

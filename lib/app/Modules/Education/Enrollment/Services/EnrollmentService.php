@@ -9,6 +9,7 @@ use App\Modules\Education\Enrollment\Models\Enrollment;
 use App\Modules\Education\Enrollment\Models\EnrollmentSuspension;
 use App\Modules\Education\Enrollment\Models\EnrollmentTransfer;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Education\Support\TeacherScope;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Services\InvoiceService;
 use App\Modules\Finance\Payment\Models\Payment;
@@ -71,6 +72,10 @@ class EnrollmentService
                 : $query->where('debt_amount', '<=', 0);
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_id');
+        }
+
         $this->applySort($query, $params, ['code', 'enrolled_at', 'status', 'debt_amount', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -78,7 +83,13 @@ class EnrollmentService
 
     public function find($id): Enrollment
     {
-        return Enrollment::with(self::RELATIONS)->findOrFail($id);
+        $query = Enrollment::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_id');
+        }
+
+        return $query->with(self::RELATIONS)->findOrFail($id);
     }
 
     /**
@@ -108,6 +119,10 @@ class EnrollmentService
         $student = Student::findOrFail($data['student_id']);
         $course = Course::findOrFail($data['course_id']);
         $class = ClassRoom::findOrFail($data['class_id']);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $class->id);
+        }
 
         $this->guardEnrollable($student, $course, $class);
 

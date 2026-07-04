@@ -14,8 +14,8 @@ class CloneLessonPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plan_code' => ['required', 'string', 'max:255', 'unique:edu_lesson_plans,plan_code'],
-            'plan_name' => ['nullable', 'string', 'max:255'],
+            'plan_code' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[a-zA-Z0-9_]+$/', 'unique:edu_lesson_plans,plan_code'],
+            'plan_name' => ['nullable', 'string', 'min:2', 'max:255'],
         ];
     }
 
@@ -23,7 +23,11 @@ class CloneLessonPlanRequest extends FormRequest
     {
         return [
             'plan_code.required' => 'Mã giáo án mới là bắt buộc.',
+            'plan_code.min' => 'Mã giáo án phải có ít nhất 2 ký tự.',
+            'plan_code.max' => 'Mã giáo án không được vượt quá 50 ký tự.',
+            'plan_code.regex' => 'Mã giáo án chỉ được chứa chữ, số và dấu gạch dưới.',
             'plan_code.unique' => 'Mã giáo án đã tồn tại.',
+            'plan_name.min' => 'Tên giáo án phải có ít nhất 2 ký tự.',
         ];
     }
 

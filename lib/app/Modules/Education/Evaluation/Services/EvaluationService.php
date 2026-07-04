@@ -4,6 +4,7 @@ namespace App\Modules\Education\Evaluation\Services;
 
 use App\Modules\Education\Evaluation\Enums\EvaluationType;
 use App\Modules\Education\Evaluation\Models\Evaluation;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -50,6 +51,10 @@ class EvaluationService
             $query->whereDate('evaluated_at', '<=', $params['evaluated_to']);
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_room_id');
+        }
+
         $this->applySort($query, $params, ['evaluation_code', 'score', 'evaluated_at', 'status', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -57,7 +62,13 @@ class EvaluationService
 
     public function find($id): Evaluation
     {
-        return Evaluation::with(self::RELATIONS)->findOrFail($id);
+        $query = Evaluation::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_room_id');
+        }
+
+        return $query->with(self::RELATIONS)->findOrFail($id);
     }
 
     /**
@@ -66,6 +77,10 @@ class EvaluationService
     public function create(array $data): Evaluation
     {
         return DB::transaction(function () use ($data) {
+            if (($scope = TeacherScope::current()) && ! empty($data['class_room_id'])) {
+                $scope->authorizeClass((int) $data['class_room_id']);
+            }
+
             $type = EvaluationType::from($data['evaluation_type']);
             $this->assertCriteriaBelongToType($type, $data['criteria'] ?? []);
             $this->assertNotSelfEvaluation($data);
@@ -88,7 +103,7 @@ class EvaluationService
     public function update($id, array $data): Evaluation
     {
         return DB::transaction(function () use ($id, $data) {
-            $evaluation = Evaluation::findOrFail($id);
+            $evaluation = $this->find($id);
 
             if ($evaluation->status === Evaluation::STATUS_LOCKED) {
                 throw new \RuntimeException('Không thể sửa đánh giá đã khóa.'); // BR-02
@@ -111,7 +126,7 @@ class EvaluationService
      */
     public function delete($id): void
     {
-        $evaluation = Evaluation::findOrFail($id);
+        $evaluation = $this->find($id);
 
         if ($evaluation->status === Evaluation::STATUS_LOCKED) {
             throw new \RuntimeException('Không thể xóa đánh giá đã khóa.'); // BR-02
@@ -148,7 +163,7 @@ class EvaluationService
     private function transition($id, string $to, array $allowedFrom, string $error): Evaluation
     {
         return DB::transaction(function () use ($id, $to, $allowedFrom, $error) {
-            $evaluation = Evaluation::findOrFail($id);
+            $evaluation = $this->find($id);
 
             if (! in_array($evaluation->status, $allowedFrom, true)) {
                 throw new \RuntimeException($error);
