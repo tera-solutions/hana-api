@@ -27,7 +27,7 @@ class MaterialCategoryService
 
         $this->applySort($query, $params, ['category_name', 'category_code', 'sort_order', 'status', 'created_at']);
 
-        return $query->orderBy('sort_order')->paginate($this->resolvePerPage($params));
+        return $query->withCount('materials')->orderBy('sort_order')->paginate($this->resolvePerPage($params));
     }
 
     public function create(array $data): MaterialCategory

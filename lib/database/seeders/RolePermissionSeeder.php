@@ -49,10 +49,10 @@ class RolePermissionSeeder extends Seeder
         ],
 
         'TEACHER' => [
-            'full' => ['assignment', 'material', 'evaluation', 'task'],
+            'full' => ['assignment', 'material', 'evaluation', 'task', 'attendance'],
             'view' => [
                 'student', 'student_level', 'lesson', 'session', 'class', 'course', 'level', 'lesson_plan',
-                'exam', 'question', 'timetable', 'attendance', 'leave', 'dashboard',
+                'exam', 'question', 'timetable', 'leave', 'dashboard',
             ],
         ],
 

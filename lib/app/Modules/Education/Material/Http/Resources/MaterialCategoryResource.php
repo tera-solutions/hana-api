@@ -14,6 +14,7 @@ class MaterialCategoryResource extends JsonResource
             'category_code' => $this->category_code,
             'sort_order' => $this->sort_order,
             'status' => $this->status,
+            'materials_count' => $this->whenCounted('materials'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

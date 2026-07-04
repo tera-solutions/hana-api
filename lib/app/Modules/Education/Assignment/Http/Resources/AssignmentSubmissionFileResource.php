@@ -11,6 +11,10 @@ class AssignmentSubmissionFileResource extends JsonResource
         return [
             'id' => $this->id,
             'submission_id' => $this->submission_id,
+            'submission' => $this->whenLoaded('submission', fn () => $this->submission ? [
+                'id' => $this->submission->id,
+                'status' => $this->submission->status,
+            ] : null),
             'file_id' => $this->file_id,
             'file_name' => $this->file_name,
         ];

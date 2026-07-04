@@ -11,6 +11,11 @@ class LessonHistoryResource extends JsonResource
         return [
             'id' => $this->id,
             'lesson_id' => $this->lesson_id,
+            'lesson' => $this->whenLoaded('lesson', fn () => $this->lesson ? [
+                'id' => $this->lesson->id,
+                'lesson_no' => $this->lesson->lesson_no,
+                'lesson_title' => $this->lesson->lesson_title,
+            ] : null),
             'action' => $this->action,
             'old_value' => $this->old_value,
             'new_value' => $this->new_value,

@@ -11,6 +11,11 @@ class ExamQuestionResource extends JsonResource
         return [
             'id' => $this->id,
             'exam_id' => $this->exam_id,
+            'exam' => $this->whenLoaded('exam', fn () => $this->exam ? [
+                'id' => $this->exam->id,
+                'exam_code' => $this->exam->exam_code,
+                'exam_name' => $this->exam->exam_name,
+            ] : null),
             'skill' => $this->skill,
             'question_type' => $this->question_type,
             'content' => $this->content,

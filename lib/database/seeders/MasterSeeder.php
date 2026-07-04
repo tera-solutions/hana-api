@@ -62,14 +62,14 @@ class MasterSeeder extends Seeder
             $parents = $this->crm($businessId, $branches, $students);
             $this->accounts($businessId, $branches);
 
-            $sessions = $this->sessions($classes, $teachers, $rooms);
+            $this->timetables($courses, $classes, $teachers, $rooms);
+            $sessions = $this->sessions($classes);
             $this->attendances($sessions, $students);
             $this->leaveRequests($students, $teachers, $classes, $lessons);
             $this->promotions($businessId, $parents, $students, $classes);
             $this->evaluations($teachers, $students, $parents, $courses, $classes, $lessons);
             $this->wallets($businessId, $parents);
             $this->tasks();
-            $this->timetables($courses, $classes, $teachers, $rooms);
         });
 
         $this->command?->info('MasterSeeder: demo data seeded.');
@@ -447,6 +447,18 @@ class MasterSeeder extends Seeder
                 'max_warning_capacity' => 18,
                 'status' => $status,
             ] + $this->audit());
+
+            foreach ([2, 4] as $weekday) {
+                DB::table('edu_class_schedules')->insert([
+                    'class_id' => $id,
+                    'weekday' => $weekday,
+                    'start_time' => '18:00:00',
+                    'end_time' => '19:30:00',
+                    'created_at' => $this->now(),
+                    'updated_at' => $this->now(),
+                ]);
+            }
+
             $result[] = ['id' => $id, 'course_id' => $course['id'], 'teacher_id' => $teacherId, 'room_id' => $roomId];
         }
 
@@ -788,33 +800,33 @@ class MasterSeeder extends Seeder
     }
 
     /**
-     * Class sessions (buổi học) — one per status variant.
+     * Picks one real session per class (from the `timetables()` history, already
+     * seeded by this point) and relabels it across the 4 status variants, instead
+     * of inserting separate ad-hoc `edu_sessions` rows — those used to duplicate/
+     * conflict with the real weekly session history on the same classes.
      *
      * @param  array<int, array{id:int,course_id:int,teacher_id:int,room_id:int}>  $classes
      * @return int[]
      */
-    private function sessions(array $classes, array $teachers, array $rooms): array
+    private function sessions(array $classes): array
     {
         $statuses = ['upcoming', 'ongoing', 'completed', 'cancelled'];
         $ids = [];
-        foreach ($statuses as $i => $status) {
-            $class = $classes[$i % count($classes)];
-            $ids[] = DB::table('edu_sessions')->insertGetId([
-                'class_id' => $class['id'],
-                'session_no' => $i + 1,
-                'code' => 'SES'.str_pad((string) ($i + 1), 3, '0', STR_PAD_LEFT),
-                'name' => 'Buổi học '.($i + 1),
-                'session_date' => now()->addDays($i)->toDateString(),
-                'start_time' => '18:00:00',
-                'end_time' => '19:30:00',
-                'room_id' => $class['room_id'],
-                'teacher_id' => $class['teacher_id'],
-                'substitute_teacher_id' => $i === 1 ? $teachers[($i + 1) % count($teachers)] : null,
+        foreach (array_slice($classes, 0, count($statuses)) as $i => $class) {
+            $sessionId = DB::table('edu_sessions')
+                ->where('class_id', $class['id'])
+                ->orderBy('session_no')
+                ->value('id');
+            if (!$sessionId) {
+                continue;
+            }
+            $status = $statuses[$i];
+            DB::table('edu_sessions')->where('id', $sessionId)->update([
                 'status' => $status,
                 'attendance_locked' => $status === 'completed',
-                'revenue_amount' => 200000 * (5 - $i),
-                'note' => 'Ghi chú buổi '.($i + 1),
-            ] + $this->audit());
+                'updated_at' => $this->now(),
+            ]);
+            $ids[] = $sessionId;
         }
 
         return $ids;
@@ -1193,21 +1205,25 @@ class MasterSeeder extends Seeder
     }
 
     /**
-     * Timetables — one per status variant with weekly rules; the active one generates a
-     * few class sessions linked back to it.
+     * Timetables — every class gets one (status cycles through all 4 variants for
+     * demo coverage), each with weekly rules (Mon/Wed, matching the `edu_class_schedules`
+     * rows seeded in `classes()`) and a full `edu_sessions` history spanning ~30 days in
+     * the past through ~60 days ahead, so `/edu/timetable/calendar` has real data for
+     * every class instead of only the one status='active' row.
      */
     private function timetables(array $courses, array $classes, array $teachers, array $rooms): void
     {
         $statuses = ['draft', 'active', 'completed', 'cancelled'];
 
-        foreach ($statuses as $i => $status) {
-            $classId = $classes[$i % count($classes)];
+        foreach ($classes as $i => $class) {
+            $classId = $class['id'];
             $teacherId = $teachers[$i % count($teachers)];
             $roomId = $rooms[$i % count($rooms)];
             $courseId = $courses[$i % count($courses)]['id'];
+            $status = $statuses[$i % count($statuses)];
 
-            $start = now()->addDays($i * 30);
-            $end = $start->copy()->addDays(28);
+            $start = now()->subDays(30)->startOfWeek();
+            $end = now()->addDays(60);
 
             $timetableId = DB::table('edu_timetables')->insertGetId([
                 'timetable_code' => 'TKB'.str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT),
@@ -1236,13 +1252,10 @@ class MasterSeeder extends Seeder
                 ]);
             }
 
-            if ($status !== 'active') {
-                continue;
-            }
-
             $no = 0;
             $date = $start->copy();
-            while ($no < 4) {
+            $today = now()->startOfDay();
+            while ($date->lte($end)) {
                 if (in_array($date->dayOfWeekIso, [1, 3], true)) {
                     $no++;
                     DB::table('edu_sessions')->insert([
@@ -1255,7 +1268,7 @@ class MasterSeeder extends Seeder
                         'end_time' => '19:30:00',
                         'teacher_id' => $teacherId,
                         'room_id' => $roomId,
-                        'status' => 'upcoming',
+                        'status' => $date->lt($today) ? 'completed' : 'upcoming',
                         'created_at' => $this->now(),
                         'updated_at' => $this->now(),
                     ]);

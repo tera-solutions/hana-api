@@ -12,6 +12,8 @@ class AttendancePermissionSeeder extends PermissionSeeder
         $this->seedPermissions('Education', 'Attendance', [
             'attendance.list' => 'Xem danh sách chuyên cần',
             'attendance.view' => 'Xem chi tiết chuyên cần',
+            'attendance.create' => 'Điểm danh học viên',
+            'attendance.update' => 'Cập nhật điểm danh',
         ]);
     }
 }

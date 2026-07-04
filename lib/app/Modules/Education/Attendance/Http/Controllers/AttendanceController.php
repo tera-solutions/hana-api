@@ -3,7 +3,11 @@
 namespace App\Modules\Education\Attendance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Education\Attendance\Actions\CreateAttendanceAction;
 use App\Modules\Education\Attendance\Actions\ListAttendanceAction;
+use App\Modules\Education\Attendance\Actions\UpdateAttendanceAction;
+use App\Modules\Education\Attendance\Http\Requests\CreateAttendanceRequest;
+use App\Modules\Education\Attendance\Http\Requests\UpdateAttendanceRequest;
 use App\Modules\Education\Attendance\Http\Resources\AttendanceResource;
 use Illuminate\Http\Request;
 
@@ -39,5 +43,79 @@ class AttendanceController extends Controller
     public function list(Request $request, ListAttendanceAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), AttendanceResource::class);
+    }
+
+    /**
+     * Mark attendance
+     *
+     * One row per (session, student) — re-marking an already-recorded student
+     * updates the existing row instead of erroring. Rejected if the session
+     * is cancelled or already attendance_locked (spec §7, §11).
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Điểm danh thành công.",
+     *   "data": {"id": 1, "session_id": 1, "student_id": 1, "status": "present"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Session cancelled" {
+     *   "success": false,
+     *   "msg": "Buổi học đã bị hủy, không thể điểm danh.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Attendance locked" {
+     *   "success": false,
+     *   "msg": "Buổi học đã chốt điểm danh, không thể thay đổi.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function create(CreateAttendanceRequest $request, CreateAttendanceAction $action)
+    {
+        try {
+            $attendance = $action->handle($request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new AttendanceResource($attendance), 'Điểm danh thành công.');
+    }
+
+    /**
+     * Update attendance
+     *
+     * Rejected if the session is cancelled or already attendance_locked
+     * (spec §7, §11).
+     *
+     * @urlParam id integer required The attendance record id. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Cập nhật điểm danh thành công.",
+     *   "data": {"id": 1, "session_id": 1, "student_id": 1, "status": "late"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Attendance locked" {
+     *   "success": false,
+     *   "msg": "Buổi học đã chốt điểm danh, không thể thay đổi.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function update(UpdateAttendanceRequest $request, $id, UpdateAttendanceAction $action)
+    {
+        try {
+            $attendance = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new AttendanceResource($attendance), 'Cập nhật điểm danh thành công.');
     }
 }

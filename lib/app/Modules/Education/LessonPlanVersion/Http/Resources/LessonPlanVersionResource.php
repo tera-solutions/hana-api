@@ -11,6 +11,11 @@ class LessonPlanVersionResource extends JsonResource
         return [
             'id' => $this->id,
             'lesson_plan_id' => $this->lesson_plan_id,
+            'plan' => $this->whenLoaded('plan', fn () => $this->plan ? [
+                'id' => $this->plan->id,
+                'plan_code' => $this->plan->plan_code,
+                'plan_name' => $this->plan->plan_name,
+            ] : null),
             'version' => $this->version,
             'change_summary' => $this->change_summary,
             'published_at' => $this->published_at,
