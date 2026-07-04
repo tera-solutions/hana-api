@@ -5,6 +5,7 @@ namespace App\Modules\Education\ClassSchedule\Services;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Services\ClassService;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Collection;
 
 class ClassScheduleService
@@ -15,6 +16,10 @@ class ClassScheduleService
     {
         ClassRoom::findOrFail($classId);
 
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $classId);
+        }
+
         return ClassSchedule::where('class_id', $classId)
             ->with('eduClass')
             ->orderBy('weekday')
@@ -24,12 +29,22 @@ class ClassScheduleService
 
     public function find($scheduleId): ClassSchedule
     {
-        return ClassSchedule::with('eduClass')->findOrFail($scheduleId);
+        $schedule = ClassSchedule::with('eduClass')->findOrFail($scheduleId);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $schedule->class_id);
+        }
+
+        return $schedule;
     }
 
     public function create($classId, array $data): ClassSchedule
     {
         ClassRoom::findOrFail($classId);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $classId);
+        }
 
         $schedule = ClassSchedule::create([
             'class_id' => $classId,
@@ -47,6 +62,11 @@ class ClassScheduleService
     public function update($scheduleId, array $data): ClassSchedule
     {
         $schedule = ClassSchedule::findOrFail($scheduleId);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $schedule->class_id);
+        }
+
         $schedule->update($data);
 
         return $schedule->fresh();
@@ -55,6 +75,11 @@ class ClassScheduleService
     public function delete($scheduleId): void
     {
         $schedule = ClassSchedule::findOrFail($scheduleId);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $schedule->class_id);
+        }
+
         $classId = $schedule->class_id;
         $schedule->delete();
 

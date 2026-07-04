@@ -98,6 +98,11 @@ class LessonService
             if (! $class) {
                 throw new \RuntimeException('Lớp học không tồn tại.');
             }
+
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeClass((int) $classId);
+            }
+
             if (! $class->lesson_plan_id) {
                 throw new \RuntimeException('Lớp học chưa được gắn giáo án.');
             }
@@ -190,6 +195,7 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
             $this->assertMutable($lesson);
 
             // BR006: a teacher change must not clash with the teacher's other lessons.
@@ -224,6 +230,7 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
             $this->assertMutable($lesson);
 
             $date = $data['lesson_date'];
@@ -265,6 +272,8 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
+
             // BR010: a completed (or locked) lesson cannot be cancelled.
             if (in_array($lesson->status, [Lesson::STATUS_COMPLETED, Lesson::STATUS_LOCKED], true)) {
                 throw new \RuntimeException('Buổi học đã hoàn thành hoặc đã khóa, không thể hủy.');
@@ -293,6 +302,8 @@ class LessonService
         return DB::transaction(function () use ($id) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
+
             if (in_array($lesson->status, [Lesson::STATUS_CANCELLED, Lesson::STATUS_LOCKED, Lesson::STATUS_COMPLETED], true)) {
                 throw new \RuntimeException('Buổi học không thể chuyển sang hoàn thành từ trạng thái hiện tại.');
             }
@@ -314,6 +325,8 @@ class LessonService
     {
         return DB::transaction(function () use ($id) {
             $lesson = Lesson::findOrFail($id);
+
+            $this->authorizeLesson($lesson);
 
             if ($lesson->isLocked()) {
                 throw new \RuntimeException('Buổi học đã được khóa.');
@@ -340,6 +353,8 @@ class LessonService
     {
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
+
+            $this->authorizeLesson($lesson);
 
             if (! $lesson->isLocked()) {
                 throw new \RuntimeException('Buổi học chưa bị khóa.');
@@ -413,6 +428,13 @@ class LessonService
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
+
+    private function authorizeLesson(Lesson $lesson): void
+    {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $lesson->class_room_id);
+        }
+    }
 
     /**
      * @throws \RuntimeException BR004 (completed) / BR005 (locked).

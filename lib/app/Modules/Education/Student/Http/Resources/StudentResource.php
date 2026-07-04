@@ -23,6 +23,10 @@ class StudentResource extends JsonResource
             'phone' => $this->phone,
 
             'level_id' => $this->level_id,
+            'level' => $this->whenLoaded('level', fn () => $this->level ? [
+                'id' => $this->level->id,
+                'name' => $this->level->level_name,
+            ] : null),
             'status' => $this->status,
             'enrollment_date' => $this->enrollment_date,
             'admission_source' => $this->admission_source,

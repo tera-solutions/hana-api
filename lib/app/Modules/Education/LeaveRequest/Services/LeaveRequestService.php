@@ -8,11 +8,13 @@ use App\Modules\Education\LeaveRequest\Models\LeaveRequest;
 use App\Modules\Education\LeaveRequest\Models\LeaveRequestLog;
 use App\Modules\Education\LeaveRequest\Models\MakeupLesson;
 use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
+use Package\Exception\AuthorizationException;
 
 class LeaveRequestService
 {
@@ -51,6 +53,10 @@ class LeaveRequestService
             $query->whereDate('leave_date', '<=', $params['leave_date_to']);
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainLeaveRequests($query);
+        }
+
         $this->applySort($query, $params, ['request_code', 'leave_date', 'status', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -58,7 +64,13 @@ class LeaveRequestService
 
     public function find($id): LeaveRequest
     {
-        return LeaveRequest::with([...self::RELATIONS, 'logs'])->findOrFail($id);
+        $query = LeaveRequest::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainLeaveRequests($query);
+        }
+
+        return $query->with([...self::RELATIONS, 'logs'])->findOrFail($id);
     }
 
     /**
@@ -81,6 +93,16 @@ class LeaveRequestService
                 $data['class_room_id'] = $data['class_room_id'] ?? $lesson->class_room_id;
             }
 
+            if ($scope = TeacherScope::current()) {
+                if ($data['requester_type'] === LeaveRequestType::TeacherLeave->requesterType()) {
+                    if ((int) $data['requester_id'] !== $scope->teacherId) {
+                        throw new AuthorizationException('Bạn chỉ có thể tạo đơn nghỉ cho chính mình.');
+                    }
+                } else {
+                    $scope->authorizeStudent((int) $data['requester_id']);
+                }
+            }
+
             $request = new LeaveRequest($data);
             $request->request_code = $this->generateCode();
             $request->status = LeaveRequest::STATUS_PENDING;
@@ -100,7 +122,7 @@ class LeaveRequestService
     public function update($id, array $data): LeaveRequest
     {
         return DB::transaction(function () use ($id, $data) {
-            $request = LeaveRequest::findOrFail($id);
+            $request = $this->find($id);
 
             if ($request->status !== LeaveRequest::STATUS_PENDING) {
                 throw new \RuntimeException('Chỉ có thể chỉnh sửa đơn đang chờ duyệt.');
@@ -141,7 +163,7 @@ class LeaveRequestService
     public function approve($id): LeaveRequest
     {
         return DB::transaction(function () use ($id) {
-            $request = LeaveRequest::findOrFail($id);
+            $request = $this->find($id);
 
             if ($request->status !== LeaveRequest::STATUS_PENDING) {
                 throw new \RuntimeException('Chỉ có thể duyệt đơn đang chờ duyệt.');
@@ -179,7 +201,7 @@ class LeaveRequestService
     public function reject($id, array $data): LeaveRequest
     {
         return DB::transaction(function () use ($id, $data) {
-            $request = LeaveRequest::findOrFail($id);
+            $request = $this->find($id);
 
             if ($request->status !== LeaveRequest::STATUS_PENDING) {
                 throw new \RuntimeException('Chỉ có thể từ chối đơn đang chờ duyệt.');
@@ -205,7 +227,7 @@ class LeaveRequestService
     public function cancel($id, array $data = []): LeaveRequest
     {
         return DB::transaction(function () use ($id, $data) {
-            $request = LeaveRequest::findOrFail($id);
+            $request = $this->find($id);
 
             if (! in_array($request->status, [LeaveRequest::STATUS_PENDING, LeaveRequest::STATUS_APPROVED], true)) {
                 throw new \RuntimeException('Chỉ có thể hủy đơn đang chờ duyệt hoặc đã duyệt.');

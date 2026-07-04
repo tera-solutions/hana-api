@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\DB;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Grant permissions to each role.
+     * Grant permissions to the roles seeded by BusinessAndUserSeeder.
      *
-     * Super Admin is intentionally omitted — those accounts use the `is_admin`
-     * flag and bypass the permission checks entirely.
+     * ADMIN_ROLE accounts also carry the `is_admin` flag and bypass the
+     * permission checks entirely; the full grant here keeps the role coherent
+     * for non-flagged admins.
      *
      * Each role is described by the modules it can manage:
-     *   - `all`  => every seeded permission (BUSINESS_ADMIN).
+     *   - `all`  => every seeded permission.
      *   - `full` => every action of the listed module prefixes (e.g. course.* ).
      *   - `view` => the read actions (`.list` / `.view`) of the listed prefixes.
      *
@@ -24,50 +25,39 @@ class RolePermissionSeeder extends Seeder
     private const READ_ACTIONS = ['list', 'view'];
 
     private array $map = [
-        'BUSINESS_ADMIN' => ['all' => true],
+        'ADMIN_ROLE' => ['all' => true],
 
-        'BRANCH_MANAGER' => [
+        // Daily teaching work: manages their classes' homework, attendance,
+        // evaluations and lessons; reads the surrounding catalog. Row-level
+        // isolation between teachers is enforced by TeacherScope, not here.
+        'TEACHER_ROLE' => [
             'full' => [
-                'branch', 'user', 'teacher', 'student', 'class', 'enrollment', 'room',
-                'lesson', 'course', 'level', 'student_level', 'lesson_plan', 'material', 'assignment',
+                'assignment', 'material', 'evaluation', 'task', 'attendance',
+                'lesson', 'session', 'leave',
             ],
             'view' => [
-                'business', 'session', 'crm_lead', 'parent', 'parent_student',
-                'fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'activity_log',
+                'student', 'student_level', 'class', 'course', 'level', 'lesson_plan',
+                'exam', 'question', 'timetable', 'room', 'parent', 'dashboard',
             ],
         ],
 
-        'ACADEMIC_STAFF' => [
-            'full' => [
-                'course', 'level', 'student_level', 'class', 'room', 'lesson', 'session',
-                'lesson_plan', 'material', 'assignment', 'student', 'enrollment',
-            ],
-            'view' => ['business', 'branch', 'teacher', 'parent', 'parent_student'],
-        ],
-
-        'TEACHER' => [
-            'full' => ['assignment', 'material', 'evaluation', 'task', 'attendance'],
+        // Own learning view: schedule, lessons, homework, results; may file
+        // leave requests.
+        'STUDENT_ROLE' => [
+            'full' => ['leave'],
             'view' => [
-                'student', 'student_level', 'lesson', 'session', 'class', 'course', 'level', 'lesson_plan',
-                'exam', 'question', 'timetable', 'leave', 'dashboard',
+                'class', 'course', 'level', 'lesson', 'session', 'assignment', 'material',
+                'exam', 'timetable', 'evaluation', 'attendance', 'student_level', 'dashboard',
             ],
         ],
 
-        'STAFF' => [
-            'full' => ['student', 'parent', 'parent_student'],
+        // Children's progress + billing view; may file leave requests for a child.
+        'PARENT_ROLE' => [
+            'full' => ['leave'],
             'view' => [
-                'business', 'branch', 'course', 'class', 'room', 'enrollment', 'crm_lead', 'lesson',
+                'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
+                'assignment', 'timetable', 'fin_invoice', 'fin_payment', 'fin_debt', 'dashboard',
             ],
-        ],
-
-        'ACCOUNTANT' => [
-            'full' => ['fin_invoice', 'fin_payment', 'fin_account', 'fin_debt'],
-            'view' => ['business', 'branch', 'student', 'enrollment', 'parent'],
-        ],
-
-        'CRM_STAFF' => [
-            'full' => ['crm_lead', 'parent', 'parent_student'],
-            'view' => ['business', 'branch', 'student', 'enrollment', 'course', 'class'],
         ],
     ];
 

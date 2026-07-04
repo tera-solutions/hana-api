@@ -7,6 +7,7 @@ use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\StudentLevel\Models\StudentLevel;
 use App\Modules\Education\StudentLevel\Models\StudentLevelAssessment;
 use App\Modules\Education\StudentLevel\Models\StudentLevelHistory;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -29,9 +30,14 @@ class StudentLevelService
      */
     public function detailByStudent($studentId): array
     {
-        $studentLevel = StudentLevel::with(['student', 'course', 'level'])
-            ->where('student_id', $studentId)
-            ->first();
+        $query = StudentLevel::with(['student', 'course', 'level'])
+            ->where('student_id', $studentId);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByStudentId($query, 'edu_student_levels.student_id');
+        }
+
+        $studentLevel = $query->first();
 
         if (! $studentLevel) {
             throw new \RuntimeException('Học viên chưa được gán cấp độ.');
@@ -57,6 +63,11 @@ class StudentLevelService
     {
         return DB::transaction(function () use ($data) {
             $student = Student::findOrFail($data['student_id']);
+
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeStudent((int) $student->id);
+            }
+
             $level = $this->levelInCourse((int) $data['level_id'], (int) $data['course_id']); // BR002
 
             StudentLevelAssessment::create([
@@ -105,7 +116,7 @@ class StudentLevelService
     public function promote($studentLevelId, array $data): StudentLevel
     {
         return DB::transaction(function () use ($studentLevelId, $data) {
-            $studentLevel = StudentLevel::findOrFail($studentLevelId);
+            $studentLevel = $this->scopedStudentLevel($studentLevelId);
             $current = $studentLevel->level_id ? Level::find($studentLevel->level_id) : null;
 
             $target = ! empty($data['target_level_id'])
@@ -133,7 +144,7 @@ class StudentLevelService
     public function adjust($studentLevelId, array $data): StudentLevel
     {
         return DB::transaction(function () use ($studentLevelId, $data) {
-            $studentLevel = StudentLevel::findOrFail($studentLevelId);
+            $studentLevel = $this->scopedStudentLevel($studentLevelId);
             $target = $this->levelInCourse((int) $data['target_level_id'], (int) $studentLevel->course_id);
 
             $fromLevelId = $studentLevel->level_id;
@@ -151,11 +162,26 @@ class StudentLevelService
      */
     public function history($studentLevelId)
     {
-        StudentLevel::findOrFail($studentLevelId);
+        $this->scopedStudentLevel($studentLevelId);
 
         return StudentLevelHistory::with(['fromLevel', 'toLevel'])
             ->where('student_level_id', $studentLevelId)
             ->latest()->get();
+    }
+
+    /**
+     * Resolve a student-level row within the caller's teacher scope, 404-ing
+     * when the student is not enrolled in any of the teacher's classes.
+     */
+    private function scopedStudentLevel($id): StudentLevel
+    {
+        $query = StudentLevel::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByStudentId($query, 'edu_student_levels.student_id');
+        }
+
+        return $query->findOrFail($id);
     }
 
     /**

@@ -62,6 +62,19 @@ class BusinessAndUserSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
+        DB::table('sys_roles')->insert([
+            'business_id' => $businessId,
+            'title' => 'Parent',
+            'code' => 'PARENT_ROLE',
+            'type' => 'system',
+            'guard_name' => 'api',
+            'description' => 'Parent to the system',
+            'is_active' => true,
+            'is_default' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         DB::table('users')->insert([
             [
                 'full_name' => 'Super Admin',

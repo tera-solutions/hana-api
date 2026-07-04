@@ -102,6 +102,8 @@ class LessonPlanService
     {
         $plan = LessonPlan::with(['course', 'level', 'lessons.materials', 'versions'])->findOrFail($id);
 
+        $this->authorizePlan($plan);
+
         return [
             'plan' => $plan,
             'usage' => [
@@ -164,6 +166,8 @@ class LessonPlanService
         return DB::transaction(function () use ($id, $data) {
             $source = LessonPlan::with('lessons.materials')->findOrFail($id);
 
+            $this->authorizePlan($source);
+
             $clone = $source->replicate(['published_at', 'published_by']);
             $clone->plan_code = $data['plan_code'];
             $clone->plan_name = $data['plan_name'] ?? $source->plan_name;
@@ -200,6 +204,8 @@ class LessonPlanService
     {
         return DB::transaction(function () use ($id, $data) {
             $plan = LessonPlan::with('lessons')->findOrFail($id);
+
+            $this->authorizePlan($plan);
 
             if ($plan->status === LessonPlan::STATUS_PUBLISHED) {
                 throw new \RuntimeException('Giáo án đã được xuất bản.');
@@ -239,6 +245,8 @@ class LessonPlanService
     {
         $plan = LessonPlan::findOrFail($id);
 
+        $this->authorizePlan($plan);
+
         if ($plan->status === LessonPlan::STATUS_ARCHIVED) {
             throw new \RuntimeException('Giáo án đã ngừng sử dụng.');
         }
@@ -258,6 +266,8 @@ class LessonPlanService
     {
         $plan = LessonPlan::findOrFail($id);
 
+        $this->authorizePlan($plan);
+
         if ($plan->status !== LessonPlan::STATUS_ARCHIVED) {
             throw new \RuntimeException('Chỉ có thể khôi phục giáo án đã ngừng sử dụng.');
         }
@@ -269,6 +279,13 @@ class LessonPlanService
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
+    private function authorizePlan(LessonPlan $plan): void
+    {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeLessonPlan((int) $plan->id, $plan->course_id ? (int) $plan->course_id : null);
+        }
+    }
+
     /**
      * Editability gate (§9, BR004). Public so lesson-template edits can reuse it.
      *
@@ -276,6 +293,8 @@ class LessonPlanService
      */
     public function assertEditable(LessonPlan $plan): void
     {
+        $this->authorizePlan($plan);
+
         if ($plan->status === LessonPlan::STATUS_PUBLISHED) {
             throw new \RuntimeException('Giáo án đã xuất bản không thể sửa trực tiếp. Hãy tạo phiên bản mới (clone).');
         }
