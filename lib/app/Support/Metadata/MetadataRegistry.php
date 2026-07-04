@@ -26,6 +26,8 @@ use App\Modules\Education\Exam\Enums\ExamSessionStatus;
 use App\Modules\Education\Exam\Enums\ExamSkill;
 use App\Modules\Education\Exam\Enums\ExamStatus;
 use App\Modules\Education\Exam\Enums\ExamType;
+use App\Modules\Education\Exam\Enums\QuestionDifficulty as ExamQuestionDifficulty;
+use App\Modules\Education\Exam\Enums\QuestionType as ExamQuestionType;
 use App\Modules\Education\Exam\Enums\RegistrationStatus;
 use App\Modules\Education\LeaveRequest\Enums\LeaveReasonType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveRequestType;
@@ -140,6 +142,8 @@ class MetadataRegistry
                 'exam_status' => ExamStatus::options(),
                 'exam_type' => ExamType::options(),
                 'exam_skill' => ExamSkill::options(),
+                'exam_question_type' => ExamQuestionType::options(),
+                'exam_question_difficulty' => ExamQuestionDifficulty::options(),
                 'exam_session_status' => ExamSessionStatus::options(),
                 'exam_registration_status' => RegistrationStatus::options(),
 

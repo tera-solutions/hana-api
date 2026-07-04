@@ -44,5 +44,22 @@ class RoleSeeder extends Seeder
                 ]
             );
         }
+
+        // Default role for individual (business-less) self-registered users, scoped to the
+        // system business since sys_roles.business_id stays NOT NULL.
+        DB::table('sys_roles')->updateOrInsert(
+            ['code' => 'INDIVIDUAL_USER'],
+            [
+                'business_id' => $businessId,
+                'title' => 'Individual User',
+                'type' => 'user',
+                'guard_name' => 'api',
+                'description' => 'Default role for individual self-registered accounts',
+                'is_active' => true,
+                'is_default' => true,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
     }
 }

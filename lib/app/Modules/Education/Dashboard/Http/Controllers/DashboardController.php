@@ -33,8 +33,8 @@ class DashboardController extends Controller
      *       {"id": 1, "class_id": 10, "class_name": "Starters 2A", "level": null, "room": "Phòng 01", "date": "2026-07-01", "start_time": "08:00", "end_time": "09:30", "status": "upcoming", "lesson_plan_id": 5, "student_count": 24}
      *     ],
      *     "schedule_week": [
-     *       {"date": "2026-06-29", "count": 2}, {"date": "2026-06-30", "count": 3}, {"date": "2026-07-01", "count": 3},
-     *       {"date": "2026-07-02", "count": 1}, {"date": "2026-07-03", "count": 0}, {"date": "2026-07-04", "count": 0}, {"date": "2026-07-05", "count": 0}
+     *       {"date": "2026-06-29", "count": 2, "completed": 2}, {"date": "2026-06-30", "count": 3, "completed": 3}, {"date": "2026-07-01", "count": 3, "completed": 1},
+     *       {"date": "2026-07-02", "count": 1, "completed": 0}, {"date": "2026-07-03", "count": 0, "completed": 0}, {"date": "2026-07-04", "count": 0, "completed": 0}, {"date": "2026-07-05", "count": 0, "completed": 0}
      *     ],
      *     "homework_pending": [{"id": 1, "title": "Unit 01 - Homework", "class_name": "Starters 2A", "pending_count": 5, "deadline": "2026-07-05"}],
      *     "lesson_plans": [{"id": 1, "unit_name": "Kids Starter", "class_name": "IELTS Foundation", "taught_percent": 60}],

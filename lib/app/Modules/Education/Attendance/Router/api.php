@@ -7,5 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('attendance')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [AttendanceController::class, 'list'])->middleware('permission:attendance.list');
+    Route::post('/create', [AttendanceController::class, 'create'])->middleware('permission:attendance.create');
+    Route::put('/update/{id}', [AttendanceController::class, 'update'])->middleware('permission:attendance.update');
 
 });
