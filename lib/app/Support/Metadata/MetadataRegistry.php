@@ -73,6 +73,10 @@ use App\Modules\System\ActivityLog\Enums\ActivityAction;
 use App\Modules\System\ActivityLog\Enums\ActivityModule;
 use App\Modules\System\Branch\Enums\BranchStatus;
 use App\Modules\System\Business\Enums\BusinessStatus;
+use App\Modules\System\Task\Enums\TaskCategory;
+use App\Modules\System\Task\Enums\TaskPriority;
+use App\Modules\System\Task\Enums\TaskRelatedType;
+use App\Modules\System\Task\Enums\TaskStatus;
 use App\Modules\System\User\Enums\UserStatus;
 
 /**
@@ -101,6 +105,10 @@ class MetadataRegistry
                 'branch_status' => BranchStatus::options(),
                 'activity_action' => ActivityAction::options(),
                 'activity_module' => ActivityModule::options(),
+                'task_status' => TaskStatus::options(),
+                'task_priority' => TaskPriority::options(),
+                'task_category' => TaskCategory::options(),
+                'task_related_type' => TaskRelatedType::options(),
             ],
             'crm' => [
                 'lead_status' => LeadStatus::options(),
