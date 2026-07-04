@@ -9,6 +9,6 @@ class GetSessionAction
 {
     public function handle($id): ClassSession
     {
-        return app(ClassSessionService::class)->find($id);
+        return app(ClassSessionService::class)->detail($id);
     }
 }

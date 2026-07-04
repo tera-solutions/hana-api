@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Helpers\SyncPermissionRole;
+use App\Helpers\Task;
 use App\Http\Controllers\Controller;
 use App\Jobs\MailRegister as JobsMailRegister;
 use App\Jobs\SendMailAccountActivation;
@@ -551,6 +552,7 @@ class ApiAuthController extends Controller
                 } else {
                     $inputIndividual = [
                         'full_name',
+                        'avatar',
                         'email',
                         'phone',
                         'password',
@@ -565,12 +567,17 @@ class ApiAuthController extends Controller
                     $dataIndividual = $request->only($inputIndividual);
                     $dataIndividual['username'] = $request->email;
                     $dataIndividual['type'] = 'individual';
-                    $dataIndividual['status_account'] = 'is_active';
+                    $dataIndividual['status'] = 'active';
                     $dataIndividual['is_active'] = 1;
                     $dataIndividual['verify_auth'] = env('VERIFY_AUTH');
                     $dataIndividual['password'] = bcrypt($request->password);
                     //
-                    $role = Role::where('is_default', 1)->whereNull('business_id')->where('type', 'user')->first();
+                    // business_id/role_id are NOT NULL; individual accounts are attached to the
+                    // system business and its dedicated default role (seeded as INDIVIDUAL_USER
+                    // in RoleSeeder) since they don't belong to a real business.
+                    $systemBusinessId = Business::query()->min('id');
+                    $dataIndividual['business_id'] = $systemBusinessId;
+                    $role = Role::where('code', 'INDIVIDUAL_USER')->where('business_id', $systemBusinessId)->first();
                     if ($role) {
                         $dataIndividual['role_id'] = $role->id;
                     }
@@ -580,31 +587,34 @@ class ApiAuthController extends Controller
                     $expiration_time = now()->addDays(7);
                     $dataIndividual['expiration_time'] = $expiration_time->format('Y-m-d');
                     //
+                    $refCount = Task::setAndGetReferenceCount('user');
+                    $dataIndividual['code'] = Task::generateReferenceNumber('user', $refCount, 'USR');
+                    //
                     $result = User::create($dataIndividual);
 
-                    // set permisson
-                    $getModuleForIndividual = Module::whereJsonContains('type', 'individual')->get();
+                    // // set permisson
+                    // $getModuleForIndividual = Module::whereJsonContains('type', 'individual')->get();
 
-                    if ($result) {
-                        if (count($getModuleForIndividual) > 0) {
-                            foreach ($getModuleForIndividual as $key => $module) {
-                                foreach ($module->type as $type) {
-                                    if ($type == 'individual') {
-                                        ModulePermission::create(['type' => $type, 'user_id' => $result->id, 'module_id' => $module->id, 'created_at' => now()]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    //
-                    $urlAuth = env('CLIENT_URL').'/auth/login';
-                    $mailConfig = MailConfig::where('type', 'system')->first();
-                    //
-                    JobsMailRegister::dispatch(
-                        $mailConfig,
-                        $request->email,
-                        $urlAuth
-                    );
+                    // if ($result) {
+                    //     if (count($getModuleForIndividual) > 0) {
+                    //         foreach ($getModuleForIndividual as $key => $module) {
+                    //             foreach ($module->type as $type) {
+                    //                 if ($type == 'individual') {
+                    //                     ModulePermission::create(['type' => $type, 'user_id' => $result->id, 'module_id' => $module->id, 'created_at' => now()]);
+                    //                 }
+                    //             }
+                    //         }
+                    //     }
+                    // }
+                    // //
+                    // $urlAuth = env('CLIENT_URL').'/auth/login';
+                    // $mailConfig = MailConfig::where('type', 'system')->first();
+                    // //
+                    // JobsMailRegister::dispatch(
+                    //     $mailConfig,
+                    //     $request->email,
+                    //     $urlAuth
+                    // );
                     if (! $result) {
                         throw new HttpException('Không thể đăng ký !');
                     }

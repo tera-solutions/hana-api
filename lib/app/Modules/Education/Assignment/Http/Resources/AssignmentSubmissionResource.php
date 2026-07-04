@@ -11,6 +11,12 @@ class AssignmentSubmissionResource extends JsonResource
         return [
             'id' => $this->id,
             'assignment_id' => $this->assignment_id,
+            'assignment' => $this->whenLoaded('assignment', fn () => $this->assignment ? [
+                'id' => $this->assignment->id,
+                'assignment_code' => $this->assignment->assignment_code,
+                'assignment_name' => $this->assignment->assignment_name,
+                'max_score' => $this->assignment->max_score,
+            ] : null),
             'student_id' => $this->student_id,
             'student' => $this->whenLoaded('student', fn () => $this->student ? [
                 'id' => $this->student->id,

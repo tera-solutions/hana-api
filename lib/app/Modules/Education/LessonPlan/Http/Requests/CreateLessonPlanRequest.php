@@ -16,6 +16,7 @@ class CreateLessonPlanRequest extends FormRequest
         return [
             'plan_code' => ['required', 'string', 'max:255', 'unique:edu_lesson_plans,plan_code'],
             'plan_name' => ['required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'course_id' => ['required', 'integer', 'exists:edu_courses,id'],
             'level_id' => ['nullable', 'integer', 'exists:edu_levels,id'],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -39,6 +40,10 @@ class CreateLessonPlanRequest extends FormRequest
         return [
             'plan_code' => ['description' => 'Unique lesson-plan code.', 'example' => 'KIDS_STARTER_V1'],
             'plan_name' => ['description' => 'Lesson-plan name.', 'example' => 'Kids Starter'],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+                'example' => 'https://cdn.hana.edu.vn/a.png',
+            ],
             'course_id' => ['description' => 'Owning course id.', 'example' => 1],
             'level_id' => ['description' => 'Level id.', 'example' => 1],
             'description' => ['description' => 'Description.'],

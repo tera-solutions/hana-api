@@ -23,6 +23,7 @@ class CreateRoomRequest extends FormRequest
                 Rule::unique('edu_rooms', 'room_code')->where('branch_id', $this->input('branch_id')),
             ],
             'room_name' => ['required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'string', 'max:1000'],
             'floor' => ['nullable', 'string', 'max:50'],
             'capacity' => ['required', 'integer', 'min:1'],
             'room_type' => ['required', Rule::in(RoomType::values())],
@@ -59,6 +60,10 @@ class CreateRoomRequest extends FormRequest
             'room_name' => [
                 'description' => 'Room name.',
                 'example' => 'Phòng A101',
+            ],
+            'avatar' => [
+                'description' => 'Avatar URL.',
+                'example' => 'https://cdn.hana.edu.vn/a.png',
             ],
             'floor' => [
                 'description' => 'Floor.',

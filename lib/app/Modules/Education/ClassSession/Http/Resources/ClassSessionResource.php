@@ -10,8 +10,6 @@ class ClassSessionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'class_id' => $this->class_id,
-            'schedule_id' => $this->schedule_id,
             'session_no' => $this->session_no,
             'code' => $this->code,
             'name' => $this->name,
@@ -20,7 +18,34 @@ class ClassSessionResource extends JsonResource
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
 
+            'class_id' => $this->class_id,
+            'class' => $this->whenLoaded('classRoom', fn () => $this->classRoom ? [
+                'id' => $this->classRoom->id,
+                'code' => $this->classRoom->code,
+                'name' => $this->classRoom->name,
+            ] : null),
+
+            'schedule_id' => $this->schedule_id,
+            'schedule' => $this->whenLoaded('schedule', fn () => $this->schedule ? [
+                'id' => $this->schedule->id,
+                'weekday' => $this->schedule->weekday,
+                'start_time' => $this->schedule->start_time,
+                'end_time' => $this->schedule->end_time,
+            ] : null),
+
             'room_id' => $this->room_id,
+            'room' => $this->whenLoaded('room', fn () => $this->room ? [
+                'id' => $this->room->id,
+                'room_code' => $this->room->room_code,
+                'room_name' => $this->room->room_name,
+            ] : null),
+
+            'timetable_id' => $this->timetable_id,
+            'timetable' => $this->whenLoaded('timetable', fn () => $this->timetable ? [
+                'id' => $this->timetable->id,
+                'timetable_code' => $this->timetable->timetable_code,
+                'name' => $this->timetable->name,
+            ] : null),
 
             'teacher_id' => $this->teacher_id,
             'teacher' => $this->whenLoaded('teacher', fn () => $this->teacher ? [

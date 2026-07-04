@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('class-room')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [ClassController::class, 'list'])->middleware('permission:class.list');
+    Route::get('/summary', [ClassController::class, 'summary'])->middleware('permission:class.list');
     Route::get('/detail/{id}', [ClassController::class, 'detail'])->middleware('permission:class.view');
 
     Route::post('/create', [ClassController::class, 'create'])->middleware('permission:class.create');

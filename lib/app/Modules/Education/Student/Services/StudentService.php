@@ -4,9 +4,13 @@ namespace App\Modules\Education\Student\Services;
 
 use App\Helpers\Task;
 use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\Student\Enums\StudentStatus;
 use App\Modules\Education\Student\Events\StudentCreated;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\Student\Models\StudentHistory;
+use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -14,6 +18,7 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class StudentService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /** Fields stored in edu_student_profiles rather than on edu_students. */
     private const PROFILE_FIELDS = ['address', 'province', 'district', 'school', 'grade', 'note'];
@@ -22,6 +27,47 @@ class StudentService
      * Paginated, searchable, filterable, sortable list.
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['code', 'name', 'enrollment_date', 'created_at']);
+
+        return $query->with(['business', 'branch', 'parents'])
+            ->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, new_this_month: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $newThisMonth = (clone $this->baseQuery($params))
+            ->whereBetween('enrollment_date', [
+                now()->startOfMonth()->toDateString(),
+                now()->endOfMonth()->toDateString(),
+            ])
+            ->count();
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, StudentStatus::cases()),
+            'new_this_month' => $newThisMonth,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = Student::query();
 
@@ -46,6 +92,16 @@ class StudentService
             }
         }
 
+        // Students enrolled in a given class (via the edu_class_students pivot).
+        if (! empty($params['class_id'])) {
+            $query->whereIn('id', function ($sub) use ($params) {
+                $sub->select('student_id')
+                    ->from('edu_class_students')
+                    ->where('class_id', $params['class_id'])
+                    ->whereNull('deleted_at');
+            });
+        }
+
         if (! empty($params['enrolled_from'])) {
             $query->whereDate('enrollment_date', '>=', $params['enrolled_from']);
         }
@@ -54,10 +110,11 @@ class StudentService
             $query->whereDate('enrollment_date', '<=', $params['enrolled_to']);
         }
 
-        $this->applySort($query, $params, ['code', 'name', 'enrollment_date', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainStudents($query);
+        }
 
-        return $query->with(['business', 'branch', 'parents'])
-            ->paginate($this->resolvePerPage($params));
+        return $query;
     }
 
     public function find($id)

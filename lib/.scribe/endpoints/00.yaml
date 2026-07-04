@@ -1,19 +1,23 @@
-name: 'Education - Student'
-description: ''
+name: 'Core - Health'
+description: |-
+
+  Liveness / connectivity probes. These endpoints are public (no token required).
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: v1/edu/student/list
+    uri: api/health
     metadata:
       custom: []
-      groupName: 'Education - Student'
-      groupDescription: ''
+      groupName: 'Core - Health'
+      groupDescription: |-
+
+        Liveness / connectivity probes. These endpoints are public (no token required).
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
+      title: 'Health check'
+      description: 'Basic liveness probe.'
       authenticated: false
       deprecated: false
     headers:
@@ -30,11 +34,16 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"current_page":1,"data":[],"first_page_url":"http:\/\/localhost:8086\/v1\/edu\/student\/list?page=1","from":null,"last_page":1,"last_page_url":"http:\/\/localhost:8086\/v1\/edu\/student\/list?page=1","links":[{"url":null,"label":"&laquo; Previous","page":null,"active":false},{"url":"http:\/\/localhost:8086\/v1\/edu\/student\/list?page=1","label":"1","page":1,"active":true},{"url":null,"label":"Next &raquo;","page":null,"active":false}],"next_page_url":null,"path":"http:\/\/localhost:8086\/v1\/edu\/student\/list","per_page":15,"prev_page_url":null,"to":null,"total":0}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-        description: null
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {"status": "ok", "app_version": 1.0, "timestamp": "2026-06-12T00:00:00+00:00"},
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -44,69 +53,19 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'v1/edu/student/detail/{id}'
+    uri: api/connect
     metadata:
       custom: []
-      groupName: 'Education - Student'
-      groupDescription: ''
+      groupName: 'Core - Health'
+      groupDescription: |-
+
+        Liveness / connectivity probes. These endpoints are public (no token required).
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the detail.'
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: consequatur
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 404
-        content: |-
-          {
-              "message": "No query results for model [App\\Modules\\Education\\Student\\Models\\Student] consequatur"
-          }
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-        description: null
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: v1/edu/student/create
-    metadata:
-      custom: []
-      groupName: 'Education - Student'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: ''
-      description: ''
+      title: 'Connectivity check'
+      description: |-
+        Reports database / cache / storage / auth status. If a bearer token is supplied,
+        the authenticated user is included.
       authenticated: false
       deprecated: false
     headers:
@@ -116,120 +75,42 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: ''
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: consequatur
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - PUT
-    uri: 'v1/edu/student/update/{id}'
-    metadata:
-      custom: []
-      groupName: 'Education - Student'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: ''
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the update.'
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: consequatur
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      name:
-        custom: []
-        name: name
-        description: ''
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      name: consequatur
-    fileParameters: []
-    responses: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - DELETE
-    uri: 'v1/edu/student/delete/{id}'
-    metadata:
-      custom: []
-      groupName: 'Education - Student'
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: ''
-      description: ''
-      authenticated: false
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'The ID of the delete.'
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: consequatur
-    queryParameters: []
-    cleanQueryParameters: []
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "success": true,
+            "msg": "Thao tác thành công",
+            "data": {
+              "status": "ok",
+              "agent": "Mozilla/5.0",
+              "ip": "127.0.0.1",
+              "timestamp": "2026-06-12T00:00:00+00:00",
+              "services": {"database": "ok", "cache": "ok", "storage": "ok", "authenticated": "active"}
+            },
+            "code": 200,
+            "errors": null
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "success": false,
+            "msg": "USER EXPIRED!!",
+            "data": null,
+            "code": 401,
+            "errors": {"status": "expired"}
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null

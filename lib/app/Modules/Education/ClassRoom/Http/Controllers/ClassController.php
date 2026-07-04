@@ -7,6 +7,7 @@ use App\Modules\Education\ClassRoom\Actions\CreateClassAction;
 use App\Modules\Education\ClassRoom\Actions\GetClassAction;
 use App\Modules\Education\ClassRoom\Actions\ListClassAction;
 use App\Modules\Education\ClassRoom\Actions\RestoreClassAction;
+use App\Modules\Education\ClassRoom\Actions\SummaryClassAction;
 use App\Modules\Education\ClassRoom\Actions\SuspendClassAction;
 use App\Modules\Education\ClassRoom\Actions\UpdateClassAction;
 use App\Modules\Education\ClassRoom\Http\Requests\CreateClassRequest;
@@ -77,6 +78,34 @@ class ClassController extends Controller
     public function list(Request $request, ListClassAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), ClassResource::class);
+    }
+
+    /**
+     * Class summary
+     *
+     * Aggregate counters for the (teacher-scoped) class list. Honours the same
+     * filters as the list endpoint.
+     *
+     * @queryParam search string Search by class name or code. Example: IELTS
+     * @queryParam course_id integer Filter by course ID. Example: 1
+     * @queryParam teacher_id integer Filter by teacher ID. Example: 2
+     * @queryParam status string Filter by status: draft, upcoming, active, suspended, completed. Example: active
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "total": 12,
+     *     "by_status": {"draft": 1, "upcoming": 2, "active": 8, "suspended": 0, "completed": 1},
+     *     "total_students": 184
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function summary(Request $request, SummaryClassAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**

@@ -2,8 +2,13 @@
 
 namespace App\Modules\Education\LessonPlan\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanVersion\Services\LessonPlanVersionService;
+use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -11,11 +16,52 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class LessonPlanService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /**
      * Paginated, searchable, filterable, sortable list (lesson-plan.md §4).
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['plan_code', 'plan_name', 'version', 'total_lessons', 'status', 'created_at']);
+
+        return $query->with('course')->withCount('lessons')->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, total_lessons: int, in_use: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $planIds = (clone $this->baseQuery($params))->pluck('id');
+
+        $inUse = ClassRoom::whereIn('lesson_plan_id', $planIds)
+            ->distinct()
+            ->count('lesson_plan_id');
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, LessonPlanStatus::cases()),
+            'total_lessons' => (int) (clone $this->baseQuery($params))->sum('total_lessons'),
+            'in_use' => $inUse,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = LessonPlan::query();
 
@@ -37,9 +83,11 @@ class LessonPlanService
             $query->where('status', $params['status']);
         }
 
-        $this->applySort($query, $params, ['plan_code', 'plan_name', 'version', 'total_lessons', 'status', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainLessonPlans($query);
+        }
 
-        return $query->with('course')->withCount('lessons')->paginate($this->resolvePerPage($params));
+        return $query;
     }
 
     public function find($id): LessonPlan
@@ -52,7 +100,7 @@ class LessonPlanService
      */
     public function detail($id): array
     {
-        $plan = LessonPlan::with(['course', 'lessons.materials', 'versions'])->findOrFail($id);
+        $plan = LessonPlan::with(['course', 'level', 'lessons.materials', 'versions'])->findOrFail($id);
 
         return [
             'plan' => $plan,
@@ -76,7 +124,10 @@ class LessonPlanService
     }
 
     /**
-     * Update plan metadata. Blocked once published or used by a class (§9, BR004).
+     * Update plan metadata, including course_id and status. Blocked once published
+     * or used by a class (§9, BR004). Setting status keeps published_at/published_by
+     * coherent; it does not run the publish lesson checks (BR005/BR006) — use the
+     * publish endpoint for that.
      *
      * @throws \RuntimeException
      */
@@ -87,7 +138,17 @@ class LessonPlanService
 
             $this->assertEditable($plan);
 
-            unset($data['id'], $data['status'], $data['version'], $data['course_id'], $data['total_lessons'], $data['published_at'], $data['published_by']);
+            unset($data['id'], $data['version'], $data['total_lessons'], $data['published_at'], $data['published_by']);
+
+            if (array_key_exists('status', $data)) {
+                if ($data['status'] === LessonPlan::STATUS_PUBLISHED) {
+                    $data['published_at'] = now();
+                    $data['published_by'] = Auth::guard('api')->id() ?? Auth::id();
+                } else {
+                    $data['published_at'] = null;
+                    $data['published_by'] = null;
+                }
+            }
 
             $plan->update($data);
 

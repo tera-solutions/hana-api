@@ -15,16 +15,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class Student extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
     protected $table = 'edu_students';
 
     protected $guarded = [];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_ACTIVE = StudentStatus::Active->value;
 

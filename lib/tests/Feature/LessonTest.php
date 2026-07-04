@@ -240,6 +240,29 @@ class LessonTest extends TestCase
         $this->assertDatabaseHas('edu_lesson_histories', ['lesson_id' => $id, 'action' => 'change_teacher']);
     }
 
+    public function test_update_changes_status_and_logs_audit(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createLesson();
+
+        $this->putJson("/v1/edu/lesson/update/{$id}", ['status' => 'confirmed'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'confirmed');
+
+        $this->assertDatabaseHas('edu_lesson_histories', ['lesson_id' => $id, 'action' => 'change_status']);
+    }
+
+    public function test_update_rejects_status_outside_plain_progression(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createLesson();
+
+        $this->putJson("/v1/edu/lesson/update/{$id}", ['status' => 'cancelled'])
+            ->assertStatus(422);
+    }
+
     public function test_completed_lesson_cannot_be_updated(): void
     {
         $this->actingAsAdmin();
@@ -322,6 +345,31 @@ class LessonTest extends TestCase
         DB::table('edu_lessons')->where('id', $id)->update(['status' => 'completed']);
 
         $this->postJson("/v1/edu/lesson/cancel/{$id}", ['reason' => 'x'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_complete_marks_lesson_completed_and_logs_audit(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createLesson();
+
+        $this->postJson("/v1/edu/lesson/complete/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'completed');
+
+        $this->assertDatabaseHas('edu_lesson_histories', ['lesson_id' => $id, 'action' => 'complete']);
+    }
+
+    public function test_cannot_complete_cancelled_or_locked_lesson(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createLesson();
+        DB::table('edu_lessons')->where('id', $id)->update(['status' => 'cancelled']);
+
+        $this->postJson("/v1/edu/lesson/complete/{$id}")
             ->assertStatus(200)
             ->assertJsonPath('success', false);
     }

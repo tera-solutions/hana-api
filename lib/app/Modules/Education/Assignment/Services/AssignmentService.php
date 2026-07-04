@@ -3,12 +3,17 @@
 namespace App\Modules\Education\Assignment\Services;
 
 use App\Helpers\Task;
+use App\Modules\Education\Assignment\Enums\AssignmentStatus;
 use App\Modules\Education\Assignment\Models\Assignment;
 use App\Modules\Education\Assignment\Models\AssignmentSubmission;
 use App\Modules\Education\Assignment\Models\AssignmentSubmissionFile;
 use App\Modules\Education\Assignment\Models\AssignmentTarget;
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +22,59 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class AssignmentService
 {
     use HandlesEntityQueries;
+    use SummarizesByStatus;
 
     /**
      * Paginated, searchable, filterable list (assignment.md §XIII).
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->baseQuery($params);
+
+        $this->applySort($query, $params, ['assignment_code', 'assignment_name', 'assignment_type', 'due_date', 'status', 'created_at']);
+
+        return $query->with(['course', 'classRoom'])->withCount('submissions')->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate counters for the list view, honouring the same filters/scope as
+     * {@see paginate()}.
+     *
+     * @return array{total: int, by_status: array<string, int>, pending_grading: int, due_this_week: int}
+     */
+    public function summary(array $params = []): array
+    {
+        $byStatus = (clone $this->baseQuery($params))
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'status');
+
+        $assignmentIds = (clone $this->baseQuery($params))->pluck('id');
+
+        $pendingGrading = AssignmentSubmission::whereIn('assignment_id', $assignmentIds)
+            ->whereIn('status', [
+                AssignmentSubmission::STATUS_SUBMITTED,
+                AssignmentSubmission::STATUS_LATE_SUBMITTED,
+            ])
+            ->count();
+
+        $dueThisWeek = (clone $this->baseQuery($params))
+            ->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        return [
+            'total' => $this->baseQuery($params)->count(),
+            'by_status' => $this->countsByStatus($byStatus, AssignmentStatus::cases()),
+            'pending_grading' => $pendingGrading,
+            'due_this_week' => $dueThisWeek,
+        ];
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by list and summary — no
+     * sort, eager-loads or pagination applied.
+     */
+    private function baseQuery(array $params): Builder
     {
         $query = Assignment::query();
 
@@ -39,9 +92,11 @@ class AssignmentService
             }
         }
 
-        $this->applySort($query, $params, ['assignment_code', 'assignment_name', 'assignment_type', 'due_date', 'status', 'created_at']);
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainAssignments($query);
+        }
 
-        return $query->with(['course', 'classRoom'])->withCount('submissions')->paginate($this->resolvePerPage($params));
+        return $query;
     }
 
     public function find($id): Assignment
@@ -189,8 +244,7 @@ class AssignmentService
      */
     private function activeClassStudents(int $classId): Collection
     {
-        return DB::table('edu_class_students')
-            ->where('class_id', $classId)
+        return ClassStudent::where('class_id', $classId)
             ->where('status', 'active')
             ->pluck('student_id');
     }
@@ -365,5 +419,96 @@ class AssignmentService
         ]);
 
         return $submission->fresh(['files', 'student']);
+    }
+
+    // ── Grading queue & results (assignment.md §XI, §XII) ─────────────────────────
+
+    /**
+     * Students who have submitted this assignment (assignment.md §XII "Tab Danh sách
+     * học viên"). Anyone who has actually turned the work in — whatever its grading
+     * status (submitted / late / graded / reviewed) — so only the merely-assigned,
+     * never-submitted students are excluded. Teacher-scoped via the parent assignment.
+     */
+    public function submittedStudents($assignmentId, array $params = [])
+    {
+        $assignment = $this->scopedAssignment($assignmentId);
+
+        $query = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->whereNotNull('submitted_at')
+            ->with(['student', 'files']);
+
+        $this->applySort($query, $params, ['submitted_at', 'status', 'created_at'], 'submitted_at');
+
+        return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Graded submissions of an assignment — GRADED / REVIEWED (assignment.md §XII
+     * "Tab Kết quả"). Teacher-scoped via the parent assignment.
+     */
+    public function gradedSubmissions($assignmentId, array $params = [])
+    {
+        $assignment = $this->scopedAssignment($assignmentId);
+
+        $query = AssignmentSubmission::where('assignment_id', $assignment->id)
+            ->whereIn('status', [
+                AssignmentSubmission::STATUS_GRADED,
+                AssignmentSubmission::STATUS_REVIEWED,
+            ])
+            ->with(['student', 'files']);
+
+        $this->applySort($query, $params, ['score', 'submitted_at', 'updated_at', 'created_at'], 'updated_at');
+
+        return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * A single graded submission with its assignment, student and files.
+     */
+    public function submissionDetail($id): AssignmentSubmission
+    {
+        return AssignmentSubmission::with(['assignment', 'student', 'files'])->findOrFail($id);
+    }
+
+    /**
+     * Update the score/comment of an already-graded submission (BR008). Unlike
+     * {@see grade()} this edits an existing grade and does not change status.
+     *
+     * @throws \RuntimeException
+     */
+    public function updateGrade($id, array $data): AssignmentSubmission
+    {
+        $submission = AssignmentSubmission::with('assignment')->findOrFail($id);
+
+        if (! in_array($submission->status, [AssignmentSubmission::STATUS_GRADED, AssignmentSubmission::STATUS_REVIEWED], true)) {
+            throw new \RuntimeException('Chỉ có thể cập nhật điểm cho bài đã chấm.');
+        }
+
+        // BR008: score cannot exceed the assignment's max score.
+        if ((float) $data['score'] > (float) $submission->assignment->max_score) {
+            throw new \RuntimeException('Điểm không được vượt quá điểm tối đa.');
+        }
+
+        $submission->update([
+            'score' => $data['score'],
+            'comment' => $data['comment'] ?? $submission->comment,
+        ]);
+
+        return $submission->fresh(['assignment', 'student', 'files']);
+    }
+
+    /**
+     * Resolve an assignment within the caller's teacher scope, 404-ing when the
+     * assignment is out of scope (a teacher may only grade their own classes' work).
+     */
+    private function scopedAssignment($assignmentId): Assignment
+    {
+        $query = Assignment::query();
+
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainAssignments($query);
+        }
+
+        return $query->findOrFail($assignmentId);
     }
 }

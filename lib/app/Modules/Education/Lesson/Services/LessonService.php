@@ -2,9 +2,12 @@
 
 namespace App\Modules\Education\Lesson\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Lesson\Models\LessonHistory;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
+use App\Modules\Education\Support\TeacherScope;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +32,9 @@ class LessonService
         if (! empty($params['class_room_id'])) {
             $query->where('class_room_id', $params['class_room_id']);
         }
+        if (! empty($params['lesson_plan_id'])) {
+            $query->where('lesson_plan_id', $params['lesson_plan_id']);
+        }
         if (! empty($params['teacher_id'])) {
             $query->where('teacher_id', $params['teacher_id']);
         }
@@ -51,6 +57,10 @@ class LessonService
             $query->whereHas('room', fn ($q) => $q->where('branch_id', $params['branch_id']));
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainByClass($query, 'class_room_id');
+        }
+
         $this->applySort($query, $params, ['lesson_no', 'lesson_date', 'start_time', 'status', 'created_at']);
 
         return $query->with(['classRoom', 'teacher', 'room'])->paginate($this->resolvePerPage($params));
@@ -63,7 +73,11 @@ class LessonService
 
     public function detail($id): array
     {
-        $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories'])->findOrFail($id);
+        $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories', 'lessonPlanLesson.materials'])->findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $lesson->class_room_id);
+        }
 
         return ['lesson' => $lesson];
     }
@@ -79,7 +93,7 @@ class LessonService
     public function generate($classId, array $data): array
     {
         return DB::transaction(function () use ($classId, $data) {
-            $class = DB::table('edu_classes')->where('id', $classId)->first();
+            $class = ClassRoom::where('id', $classId)->first();
 
             if (! $class) {
                 throw new \RuntimeException('Lớp học không tồn tại.');
@@ -97,7 +111,7 @@ class LessonService
                 throw new \RuntimeException('Giáo án không có buổi học để sinh.');
             }
 
-            $schedules = DB::table('edu_class_schedules')->where('class_id', $classId)->get();
+            $schedules = ClassSchedule::where('class_id', $classId)->get();
             if ($schedules->isEmpty()) {
                 throw new \RuntimeException('Lớp học chưa có lịch học để sinh buổi học.');
             }
@@ -165,8 +179,9 @@ class LessonService
     }
 
     /**
-     * Update editable fields (lesson.md §8): teacher_id, lesson_note.
-     * Date/time/room changes go through reschedule.
+     * Update editable fields (lesson.md §8): teacher_id, lesson_note, status.
+     * Date/time/room changes go through reschedule; cancel/lock/unlock keep
+     * their own endpoints, so only the plain progression statuses are accepted.
      *
      * @throws \RuntimeException
      */
@@ -184,9 +199,14 @@ class LessonService
                 $this->log($lesson, 'change_teacher', (string) $lesson->teacher_id, (string) $data['teacher_id']);
             }
 
+            if (array_key_exists('status', $data) && $data['status'] !== $lesson->status) {
+                $this->log($lesson, 'change_status', $lesson->status, $data['status']);
+            }
+
             $lesson->update([
                 'teacher_id' => $data['teacher_id'] ?? $lesson->teacher_id,
                 'lesson_note' => $data['lesson_note'] ?? $lesson->lesson_note,
+                'status' => $data['status'] ?? $lesson->status,
             ]);
 
             return $this->find($lesson->id);
@@ -256,6 +276,30 @@ class LessonService
             $lesson->update(['status' => Lesson::STATUS_CANCELLED]);
 
             $this->log($lesson, 'cancel', null, null, $data['reason'] ?? null);
+
+            return $this->find($lesson->id);
+        });
+    }
+
+    /**
+     * Manually complete a lesson before its scheduled end time (lesson.md §6).
+     * Normal completion is automatic via autoComplete(); this covers early
+     * wrap-up so the lesson can then be locked.
+     *
+     * @throws \RuntimeException
+     */
+    public function complete($id): Lesson
+    {
+        return DB::transaction(function () use ($id) {
+            $lesson = Lesson::findOrFail($id);
+
+            if (in_array($lesson->status, [Lesson::STATUS_CANCELLED, Lesson::STATUS_LOCKED, Lesson::STATUS_COMPLETED], true)) {
+                throw new \RuntimeException('Buổi học không thể chuyển sang hoàn thành từ trạng thái hiện tại.');
+            }
+
+            $lesson->update(['status' => Lesson::STATUS_COMPLETED, 'completed_at' => now()]);
+
+            $this->log($lesson, 'complete');
 
             return $this->find($lesson->id);
         });

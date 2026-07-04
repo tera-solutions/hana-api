@@ -8,16 +8,19 @@ use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
 use App\Modules\Education\LessonPlanVersion\Models\LessonPlanVersion;
+use App\Modules\Education\Level\Models\Level;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
+use Package\Database\Concerns\HasAvatarUrl;
 
 class LessonPlan extends Model
 {
     use HasAuditFields;
+    use HasAvatarUrl;
     use LogsActivity;
     use SoftDeletes;
 
@@ -30,6 +33,8 @@ class LessonPlan extends Model
         'total_lessons' => 'integer',
         'published_at' => 'datetime',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public const STATUS_DRAFT = LessonPlanStatus::Draft->value;
 
@@ -52,6 +57,11 @@ class LessonPlan extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function level(): BelongsTo
+    {
+        return $this->belongsTo(Level::class, 'level_id');
     }
 
     public function lessons(): HasMany

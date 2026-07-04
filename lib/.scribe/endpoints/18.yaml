@@ -1,0 +1,883 @@
+name: 'Education - Exam'
+description: |-
+
+  Manage the exam bank and its questions (exam.md §VI, §VII).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: v1/edu/exam/list
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List exams'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'v1/edu/exam/detail/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Exam detail'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The exam ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: v1/edu/exam/create
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create exam'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      exam_name:
+        custom: []
+        name: exam_name
+        description: 'Exam name. Must not be greater than 255 characters.'
+        required: true
+        example: 'Final Test - Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      exam_type:
+        custom: []
+        name: exam_type
+        description: 'Type: placement, progress, midterm, final, promotion, mock_test, certification.'
+        required: true
+        example: final
+        type: string
+        enumValues:
+          - placement
+          - progress
+          - midterm
+          - final
+          - promotion
+          - mock_test
+          - certification
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Owning course (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Owning level (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration:
+        custom: []
+        name: duration
+        description: 'Duration in minutes (> 0).'
+        required: true
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      total_score:
+        custom: []
+        name: total_score
+        description: 'Maximum total score (> 0).'
+        required: true
+        example: 100.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      passing_score:
+        custom: []
+        name: passing_score
+        description: 'Minimum score to pass (<= total_score).'
+        required: true
+        example: 70.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      exam_name: 'Final Test - Starter'
+      exam_type: final
+      course_id: 1
+      level_id: 1
+      duration: 60
+      total_score: 100.0
+      passing_score: 70.0
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/exam/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update exam'
+      description: |-
+        Editing an exam already in use (published or with a scheduled session) leaves it
+        untouched and returns a new draft version within its lineage; drafts are updated in
+        place (exam.md §IV "Version đề thi").
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The exam ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      exam_name:
+        custom: []
+        name: exam_name
+        description: 'Exam name. Must not be greater than 255 characters.'
+        required: false
+        example: 'Final Test - Starter'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      exam_type:
+        custom: []
+        name: exam_type
+        description: 'Type: placement, progress, midterm, final, promotion, mock_test, certification.'
+        required: false
+        example: final
+        type: string
+        enumValues:
+          - placement
+          - progress
+          - midterm
+          - final
+          - promotion
+          - mock_test
+          - certification
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      course_id:
+        custom: []
+        name: course_id
+        description: 'Owning course (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      level_id:
+        custom: []
+        name: level_id
+        description: 'Owning level (optional). Must match an existing stored value.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      duration:
+        custom: []
+        name: duration
+        description: 'Duration in minutes (> 0).'
+        required: false
+        example: 60
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      total_score:
+        custom: []
+        name: total_score
+        description: 'Maximum total score (> 0).'
+        required: false
+        example: 100.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      passing_score:
+        custom: []
+        name: passing_score
+        description: 'Minimum score to pass.'
+        required: false
+        example: 70.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      status:
+        custom: []
+        name: status
+        description: 'Status: draft, published, archived.'
+        required: false
+        example: published
+        type: string
+        enumValues:
+          - draft
+          - published
+          - archived
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      exam_name: 'Final Test - Starter'
+      exam_type: final
+      course_id: 1
+      level_id: 1
+      duration: 60
+      total_score: 100.0
+      passing_score: 70.0
+      status: published
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/exam/clone/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Clone exam'
+      description: 'Clones the exam (and its questions) into a brand-new, standalone draft at version 1.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The source exam ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/exam/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete exam'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The exam ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'v1/edu/exam/question/create/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add a question'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The exam ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      skill:
+        custom: []
+        name: skill
+        description: 'Skill: listening, speaking, reading, writing, grammar, vocabulary.'
+        required: true
+        example: reading
+        type: string
+        enumValues:
+          - listening
+          - speaking
+          - reading
+          - writing
+          - grammar
+          - vocabulary
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      question_type:
+        custom: []
+        name: question_type
+        description: 'Type: single_choice, multiple_choice, fill_blank, matching, essay, speaking, listening.'
+        required: true
+        example: single_choice
+        type: string
+        enumValues:
+          - single_choice
+          - multiple_choice
+          - fill_blank
+          - matching
+          - essay
+          - speaking
+          - listening
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      content:
+        custom: []
+        name: content
+        description: 'Question content.'
+        required: true
+        example: 'What is the capital of France?'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      answer_key:
+        custom: []
+        name: answer_key
+        description: 'Answer key (array; shape depends on type).'
+        required: false
+        example:
+          - A
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      score:
+        custom: []
+        name: score
+        description: 'Score awarded for this question.'
+        required: true
+        example: 2.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      difficulty:
+        custom: []
+        name: difficulty
+        description: 'Difficulty: easy, medium, hard.'
+        required: false
+        example: medium
+        type: string
+        enumValues:
+          - easy
+          - medium
+          - hard
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      skill: reading
+      question_type: single_choice
+      content: 'What is the capital of France?'
+      answer_key:
+        - A
+      score: 2.0
+      difficulty: medium
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: 'v1/edu/exam/question/update/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update a question'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The question ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      skill:
+        custom: []
+        name: skill
+        description: 'Skill: listening, speaking, reading, writing, grammar, vocabulary.'
+        required: false
+        example: reading
+        type: string
+        enumValues:
+          - listening
+          - speaking
+          - reading
+          - writing
+          - grammar
+          - vocabulary
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      question_type:
+        custom: []
+        name: question_type
+        description: 'Type: single_choice, multiple_choice, fill_blank, matching, essay, speaking, listening.'
+        required: false
+        example: single_choice
+        type: string
+        enumValues:
+          - single_choice
+          - multiple_choice
+          - fill_blank
+          - matching
+          - essay
+          - speaking
+          - listening
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      content:
+        custom: []
+        name: content
+        description: 'Question content.'
+        required: false
+        example: 'What is the capital of France?'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      answer_key:
+        custom: []
+        name: answer_key
+        description: 'Answer key (array; shape depends on type).'
+        required: false
+        example:
+          - A
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      score:
+        custom: []
+        name: score
+        description: 'Score awarded for this question.'
+        required: false
+        example: 2.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      difficulty:
+        custom: []
+        name: difficulty
+        description: 'Difficulty: easy, medium, hard.'
+        required: false
+        example: medium
+        type: string
+        enumValues:
+          - easy
+          - medium
+          - hard
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      skill: reading
+      question_type: single_choice
+      content: 'What is the capital of France?'
+      answer_key:
+        - A
+      score: 2.0
+      difficulty: medium
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'v1/edu/exam/question/delete/{id}'
+    metadata:
+      custom: []
+      groupName: 'Education - Exam'
+      groupDescription: |-
+
+        Manage the exam bank and its questions (exam.md §VI, §VII).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a question'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The question ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"code":401,"msg":"Kh\u00f4ng c\u00f3 quy\u1ec1n truy c\u1eadp!","errors":[],"data":null}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3V5EgbkvZcDPa166h8fd4ae'
+    controller: null
+    method: null
+    route: null

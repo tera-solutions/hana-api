@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Exam\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Exam\Models\ExamRegistration;
 use App\Modules\Education\Exam\Models\ExamSession;
 use App\Modules\Education\Student\Models\Student;
@@ -104,8 +105,7 @@ class ExamSessionService
      */
     public function registerByClass($sessionId, int $classRoomId): array
     {
-        $studentIds = DB::table('edu_class_students')
-            ->where('class_id', $classRoomId)
+        $studentIds = ClassStudent::where('class_id', $classRoomId)
             ->where('status', 'active')
             ->pluck('student_id');
 

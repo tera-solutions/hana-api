@@ -3,10 +3,14 @@
 namespace App\Modules\Education\Room\Services;
 
 use App\Modules\Education\ClassRoom\Enums\ClassStatus;
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\Education\Room\Models\RoomHistory;
+use App\Modules\System\Branch\Models\Branch;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -82,7 +86,7 @@ class RoomService
             $room = new Room($data);
             $room->status = Room::STATUS_ACTIVE; // room.md BR002
             // edu_rooms keeps the legacy (NOT NULL) business scope; derive it from the branch.
-            $room->business_id = DB::table('sys_branches')->where('id', $data['branch_id'])->value('business_id');
+            $room->business_id = Branch::where('id', $data['branch_id'])->value('business_id');
             $room->save();
 
             $this->log($room, 'created', null, $room->status);
@@ -188,8 +192,7 @@ class RoomService
 
         // Half-open overlap: existing.start < new.end AND existing.end > new.start.
         $sessionConflicts = $this->guardCollect(function () use ($id, $params, $start, $end) {
-            $query = DB::table('edu_sessions')
-                ->where('room_id', $id)
+            $query = ClassSession::where('room_id', $id)
                 ->whereNull('deleted_at')
                 ->whereDate('session_date', $params['lesson_date'])
                 ->where('status', '!=', ClassSessionStatus::Cancelled->value)
@@ -207,8 +210,7 @@ class RoomService
 
         // edu_lessons (lesson.md §16) share the room; no deleted_at column here.
         $lessonConflicts = $this->guardCollect(function () use ($id, $params, $start, $end) {
-            $query = DB::table('edu_lessons')
-                ->where('room_id', $id)
+            $query = Lesson::where('room_id', $id)
                 ->whereDate('lesson_date', $params['lesson_date'])
                 ->where('status', '!=', Lesson::STATUS_CANCELLED)
                 ->where('start_time', '<', $end)
@@ -246,24 +248,24 @@ class RoomService
     {
         return [
             'total_classes' => $this->countLinked('edu_classes', $id, 'room_id'),
-            'active_classes' => $this->guard(fn () => DB::table('edu_classes')
-                ->where('room_id', $id)
+            'active_classes' => $this->guard(fn () => ClassRoom::where('room_id', $id)
                 ->where('status', ClassStatus::Active->value)
                 ->whereNull('deleted_at')
-                ->count()),
+                ->count()
+            ),
             'total_sessions' => $this->countLinked('edu_sessions', $id, 'room_id'),
-            'completed_sessions' => $this->guard(fn () => DB::table('edu_sessions')
-                ->where('room_id', $id)
+            'completed_sessions' => $this->guard(fn () => ClassSession::where('room_id', $id)
                 ->where('status', ClassSessionStatus::Completed->value)
                 ->whereNull('deleted_at')
-                ->count()),
-            'total_lessons' => $this->guard(fn () => DB::table('edu_lessons')
-                ->where('room_id', $id)
-                ->count()),
-            'completed_lessons' => $this->guard(fn () => DB::table('edu_lessons')
-                ->where('room_id', $id)
+                ->count()
+            ),
+            'total_lessons' => $this->guard(fn () => Lesson::where('room_id', $id)
+                ->count()
+            ),
+            'completed_lessons' => $this->guard(fn () => Lesson::where('room_id', $id)
                 ->where('status', Lesson::STATUS_COMPLETED)
-                ->count()),
+                ->count()
+            ),
             'last_used_at' => $this->lastUsedAt($id),
         ];
     }
@@ -276,8 +278,7 @@ class RoomService
     public function classesInUse($id): array
     {
         return $this->guardCollect(function () use ($id) {
-            return DB::table('edu_classes')
-                ->where('room_id', $id)
+            return ClassRoom::where('room_id', $id)
                 ->where('status', ClassStatus::Active->value)
                 ->whereNull('deleted_at')
                 ->get(['id', 'code', 'name', 'teacher_id', 'max_capacity'])
@@ -293,38 +294,38 @@ class RoomService
 
     private function hasOngoingSession($id): bool
     {
-        return $this->guard(fn () => DB::table('edu_sessions')
-            ->where('room_id', $id)
+        return $this->guard(fn () => ClassSession::where('room_id', $id)
             ->where('status', ClassSessionStatus::Ongoing->value)
             ->whereNull('deleted_at')
-            ->count()) > 0;
+            ->count()
+        ) > 0;
     }
 
     private function futureSessionCount($id): int
     {
-        return $this->guard(fn () => DB::table('edu_sessions')
-            ->where('room_id', $id)
+        return $this->guard(fn () => ClassSession::where('room_id', $id)
             ->where('status', ClassSessionStatus::Upcoming->value)
             ->whereDate('session_date', '>=', now()->toDateString())
             ->whereNull('deleted_at')
-            ->count());
+            ->count()
+        );
     }
 
     private function hasOngoingLesson($id): bool
     {
-        return $this->guard(fn () => DB::table('edu_lessons')
-            ->where('room_id', $id)
+        return $this->guard(fn () => Lesson::where('room_id', $id)
             ->where('status', Lesson::STATUS_IN_PROGRESS)
-            ->count()) > 0;
+            ->count()
+        ) > 0;
     }
 
     private function futureLessonCount($id): int
     {
-        return $this->guard(fn () => DB::table('edu_lessons')
-            ->where('room_id', $id)
+        return $this->guard(fn () => Lesson::where('room_id', $id)
             ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_CONFIRMED])
             ->whereDate('lesson_date', '>=', now()->toDateString())
-            ->count());
+            ->count()
+        );
     }
 
     /**
@@ -333,16 +334,16 @@ class RoomService
      */
     private function lastUsedAt($id): ?string
     {
-        $session = $this->guardValue(fn () => DB::table('edu_sessions')
-            ->where('room_id', $id)
+        $session = $this->guardValue(fn () => ClassSession::where('room_id', $id)
             ->where('status', ClassSessionStatus::Completed->value)
             ->whereNull('deleted_at')
-            ->max('session_date'));
+            ->max('session_date')
+        );
 
-        $lesson = $this->guardValue(fn () => DB::table('edu_lessons')
-            ->where('room_id', $id)
+        $lesson = $this->guardValue(fn () => Lesson::where('room_id', $id)
             ->where('status', Lesson::STATUS_COMPLETED)
-            ->max('lesson_date'));
+            ->max('lesson_date')
+        );
 
         $dates = array_filter([$session, $lesson]);
 
@@ -355,8 +356,7 @@ class RoomService
     private function maxStudentsInActiveClasses($id): int
     {
         return $this->guard(function () use ($id) {
-            return (int) DB::table('edu_class_students')
-                ->join('edu_classes', 'edu_class_students.class_id', '=', 'edu_classes.id')
+            return (int) ClassStudent::join('edu_classes', 'edu_class_students.class_id', '=', 'edu_classes.id')
                 ->where('edu_classes.room_id', $id)
                 ->where('edu_classes.status', ClassStatus::Active->value)
                 ->where('edu_class_students.status', 'active')
@@ -366,15 +366,6 @@ class RoomService
                 ->orderByDesc('c')
                 ->value('c') ?? 0;
         });
-    }
-
-    private function guard(callable $fn): int
-    {
-        try {
-            return (int) $fn();
-        } catch (\Throwable $e) {
-            return 0;
-        }
     }
 
     private function guardValue(callable $fn)

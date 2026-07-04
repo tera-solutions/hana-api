@@ -26,6 +26,8 @@ use App\Modules\Education\Exam\Enums\ExamSessionStatus;
 use App\Modules\Education\Exam\Enums\ExamSkill;
 use App\Modules\Education\Exam\Enums\ExamStatus;
 use App\Modules\Education\Exam\Enums\ExamType;
+use App\Modules\Education\Exam\Enums\QuestionDifficulty as ExamQuestionDifficulty;
+use App\Modules\Education\Exam\Enums\QuestionType as ExamQuestionType;
 use App\Modules\Education\Exam\Enums\RegistrationStatus;
 use App\Modules\Education\LeaveRequest\Enums\LeaveReasonType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveRequestType;
@@ -45,6 +47,8 @@ use App\Modules\Education\Question\Enums\QuestionType;
 use App\Modules\Education\Room\Enums\RoomStatus;
 use App\Modules\Education\Room\Enums\RoomType;
 use App\Modules\Education\Student\Enums\StudentStatus;
+use App\Modules\Education\Timetable\Enums\SchedulePattern;
+use App\Modules\Education\Timetable\Enums\TimetableStatus;
 use App\Modules\Finance\Account\Enums\AccountType;
 use App\Modules\Finance\Debt\Enums\AdjustmentType;
 use App\Modules\Finance\Debt\Enums\DebtStatus;
@@ -146,6 +150,8 @@ class MetadataRegistry
                 'exam_status' => ExamStatus::options(),
                 'exam_type' => ExamType::options(),
                 'exam_skill' => ExamSkill::options(),
+                'exam_question_type' => ExamQuestionType::options(),
+                'exam_question_difficulty' => ExamQuestionDifficulty::options(),
                 'exam_session_status' => ExamSessionStatus::options(),
                 'exam_registration_status' => RegistrationStatus::options(),
 
@@ -153,6 +159,9 @@ class MetadataRegistry
                 'leave_request_type' => LeaveRequestType::options(),
                 'leave_reason_type' => LeaveReasonType::options(),
                 'makeup_status' => MakeupStatus::options(),
+
+                'timetable_status' => TimetableStatus::options(),
+                'schedule_pattern' => SchedulePattern::options(),
             ],
             'hr' => [
                 'teacher_status' => TeacherStatus::options(),

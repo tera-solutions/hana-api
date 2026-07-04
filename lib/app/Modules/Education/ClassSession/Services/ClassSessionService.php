@@ -5,6 +5,7 @@ namespace App\Modules\Education\ClassSession\Services;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\Support\TeacherScope;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class ClassSessionService
 {
     use HandlesEntityQueries;
 
-    private const WITH = ['classRoom', 'teacher', 'substituteTeacher', 'tags'];
+    private const WITH = ['classRoom', 'schedule', 'room', 'timetable', 'teacher', 'substituteTeacher', 'tags'];
 
     /**
      * Paginated, searchable, filterable list (spec §3–§4).
@@ -60,6 +61,10 @@ class ClassSessionService
             $query->whereHas('tags', fn ($q) => $q->whereIn('crm_tags.id', $tagIds));
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainSessions($query);
+        }
+
         $this->applySort($query, $params, ['session_no', 'name', 'session_date', 'start_time', 'status', 'created_at'], 'session_date');
 
         return $query->with(self::WITH)->paginate($this->resolvePerPage($params));
@@ -68,6 +73,21 @@ class ClassSessionService
     public function find($id): ClassSession
     {
         return ClassSession::with(self::WITH)->findOrFail($id);
+    }
+
+    /**
+     * Session detail for a read endpoint — enforces teacher ownership (403 when the
+     * session's class is not the teacher's and they are not its teacher).
+     */
+    public function detail($id): ClassSession
+    {
+        $session = $this->find($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeSession($session);
+        }
+
+        return $session;
     }
 
     /**
