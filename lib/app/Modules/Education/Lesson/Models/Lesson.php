@@ -86,6 +86,11 @@ class Lesson extends Model
         return $this->hasMany(LessonHistory::class, 'lesson_id')->latest('id');
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LessonActivity::class, 'lesson_id')->orderBy('sort_order');
+    }
+
     public function isLocked(): bool
     {
         return $this->status === self::STATUS_LOCKED;

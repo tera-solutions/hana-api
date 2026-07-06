@@ -127,6 +127,23 @@ class DemoDataSeeder extends Seeder
         return $this->media[$i % count($this->media)];
     }
 
+    /**
+     * The standard 5-phase lesson flow (lesson.md mock), sized to the 90-minute
+     * demo lesson: Warm-up 10' + Presentation 20' + Practice 30' + Production 20' + Wrap-up 10'.
+     *
+     * @return array<int, array{title: string, duration: int, description: string}>
+     */
+    private function standardActivities(string $vocabulary, string $grammar, string $homework): array
+    {
+        return [
+            ['title' => 'Warm-up', 'duration' => 10, 'description' => 'Khởi động, gợi mở chủ đề bài học.'],
+            ['title' => 'Presentation', 'duration' => 20, 'description' => "Giới thiệu từ vựng mới: {$vocabulary}."],
+            ['title' => 'Practice', 'duration' => 30, 'description' => "Luyện cấu trúc: {$grammar}."],
+            ['title' => 'Production', 'duration' => 20, 'description' => 'Học sinh thực hành nói theo cặp/nhóm.'],
+            ['title' => 'Wrap-up', 'duration' => 10, 'description' => "Ôn tập và giao bài tập: {$homework}."],
+        ];
+    }
+
     /** A portal login (non-admin) so scoping and per-role permissions apply. */
     private function portalUser(string $username, string $fullName, string $email, int $roleId): int
     {
@@ -276,28 +293,30 @@ class DemoDataSeeder extends Seeder
     private function lessonPlanTemplates(array $plans): array
     {
         $units = [
-            ['My Family', 'Giới thiệu thành viên gia đình', 'Father, Mother, Brother, Sister', 'This is my...', 'Flashcard, Speaking', 'Workbook page 10'],
-            ['At School', 'Gọi tên đồ dùng học tập', 'Pen, Book, Desk, Bag', 'I have a...', 'Matching, Roleplay', 'Workbook page 14'],
-            ['My Body', 'Nhận biết các bộ phận cơ thể', 'Head, Hand, Leg, Eye', 'Touch your...', 'TPR game, Song', 'Draw and label'],
-            ['Food & Drink', 'Nói về món ăn yêu thích', 'Rice, Milk, Apple, Water', 'I like...', 'Survey, Speaking', 'Workbook page 20'],
-            ['Animals', 'Mô tả các con vật', 'Dog, Cat, Bird, Fish', 'It can...', 'Guessing game', 'Workbook page 24'],
-            ['Weather', 'Nói về thời tiết', 'Sunny, Rainy, Hot, Cold', 'It is...', 'Weather chart', 'Workbook page 28'],
-            ['My Town', 'Mô tả nơi sinh sống', 'Park, School, Shop, House', 'There is a...', 'Map activity', 'Workbook page 32'],
-            ['Review & Test', 'Ôn tập và kiểm tra', 'Unit 1-7 vocabulary', 'Mixed structures', 'Quiz, Board game', 'Prepare for test'],
+            ['My Family', 'Giới thiệu thành viên gia đình', 'Father, Mother, Brother, Sister', 'This is my...', 'Workbook page 10'],
+            ['At School', 'Gọi tên đồ dùng học tập', 'Pen, Book, Desk, Bag', 'I have a...', 'Workbook page 14'],
+            ['My Body', 'Nhận biết các bộ phận cơ thể', 'Head, Hand, Leg, Eye', 'Touch your...', 'Draw and label'],
+            ['Food & Drink', 'Nói về món ăn yêu thích', 'Rice, Milk, Apple, Water', 'I like...', 'Workbook page 20'],
+            ['Animals', 'Mô tả các con vật', 'Dog, Cat, Bird, Fish', 'It can...', 'Workbook page 24'],
+            ['Weather', 'Nói về thời tiết', 'Sunny, Rainy, Hot, Cold', 'It is...', 'Workbook page 28'],
+            ['My Town', 'Mô tả nơi sinh sống', 'Park, School, Shop, House', 'There is a...', 'Workbook page 32'],
+            ['Review & Test', 'Ôn tập và kiểm tra', 'Unit 1-7 vocabulary', 'Mixed structures', 'Prepare for test'],
         ];
 
         $types = ['pdf', 'video', 'audio', 'slide', 'worksheet', 'homework'];
         $byPlan = [];
         $seq = 0;
         foreach ($plans as $planId) {
-            foreach ($units as $i => [$title, $objective, $vocabulary, $grammar, $activities, $homework]) {
+            foreach ($units as $i => [$title, $objective, $vocabulary, $grammar, $homework]) {
+                $activities = $this->standardActivities($vocabulary, $grammar, $homework);
+
                 $snapshot = [
                     'lesson_no' => $i + 1,
                     'lesson_title' => $title,
-                    'objective' => $objective,
+                    // Multiple objectives are stored as a single ";"-joined string.
+                    'objective' => $objective.';Sử dụng được từ vựng: '.$vocabulary,
                     'vocabulary' => $vocabulary,
                     'grammar' => $grammar,
-                    'activities' => $activities,
                     'homework' => $homework,
                     'duration' => 90,
                 ];
@@ -305,13 +324,23 @@ class DemoDataSeeder extends Seeder
                     'lesson_plan_id' => $planId,
                 ] + $this->audit());
 
+                foreach ($activities as $order => $activity) {
+                    DB::table('edu_lesson_plan_lesson_activities')->insert([
+                        'lesson_plan_lesson_id' => $id,
+                        'sort_order' => $order + 1,
+                        'title' => $activity['title'],
+                        'description' => $activity['description'],
+                        'duration' => $activity['duration'],
+                    ] + $this->audit());
+                }
+
                 DB::table('edu_lesson_plan_materials')->insert([
                     'lesson_plan_lesson_id' => $id,
                     'file_id' => $this->file($seq),
                     'material_type' => $types[$seq++ % count($types)],
                 ] + $this->audit());
 
-                $byPlan[$planId][] = ['id' => $id, 'snapshot' => $snapshot];
+                $byPlan[$planId][] = ['id' => $id, 'snapshot' => $snapshot, 'activities' => $activities];
             }
         }
 
@@ -868,7 +897,7 @@ class DemoDataSeeder extends Seeder
                 $isDone = in_array($status, ['completed', 'locked'], true);
                 $snapshot = $template['snapshot'];
 
-                $byClass[$class['id']][] = DB::table('edu_lessons')->insertGetId([
+                $lessonId = DB::table('edu_lessons')->insertGetId([
                     'class_room_id' => $class['id'],
                     'lesson_plan_id' => $class['plan_id'],
                     'lesson_plan_lesson_id' => $template['id'],
@@ -883,13 +912,33 @@ class DemoDataSeeder extends Seeder
                     'objective' => $snapshot['objective'],
                     'vocabulary' => $snapshot['vocabulary'],
                     'grammar' => $snapshot['grammar'],
-                    'activities' => $snapshot['activities'],
                     'homework' => $snapshot['homework'],
                     'lesson_note' => $isDone ? 'Lớp học sôi nổi, hoàn thành mục tiêu bài '.($i + 1) : null,
                     'status' => $status,
                     'completed_at' => $isDone ? now()->addDays($dayOffset)->setTime(19, 30) : null,
                     'locked_at' => $status === 'locked' ? now()->addDays($dayOffset)->addDays(7) : null,
                 ] + $this->audit());
+
+                // In-progress lessons show a realistic mid-flight split; done/scheduled are uniform.
+                $activityCount = count($template['activities']);
+                $completedCount = match (true) {
+                    $isDone => $activityCount,
+                    $status === 'in_progress' => (int) ceil($activityCount / 2),
+                    default => 0,
+                };
+
+                foreach ($template['activities'] as $order => $activity) {
+                    DB::table('edu_lesson_activities')->insert([
+                        'lesson_id' => $lessonId,
+                        'sort_order' => $order + 1,
+                        'title' => $activity['title'],
+                        'description' => $activity['description'],
+                        'duration' => $activity['duration'],
+                        'status' => $order < $completedCount ? 'completed' : ($order === $completedCount && $status === 'in_progress' ? 'in_progress' : 'pending'),
+                    ] + $this->audit());
+                }
+
+                $byClass[$class['id']][] = $lessonId;
             }
         }
 

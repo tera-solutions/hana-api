@@ -100,7 +100,7 @@ class LessonPlanService
      */
     public function detail($id): array
     {
-        $plan = LessonPlan::with(['course', 'level', 'lessons.materials', 'versions'])->findOrFail($id);
+        $plan = LessonPlan::with(['course', 'level', 'lessons.materials', 'lessons.activities', 'versions'])->findOrFail($id);
 
         $this->authorizePlan($plan);
 
@@ -164,7 +164,7 @@ class LessonPlanService
     public function clone($id, array $data): LessonPlan
     {
         return DB::transaction(function () use ($id, $data) {
-            $source = LessonPlan::with('lessons.materials')->findOrFail($id);
+            $source = LessonPlan::with(['lessons.materials', 'lessons.activities'])->findOrFail($id);
 
             $this->authorizePlan($source);
 
@@ -186,6 +186,12 @@ class LessonPlanService
                     $newMaterial = $material->replicate();
                     $newMaterial->lesson_plan_lesson_id = $newLesson->id;
                     $newMaterial->save();
+                }
+
+                foreach ($lesson->activities as $activity) {
+                    $newActivity = $activity->replicate();
+                    $newActivity->lesson_plan_lesson_id = $newLesson->id;
+                    $newActivity->save();
                 }
             }
 

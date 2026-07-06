@@ -85,6 +85,10 @@ class ClassService
             $query->where('course_id', $params['course_id']);
         }
 
+        if (! empty($params['lesson_plan_id'])) {
+            $query->where('lesson_plan_id', $params['lesson_plan_id']);
+        }
+
         if (! empty($params['teacher_id'])) {
             $query->where('teacher_id', $params['teacher_id']);
         }
