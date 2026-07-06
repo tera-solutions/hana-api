@@ -151,10 +151,17 @@ class TimetableService
     {
         $query = ClassSession::query()->with(['classRoom', 'teacher', 'room', 'timetable']);
 
-        foreach (['class_id', 'teacher_id', 'room_id', 'timetable_id', 'status'] as $filter) {
+        foreach (['class_id', 'teacher_id', 'room_id', 'timetable_id'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
             }
+        }
+
+        if (! empty($params['status'])) {
+            $statuses = is_array($params['status'])
+                ? $params['status']
+                : explode(',', $params['status']);
+            $query->whereIn('status', $statuses);
         }
 
         if (! empty($params['date_from'])) {

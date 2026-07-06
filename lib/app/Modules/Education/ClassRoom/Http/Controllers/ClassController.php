@@ -31,6 +31,7 @@ class ClassController extends Controller
      *
      * @queryParam search string Search by class name or code. Example: IELTS
      * @queryParam course_id integer Filter by course ID. Example: 1
+     * @queryParam lesson_plan_id integer Filter by lesson plan ID. Example: 1
      * @queryParam teacher_id integer Filter by teacher ID. Example: 2
      * @queryParam assignee_id integer Filter by assignee (staff) user ID. Example: 5
      * @queryParam weekday integer Filter by schedule weekday (1=Mon … 7=Sun). Example: 2
@@ -88,6 +89,7 @@ class ClassController extends Controller
      *
      * @queryParam search string Search by class name or code. Example: IELTS
      * @queryParam course_id integer Filter by course ID. Example: 1
+     * @queryParam lesson_plan_id integer Filter by lesson plan ID. Example: 1
      * @queryParam teacher_id integer Filter by teacher ID. Example: 2
      * @queryParam status string Filter by status: draft, upcoming, active, suspended, completed. Example: active
      *

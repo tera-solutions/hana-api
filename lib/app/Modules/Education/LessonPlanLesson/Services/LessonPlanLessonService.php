@@ -5,6 +5,7 @@ namespace App\Modules\Education\LessonPlanLesson\Services;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlan\Services\LessonPlanService;
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
+use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLessonActivity;
 use Illuminate\Support\Facades\DB;
 
 class LessonPlanLessonService
@@ -30,14 +31,21 @@ class LessonPlanLessonService
                 throw new \RuntimeException("Thứ tự buổi học phải liên tục. Buổi học tiếp theo phải là số {$nextNo}.");
             }
 
+            $activities = $data['activities'] ?? null;
+            unset($data['activities']);
+
             $data['lesson_no'] = $nextNo;
             $data['lesson_plan_id'] = $planId;
 
             $lesson = LessonPlanLesson::create($data);
 
+            if ($activities !== null) {
+                $this->syncActivities($lesson, $activities);
+            }
+
             $this->recomputeTotals($planId);
 
-            return $lesson;
+            return $lesson->load('activities');
         });
     }
 
@@ -51,12 +59,36 @@ class LessonPlanLessonService
 
             $this->assertEditable($lesson->plan);
 
-            unset($data['id'], $data['lesson_plan_id'], $data['lesson_no']);
+            $activities = $data['activities'] ?? null;
+            unset($data['id'], $data['lesson_plan_id'], $data['lesson_no'], $data['activities']);
 
             $lesson->update($data);
 
-            return $lesson->fresh();
+            if ($activities !== null) {
+                $this->syncActivities($lesson, $activities);
+            }
+
+            return $lesson->fresh()->load('activities');
         });
+    }
+
+    /**
+     * Replace the activity set with the given ordered list (BR008).
+     */
+    private function syncActivities(LessonPlanLesson $lesson, array $activities): void
+    {
+        $lesson->activities()->forceDelete();
+
+        foreach (array_values($activities) as $index => $activity) {
+            $lesson->activities()->create([
+                'sort_order' => $index + 1,
+                'avatar' => $activity['avatar'] ?? null,
+                'title' => $activity['title'],
+                'description' => $activity['description'] ?? null,
+                'duration' => $activity['duration'] ?? null,
+                'status' => $activity['status'] ?? LessonPlanLessonActivity::STATUS_PENDING,
+            ]);
+        }
     }
 
     /**

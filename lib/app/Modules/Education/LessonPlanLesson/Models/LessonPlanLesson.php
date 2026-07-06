@@ -32,7 +32,7 @@ class LessonPlanLesson extends Model
      */
     public const SNAPSHOT_FIELDS = [
         'lesson_no', 'lesson_title', 'objective', 'vocabulary',
-        'grammar', 'activities', 'homework', 'duration',
+        'grammar', 'homework', 'duration',
     ];
 
     public function plan(): BelongsTo
@@ -43,6 +43,11 @@ class LessonPlanLesson extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(LessonPlanMaterial::class, 'lesson_plan_lesson_id');
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LessonPlanLessonActivity::class, 'lesson_plan_lesson_id')->orderBy('sort_order');
     }
 
     /**
