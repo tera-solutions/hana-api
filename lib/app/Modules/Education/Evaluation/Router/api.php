@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('evaluation')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [EvaluationController::class, 'list'])->middleware('permission:evaluation.list');
+    Route::get('/student-summary', [EvaluationController::class, 'studentSummary'])->middleware('permission:evaluation.list');
     Route::get('/detail/{id}', [EvaluationController::class, 'detail'])->middleware('permission:evaluation.view');
 
     Route::post('/create', [EvaluationController::class, 'create'])->middleware('permission:evaluation.create');

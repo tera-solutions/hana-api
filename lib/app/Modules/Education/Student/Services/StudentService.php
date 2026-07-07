@@ -146,6 +146,74 @@ class StudentService
         ];
     }
 
+    /**
+     * Learning stats for the student detail screen's overview cards/charts
+     * (student-detail.md §6.1/§6.2): attendance rate, average exam score,
+     * homework completion and per-skill averages. Computed from real
+     * attendance/exam/assignment data — everything degrades to 0/null rather
+     * than throwing when a table has no rows for this student.
+     */
+    public function learningStats($id): array
+    {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeStudent((int) $id);
+        }
+
+        $attendance = $this->guard(
+            fn () => DB::table('edu_attendances')
+                ->where('student_id', $id)
+                ->whereNull('deleted_at')
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status IN ('present', 'late') THEN 1 ELSE 0 END) as attended")
+                ->first(),
+            (object) ['total' => 0, 'attended' => 0],
+        );
+
+        $totalSessions = (int) ($attendance->total ?? 0);
+        $attendanceRate = $totalSessions > 0
+            ? (int) round(((int) $attendance->attended / $totalSessions) * 100)
+            : 0;
+
+        $exam = $this->guard(
+            fn () => DB::table('edu_exam_results')
+                ->where('student_id', $id)
+                ->selectRaw('AVG(total_score) as avg_total, AVG(listening_score) as avg_listening, AVG(speaking_score) as avg_speaking, AVG(reading_score) as avg_reading, AVG(writing_score) as avg_writing')
+                ->first(),
+            (object) [],
+        );
+
+        $homework = $this->guard(
+            fn () => DB::table('edu_assignment_submissions')
+                ->where('student_id', $id)
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status IN ('submitted', 'late_submitted', 'graded', 'reviewed') THEN 1 ELSE 0 END) as completed")
+                ->first(),
+            (object) ['total' => 0, 'completed' => 0],
+        );
+
+        $homeworkTotal = (int) ($homework->total ?? 0);
+        $homeworkCompletion = $homeworkTotal > 0
+            ? (int) round(((int) $homework->completed / $homeworkTotal) * 100)
+            : 0;
+
+        // edu_exam_results has no per-skill max-score column; skill scores in
+        // this schema run up to 25 per skill (4 skills = 100 total), so that's
+        // the normalization used for the 0-100 bar. Revisit if a per-exam max
+        // is ever added to the schema.
+        $skillPercent = fn ($avg) => $avg !== null ? (int) round(min(100, max(0, (float) $avg / 25 * 100))) : 0;
+
+        return [
+            'attendance_rate' => $attendanceRate,
+            'total_sessions' => $totalSessions,
+            'avg_score' => isset($exam->avg_total) && $exam->avg_total !== null ? round((float) $exam->avg_total, 1) : null,
+            'homework_completion' => $homeworkCompletion,
+            'skills' => [
+                'listening' => $skillPercent($exam->avg_listening ?? null),
+                'speaking' => $skillPercent($exam->avg_speaking ?? null),
+                'reading' => $skillPercent($exam->avg_reading ?? null),
+                'writing' => $skillPercent($exam->avg_writing ?? null),
+            ],
+        ];
+    }
+
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {

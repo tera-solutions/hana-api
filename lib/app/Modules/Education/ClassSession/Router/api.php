@@ -19,6 +19,7 @@ Route::prefix('class-session')->middleware('auth.tera')->group(function () {
 
     Route::get('/detail/{id}', [ClassSessionController::class, 'detail'])->middleware('permission:session.view');
     Route::put('/update/{id}', [ClassSessionController::class, 'update'])->middleware('permission:session.update');
+    Route::post('/end/{id}', [ClassSessionController::class, 'endSession'])->middleware('permission:session.end');
     Route::post('/cancel/{id}', [ClassSessionController::class, 'cancel'])->middleware('permission:session.cancel');
     Route::delete('/delete/{id}', [ClassSessionController::class, 'delete'])->middleware('permission:session.delete');
 

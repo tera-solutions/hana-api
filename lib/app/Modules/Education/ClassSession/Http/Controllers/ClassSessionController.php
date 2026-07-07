@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Modules\Education\ClassSession\Actions\CancelSessionAction;
 use App\Modules\Education\ClassSession\Actions\CreateSessionAction;
 use App\Modules\Education\ClassSession\Actions\DeleteSessionAction;
+use App\Modules\Education\ClassSession\Actions\EndSessionAction;
 use App\Modules\Education\ClassSession\Actions\GenerateSessionAction;
 use App\Modules\Education\ClassSession\Actions\GetSessionAction;
 use App\Modules\Education\ClassSession\Actions\ListSessionAction;
 use App\Modules\Education\ClassSession\Actions\UpdateSessionAction;
 use App\Modules\Education\ClassSession\Http\Requests\CancelSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\CreateSessionRequest;
+use App\Modules\Education\ClassSession\Http\Requests\EndSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\GenerateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\UpdateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Resources\ClassSessionResource;
@@ -217,6 +219,40 @@ class ClassSessionController extends Controller
         }
 
         return $this->respondSuccess(new ClassSessionResource($session), 'Hủy buổi học thành công.');
+    }
+
+    /**
+     * End session early
+     *
+     * Marks an in-progress session as completed ahead of its scheduled end time
+     * (room-detail.md §6.2 "Dừng lại"). Revenue is kept, unlike cancel().
+     *
+     * @urlParam id integer required The session ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Kết thúc buổi học thành công.",
+     *   "data": {"id": 1, "status": "completed"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Not ongoing" {
+     *   "success": false,
+     *   "msg": "Chỉ có thể kết thúc sớm buổi học đang diễn ra.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function endSession(EndSessionRequest $request, $id, EndSessionAction $action)
+    {
+        try {
+            $session = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new ClassSessionResource($session), 'Kết thúc buổi học thành công.');
     }
 
     /**

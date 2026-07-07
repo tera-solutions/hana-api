@@ -12,6 +12,7 @@ class ClassSessionPermissionSeeder extends PermissionSeeder
             'session.create' => 'Tạo mới',
             'session.generate' => 'Sinh hàng loạt',
             'session.update' => 'Cập nhật',
+            'session.end' => 'Kết thúc sớm',
             'session.cancel' => 'Hủy buổi học',
             'session.delete' => 'Xóa buổi học',
         ]);

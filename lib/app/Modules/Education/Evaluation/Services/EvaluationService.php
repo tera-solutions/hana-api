@@ -60,6 +60,75 @@ class EvaluationService
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
     }
 
+    /**
+     * Class-wide (or, when no class_room_id is given, all of the caller's classes)
+     * evaluation counters for the teacher "Nhận xét & Đánh giá" screen. The
+     * per-student roster and skill breakdown are not returned here — the
+     * frontend joins /edu/student/list with /edu/evaluation/list itself; this
+     * endpoint is summary counters only.
+     *
+     * @return array<string, mixed>
+     */
+    public function studentSummary(array $params = []): array
+    {
+        $classId = $params['class_room_id'] ?? $params['class_id'] ?? null;
+        $scope = TeacherScope::current();
+
+        if ($classId && $scope) {
+            $scope->authorizeClass((int) $classId);
+        }
+
+        $studentQuery = DB::table('edu_class_students as cs')
+            ->where('cs.status', 'active')
+            ->whereNull('cs.deleted_at');
+
+        if ($classId) {
+            $studentQuery->where('cs.class_id', $classId);
+        } elseif ($scope) {
+            $studentQuery->whereIn('cs.class_id', $scope->classIds());
+        }
+
+        $studentIds = $studentQuery->distinct()->pluck('cs.student_id')->all();
+
+        if (empty($studentIds)) {
+            return $this->emptyStudentSummary();
+        }
+
+        $evaluationQuery = Evaluation::where('evaluation_type', Evaluation::TYPE_STUDENT)
+            ->whereIn('target_id', $studentIds);
+
+        if ($classId) {
+            $evaluationQuery->where('class_room_id', $classId);
+        }
+
+        $evaluations = $evaluationQuery->get(['target_id', 'score', 'classification']);
+
+        $totalStudents = count($studentIds);
+        $evaluatedCount = $evaluations->pluck('target_id')->unique()->count();
+        $totalComments = $evaluations->count();
+        $avgRating = $evaluations->avg('score');
+        $satisfactionCount = $evaluations->whereIn('classification', ['excellent', 'good'])->count();
+
+        return [
+            'total_students' => $totalStudents,
+            'evaluated_rate' => $totalStudents > 0 ? (int) round($evaluatedCount / $totalStudents * 100) : 0,
+            'total_comments' => $totalComments,
+            'avg_rating' => $avgRating !== null ? round((float) $avgRating, 1) : null,
+            'satisfaction_rate' => $totalComments > 0 ? (int) round($satisfactionCount / $totalComments * 100) : 0,
+        ];
+    }
+
+    private function emptyStudentSummary(): array
+    {
+        return [
+            'total_students' => 0,
+            'evaluated_rate' => 0,
+            'total_comments' => 0,
+            'avg_rating' => null,
+            'satisfaction_rate' => 0,
+        ];
+    }
+
     public function find($id): Evaluation
     {
         $query = Evaluation::query();

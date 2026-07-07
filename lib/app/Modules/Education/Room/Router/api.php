@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('room')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [RoomController::class, 'list'])->middleware('permission:room.list');
+    Route::get('/summary', [RoomController::class, 'summary'])->middleware('permission:room.list');
     Route::get('/detail/{id}', [RoomController::class, 'detail'])->middleware('permission:room.view');
 
     Route::post('/create', [RoomController::class, 'create'])->middleware('permission:room.create');

@@ -406,15 +406,24 @@ class DemoDataSeeder extends Seeder
     }
 
     /** @return int[] */
+    /**
+     * Seeds one room per `RoomType` case (room.md/room-detail.md demo coverage) and
+     * exercises all three `RoomStatus` values — rooms[0..2] are referenced by index
+     * elsewhere (classes()), so those three keep their original name/type/active
+     * status; the rest are additive.
+     */
     private function rooms(array $branches): array
     {
         $rows = [
-            ['Phòng 101', 'classroom'],
-            ['Phòng 102', 'classroom'],
-            ['Phòng Speaking', 'speaking_room'],
+            ['Phòng 101', 'classroom', 'active'],
+            ['Phòng 102', 'classroom', 'active'],
+            ['Phòng Speaking', 'speaking_room', 'active'],
+            ['Phòng Vi tính', 'computer_room', 'active'],
+            ['Phòng Thi', 'exam_room', 'maintenance'],
+            ['Phòng Họp', 'meeting_room', 'inactive'],
         ];
         $ids = [];
-        foreach ($rows as $i => [$name, $type]) {
+        foreach ($rows as $i => [$name, $type, $status]) {
             $ids[] = DB::table('edu_rooms')->insertGetId([
                 'business_id' => $this->businessId,
                 'branch_id' => $branches[$i % count($branches)],
@@ -424,7 +433,7 @@ class DemoDataSeeder extends Seeder
                 'capacity' => 20,
                 'floor' => 'Tầng '.(($i % 2) + 1),
                 'room_type' => $type,
-                'status' => 'active',
+                'status' => $status,
                 'description' => $name,
             ] + $this->audit());
         }
