@@ -45,9 +45,15 @@ class RolePermissionSeeder extends Seeder
             'view' => [
                 'student', 'student_level', 'class', 'course', 'level',
                 'exam', 'question', 'timetable', 'room', 'parent', 'dashboard',
+                'achievement',
             ],
             'actions' => [
                 'lesson_plan' => ['list', 'view', 'create', 'update'],
+                // Ghi danh (066) + chuyển lớp (067): teachers enroll/transfer
+                // students of their own classes; row-level ownership is enforced
+                // by TeacherScope. Heavier actions (suspend/refund/cancel/update)
+                // stay admin-only.
+                'enrollment' => ['list', 'view', 'create', 'transfer'],
             ],
         ],
 
@@ -67,6 +73,9 @@ class RolePermissionSeeder extends Seeder
             'view' => [
                 'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
                 'assignment', 'timetable', 'fin_invoice', 'fin_payment', 'fin_debt', 'dashboard',
+            ],
+            'actions' => [
+                'teacher_review' => ['create'],
             ],
         ],
     ];
