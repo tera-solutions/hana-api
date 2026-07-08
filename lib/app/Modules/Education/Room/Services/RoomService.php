@@ -55,10 +55,105 @@ class RoomService
 
         $this->applySort($query, $params, ['room_code', 'room_name', 'capacity', 'floor', 'status', 'created_at']);
 
-        return $query
-            ->with('branch')
+        // Note: `classes` here loads every active class per room (not just the
+        // first) because a `limit()` inside an eager-load closure applies to
+        // the whole batched query, not per-parent — RoomResource picks the
+        // first one for the "Lớp học đang sử dụng" column.
+        $paginator = $query
+            ->with([
+                'branch',
+                'classes' => fn ($q) => $q->where('status', ClassStatus::Active->value)
+                    ->withCount(['enrollments as enrollments_count' => fn ($eq) => $eq->where('status', 'active')]),
+            ])
             ->withCount(['classes as active_classes_count' => fn ($q) => $q->where('status', ClassStatus::Active->value)])
             ->paginate($this->resolvePerPage($params));
+
+        $this->attachNextSessions($paginator->getCollection());
+
+        return $paginator;
+    }
+
+    /**
+     * Aggregate counts for the room-list dashboard cards (room.md §5.1).
+     */
+    public function summary(array $params = []): array
+    {
+        return [
+            'total' => Room::count(),
+            'in_use' => $this->guard(fn () => Room::where('status', Room::STATUS_ACTIVE)
+                ->whereHas('classes', fn ($q) => $q->where('status', ClassStatus::Active->value))
+                ->count()
+            ),
+            'maintenance' => Room::where('status', Room::STATUS_MAINTENANCE)->count(),
+            'empty' => $this->guard(fn () => Room::where('status', Room::STATUS_ACTIVE)
+                ->whereDoesntHave('classes', fn ($q) => $q->where('status', ClassStatus::Active->value))
+                ->count()
+            ),
+            'total_students' => $this->guard(fn () => ClassStudent::join('edu_classes', 'edu_class_students.class_id', '=', 'edu_classes.id')
+                ->where('edu_classes.status', ClassStatus::Active->value)
+                ->whereNotNull('edu_classes.room_id')
+                ->where('edu_class_students.status', 'active')
+                ->whereNull('edu_class_students.deleted_at')
+                ->count()
+            ),
+            'online_rooms' => Room::where('room_type', 'online')->count(),
+        ];
+    }
+
+    /**
+     * Attach the nearest upcoming session/lesson to each room in the given
+     * collection (room.md list §5.2 "Lịch học tiếp theo"). Batched per page to
+     * avoid N+1 queries.
+     */
+    private function attachNextSessions($rooms): void
+    {
+        $ids = $rooms->pluck('id')->all();
+        if (empty($ids)) {
+            return;
+        }
+
+        $today = now()->toDateString();
+
+        $sessions = $this->guardCollect(fn () => ClassSession::whereIn('room_id', $ids)
+            ->whereNull('deleted_at')
+            ->where('status', ClassSessionStatus::Upcoming->value)
+            ->whereDate('session_date', '>=', $today)
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->get(['room_id', 'session_date', 'start_time', 'end_time'])
+            ->all()
+        );
+
+        $lessons = $this->guardCollect(fn () => Lesson::whereIn('room_id', $ids)
+            ->whereIn('status', [Lesson::STATUS_SCHEDULED, Lesson::STATUS_CONFIRMED])
+            ->whereDate('lesson_date', '>=', $today)
+            ->orderBy('lesson_date')
+            ->orderBy('start_time')
+            ->get(['room_id', 'lesson_date', 'start_time', 'end_time'])
+            ->all()
+        );
+
+        $candidatesByRoom = [];
+        foreach ($sessions as $s) {
+            $candidatesByRoom[$s->room_id][] = [
+                'date' => $s->session_date,
+                'start_time' => $s->start_time,
+                'end_time' => $s->end_time,
+            ];
+        }
+        foreach ($lessons as $l) {
+            $candidatesByRoom[$l->room_id][] = [
+                'date' => $l->lesson_date,
+                'start_time' => $l->start_time,
+                'end_time' => $l->end_time,
+            ];
+        }
+
+        foreach ($rooms as $room) {
+            $candidates = $candidatesByRoom[$room->id] ?? [];
+            usort($candidates, fn ($a, $b) => strcmp($a['date'].$a['start_time'], $b['date'].$b['start_time']));
+            $room->setAttribute('next_session', $candidates[0] ?? null);
+        }
     }
 
     public function find($id): Room
@@ -77,6 +172,57 @@ class RoomService
             'room' => $this->find($id),
             'statistics' => $this->usageStatistics($id),
             'classes_in_use' => $this->classesInUse($id),
+            'current_session' => $this->currentSession($id),
+        ];
+    }
+
+    /**
+     * The room's in-progress session, if any (room-detail.md §6.1 "current_session").
+     * Drives the session timer / student grid / materials on the room detail screen.
+     */
+    public function currentSession($id): ?array
+    {
+        $session = $this->guardValue(fn () => ClassSession::where('room_id', $id)
+            ->where('status', ClassSessionStatus::Ongoing->value)
+            ->whereNull('deleted_at')
+            ->with([
+                'classRoom' => fn ($q) => $q->with(['course', 'teacher', 'schedules'])
+                    ->withCount(['enrollments as student_count' => $this->activeEnrollmentScope()]),
+            ])
+            ->orderByDesc('session_date')
+            ->first()
+        );
+
+        if (! $session || ! $session->classRoom) {
+            return null;
+        }
+
+        $classRoom = $session->classRoom;
+
+        $levelName = $classRoom->course?->level_id
+            ? $this->guardValue(fn () => DB::table('edu_levels')->where('id', $classRoom->course->level_id)->value('name'))
+            : null;
+
+        return [
+            'session_id' => $session->id,
+            'class_id' => $classRoom->id,
+            'class_code' => $classRoom->code,
+            'class_name' => $classRoom->name,
+            'course_id' => $classRoom->course_id,
+            'level' => $levelName,
+            'teacher_name' => $classRoom->teacher?->full_name,
+            'session_date' => $session->session_date,
+            'start_time' => $session->start_time,
+            'end_time' => $session->end_time,
+            'class_start_date' => $classRoom->start_date,
+            'class_end_date' => $classRoom->end_date,
+            'student_count' => $classRoom->student_count ?? 0,
+            'max_students' => $classRoom->max_capacity,
+            'schedules' => $classRoom->schedules->map(fn ($s) => [
+                'weekday' => $s->weekday,
+                'start_time' => $s->start_time,
+                'end_time' => $s->end_time,
+            ])->all(),
         ];
     }
 
@@ -272,6 +418,8 @@ class RoomService
 
     /**
      * Classes currently using the room (room.md §8 "Lớp học đang sử dụng" tab).
+     * Shape mirrors `currentSession()`'s class fields (`teacher_name`,
+     * `student_count`, `max_students`) so both surface the same class summary.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -281,10 +429,29 @@ class RoomService
             return ClassRoom::where('room_id', $id)
                 ->where('status', ClassStatus::Active->value)
                 ->whereNull('deleted_at')
+                ->with('teacher')
+                ->withCount(['enrollments as student_count' => $this->activeEnrollmentScope()])
                 ->get(['id', 'code', 'name', 'teacher_id', 'max_capacity'])
-                ->map(fn ($c) => (array) $c)
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'code' => $c->code,
+                    'name' => $c->name,
+                    'teacher_id' => $c->teacher_id,
+                    'teacher_name' => $c->teacher?->full_name,
+                    'student_count' => $c->student_count ?? 0,
+                    'max_students' => $c->max_capacity,
+                ])
                 ->all();
         });
+    }
+
+    /**
+     * Shared "active enrollment" constraint used to count current class
+     * headcount both in `classesInUse()` and `currentSession()`.
+     */
+    private function activeEnrollmentScope(): \Closure
+    {
+        return fn ($q) => $q->where('status', 'active')->whereNull('deleted_at');
     }
 
     private function hasClasses($id): bool
