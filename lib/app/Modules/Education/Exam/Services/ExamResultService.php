@@ -7,6 +7,7 @@ use App\Modules\Education\Exam\Models\ExamRegistration;
 use App\Modules\Education\Exam\Models\ExamResult;
 use App\Modules\Education\StudentLevel\Models\StudentLevel;
 use App\Modules\Education\StudentLevel\Services\StudentLevelService;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Support\Facades\DB;
 
 class ExamResultService
@@ -34,6 +35,9 @@ class ExamResultService
     {
         return DB::transaction(function () use ($registrationId, $data) {
             $registration = ExamRegistration::with('session.exam')->findOrFail($registrationId);
+
+            $this->authorizeRegistration($registration);
+
             $exam = $registration->session->exam;
 
             $scores = [];
@@ -80,7 +84,9 @@ class ExamResultService
     public function publish($registrationId): ExamResult
     {
         return DB::transaction(function () use ($registrationId) {
-            $registration = ExamRegistration::findOrFail($registrationId);
+            $registration = ExamRegistration::with('session')->findOrFail($registrationId);
+
+            $this->authorizeRegistration($registration);
 
             $result = ExamResult::where('exam_session_id', $registration->exam_session_id)
                 ->where('student_id', $registration->student_id)
@@ -110,7 +116,9 @@ class ExamResultService
     public function promote($registrationId, array $data): StudentLevel
     {
         return DB::transaction(function () use ($registrationId, $data) {
-            $registration = ExamRegistration::findOrFail($registrationId);
+            $registration = ExamRegistration::with('session')->findOrFail($registrationId);
+
+            $this->authorizeRegistration($registration);
 
             $result = ExamResult::where('exam_session_id', $registration->exam_session_id)
                 ->where('student_id', $registration->student_id)
@@ -133,6 +141,23 @@ class ExamResultService
                 'exam_result_id' => $result->id,
             ]);
         });
+    }
+
+    /**
+     * Guard grading/publishing/promotion: throws 403 when the registration's
+     * sitting is not the teacher's (owns its class, or is its invigilator).
+     */
+    private function authorizeRegistration(ExamRegistration $registration): void
+    {
+        if ($scope = TeacherScope::current()) {
+            $session = $registration->session;
+            $owned = in_array((int) $session->class_room_id, $scope->classIds(), true)
+                || (int) $session->teacher_id === $scope->teacherId;
+
+            if (! $owned) {
+                throw new \Package\Exception\AuthorizationException('Bạn không có quyền truy cập kỳ thi này.');
+            }
+        }
     }
 
     /**

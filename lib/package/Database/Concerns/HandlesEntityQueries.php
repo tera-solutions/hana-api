@@ -57,7 +57,7 @@ trait HandlesEntityQueries
      *
      * @param  int[]  $allowed
      */
-    protected function resolvePerPage(array $params, array $allowed = [20, 50, 100], int $default = 20): int
+    protected function resolvePerPage(array $params, array $allowed = [10, 20, 50, 100], int $default = 20): int
     {
         $perPage = (int) ($params['per_page'] ?? $default);
 

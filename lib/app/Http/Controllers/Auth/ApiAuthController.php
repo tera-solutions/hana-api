@@ -26,6 +26,9 @@ use App\Models\Session;
 use App\Models\StockCRM;
 use App\Models\Token;
 use App\Models\User;
+use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\Student\Models\Student;
+use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\ActivityLog\Support\ActivityLogger;
 use Exception;
 use Google_Client;
@@ -107,9 +110,8 @@ class ApiAuthController extends Controller
                 return $this->respondWithError($message, [], 422);
             }
 
-            $query = "(username = '$input->username')";
-
-            $user = User::whereRaw(DB::raw($query))
+            $user = User::where('email', $input->username)
+                ->orWhere('phone', $input->username)
                 ->first();
 
             if ($user) {
@@ -131,7 +133,7 @@ class ApiAuthController extends Controller
                         return $this->respondWithError('Tài khoản đã ngưng hoạt động hoặc chưa được kích hoạt !', [], 501);
                     }
 
-                    $response = $this->createToken($user);
+                    $response = $this->createToken($user, $pass);
                     DB::commit();
                     $this->logAuthEvent('login', 'success', $user->id, "Đăng nhập thành công: {$user->username}");
 
@@ -163,6 +165,63 @@ class ApiAuthController extends Controller
         }
     }
 
+    /**
+     * Refresh token
+     *
+     * Exchanges a refresh token for a new access + refresh token pair. The
+     * Passport client secret never leaves the server: this proxies the
+     * request to `/oauth/token` internally (see `createToken()`).
+     *
+     * @bodyParam refresh_token string required The refresh token from login. Example: def502...
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"token": "eyJ0eXAiOiJKV1Qi...", "refresh_token": "def502...", "expires_in": 1296000},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Invalid/expired refresh token" {
+     *   "success": false,
+     *   "msg": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
+     *   "data": null,
+     *   "code": 401,
+     *   "errors": []
+     * }
+     */
+    public function refreshToken(Request $request)
+    {
+        try {
+            $refreshToken = $request->refresh_token;
+            if (! $refreshToken) {
+                return $this->respondWithError('Thiếu refresh token', [], 422);
+            }
+
+            $tokenRequest = Request::create('/oauth/token', 'POST', [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $refreshToken,
+                'client_id' => config('services.passport.password_client_id'),
+                'client_secret' => config('services.passport.password_client_secret'),
+                'scope' => '',
+            ]);
+
+            $tokenResponse = app()->handle($tokenRequest);
+            $data = json_decode($tokenResponse->getContent(), true);
+
+            if ($tokenResponse->getStatusCode() !== 200 || empty($data['access_token'])) {
+                return $this->respondWithError('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', [], 401);
+            }
+
+            return $this->respondSuccess([
+                'token' => $data['access_token'],
+                'refresh_token' => $data['refresh_token'] ?? null,
+                'expires_in' => $data['expires_in'] ?? null,
+            ]);
+        } catch (Exception $err) {
+            return $this->respondWithError($err->getMessage(), [], 403);
+        }
+    }
+
     //
     private function sendOTP($data, $dataUser, $user)
     {
@@ -185,16 +244,40 @@ class ApiAuthController extends Controller
         return $data;
     }
 
-    private function createToken($user)
+    /**
+     * Issues an access + refresh token pair via Passport's password grant
+     * (dispatched as an internal sub-request to `/oauth/token`, per Laravel's
+     * own documented approach for minting tokens from within the app, since
+     * `$user->createToken()` only issues personal-access tokens, which never
+     * carry a refresh token).
+     */
+    private function createToken($user, $password)
     {
-        $token = $user->createToken('Tera Auth Private key');
+        $tokenRequest = Request::create('/oauth/token', 'POST', [
+            'grant_type' => 'password',
+            'client_id' => config('services.passport.password_client_id'),
+            'client_secret' => config('services.passport.password_client_secret'),
+            'username' => $user->email,
+            'password' => $password,
+            'scope' => '',
+        ]);
+
+        $tokenResponse = app()->handle($tokenRequest);
+        $data = json_decode($tokenResponse->getContent(), true);
+
+        if ($tokenResponse->getStatusCode() !== 200 || empty($data['access_token'])) {
+            throw new HttpException($data['error_description'] ?? 'Không thể tạo phiên đăng nhập');
+        }
+
         $user->save();
 
         return [
             'verify_auth' => $user->verify_auth,
             'user' => $user,
-            'token' => $token->accessToken,
-            'access_id' => $token->accessTokenId ?? null,
+            'token' => $data['access_token'],
+            'refresh_token' => $data['refresh_token'] ?? null,
+            'expires_in' => $data['expires_in'] ?? null,
+            'access_id' => null,
         ];
     }
 
@@ -572,12 +655,21 @@ class ApiAuthController extends Controller
                     $dataIndividual['verify_auth'] = env('VERIFY_AUTH');
                     $dataIndividual['password'] = bcrypt($request->password);
                     //
-                    // business_id/role_id are NOT NULL; individual accounts are attached to the
-                    // system business and its dedicated default role (seeded as INDIVIDUAL_USER
-                    // in RoleSeeder) since they don't belong to a real business.
+                    // business_id/role_id are NOT NULL; individual accounts (teacher, student
+                    // or parent portal) are attached to the system business and the role
+                    // matching their portal (seeded by BusinessAndUserSeeder). `type` is a
+                    // client-supplied hint, same trust level as the business/individual split
+                    // above — it only picks which role + identity row to create, it does not
+                    // grant anything beyond that role's normal permissions.
                     $systemBusinessId = Business::query()->min('id');
                     $dataIndividual['business_id'] = $systemBusinessId;
-                    $role = Role::where('code', 'INDIVIDUAL_USER')->where('business_id', $systemBusinessId)->first();
+                    $roleCodeByType = [
+                        'student' => 'STUDENT_ROLE',
+                        'parent' => 'PARENT_ROLE',
+                    ];
+                    $roleCode = $roleCodeByType[$request->type] ?? 'TEACHER_ROLE';
+                    $role = Role::where('code', $roleCode)->where('business_id', $systemBusinessId)->first()
+                        ?? Role::where('business_id', $systemBusinessId)->where('is_default', true)->first();
                     if ($role) {
                         $dataIndividual['role_id'] = $role->id;
                     }
@@ -591,6 +683,43 @@ class ApiAuthController extends Controller
                     $dataIndividual['code'] = Task::generateReferenceNumber('user', $refCount, 'USR');
                     //
                     $result = User::create($dataIndividual);
+
+                    // Every portal's self-registration must also get its matching identity
+                    // row (hr_teachers / edu_students / crm_parents) — without one, the
+                    // corresponding *Scope helper finds nothing to link and treats the
+                    // account as unscoped (like an admin) instead of scoped-to-nothing.
+                    // Status starts active with no class/child assignment yet, so every
+                    // scoped query legitimately returns empty until an admin links them.
+                    if ($role && $role->code === 'TEACHER_ROLE') {
+                        Teacher::create([
+                            'user_id' => $result->id,
+                            'business_id' => $systemBusinessId,
+                            'code' => Task::generateReferenceNumber('teacher', Task::setAndGetReferenceCount('teacher'), 'TCH'),
+                            'full_name' => $dataIndividual['full_name'] ?? null,
+                            'email' => $dataIndividual['email'] ?? null,
+                            'phone' => $dataIndividual['phone'] ?? null,
+                            'status' => Teacher::STATUS_ACTIVE,
+                        ]);
+                    } elseif ($role && $role->code === 'STUDENT_ROLE') {
+                        Student::create([
+                            'user_id' => $result->id,
+                            'business_id' => $systemBusinessId,
+                            'code' => Task::generateReferenceNumber('student', Task::setAndGetReferenceCount('student'), 'STU'),
+                            'name' => $dataIndividual['full_name'] ?? null,
+                            'email' => $dataIndividual['email'] ?? null,
+                            'phone' => $dataIndividual['phone'] ?? null,
+                            'status' => Student::STATUS_ACTIVE,
+                        ]);
+                    } elseif ($role && $role->code === 'PARENT_ROLE') {
+                        ParentModel::create([
+                            'user_id' => $result->id,
+                            'business_id' => $systemBusinessId,
+                            'name' => $dataIndividual['full_name'] ?? null,
+                            'email' => $dataIndividual['email'] ?? null,
+                            'phone' => $dataIndividual['phone'] ?? null,
+                            'status' => ParentModel::STATUS_ACTIVE,
+                        ]);
+                    }
 
                     // // set permisson
                     // $getModuleForIndividual = Module::whereJsonContains('type', 'individual')->get();

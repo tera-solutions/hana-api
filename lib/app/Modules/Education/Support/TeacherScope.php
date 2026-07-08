@@ -4,9 +4,11 @@ namespace App\Modules\Education\Support;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\LeaveRequest\Enums\LeaveRequestType;
 use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Package\Exception\AuthorizationException;
 
 /**
@@ -44,6 +46,12 @@ class TeacherScope
     /**
      * The scope for the authenticated caller, or null when no scoping applies
      * (unauthenticated, admin, or a non-teacher staff user).
+     *
+     * Memoized on the current Request so the hr_teachers lookup (and the lazy
+     * owned-class snapshot on the shared instance) runs once per request instead
+     * of once per call site. Request attributes are the cache on purpose: they
+     * die with the request, so long-running workers (queues, Octane) never leak
+     * a scope across requests the way a static property would.
      */
     public static function current(): ?self
     {
@@ -53,13 +61,16 @@ class TeacherScope
             return null;
         }
 
-        $teacherId = Teacher::query()->where('user_id', $user->id)->value('id');
+        $attributes = app('request')->attributes;
+        $key = 'education.teacher_scope.'.$user->id;
 
-        if (! $teacherId) {
-            return null;
+        if (! $attributes->has($key)) {
+            $teacherId = Teacher::query()->where('user_id', $user->id)->value('id');
+
+            $attributes->set($key, $teacherId ? new self((int) $teacherId, (int) $user->id) : null);
         }
 
-        return new self((int) $teacherId, (int) $user->id);
+        return $attributes->get($key);
     }
 
     /**
@@ -121,7 +132,8 @@ class TeacherScope
             $sub->selectRaw('1')
                 ->from('edu_class_students')
                 ->whereColumn('edu_class_students.student_id', 'edu_students.id')
-                ->whereIn('edu_class_students.class_id', $classIds);
+                ->whereIn('edu_class_students.class_id', $classIds)
+                ->whereNull('edu_class_students.deleted_at');
         });
     }
 
@@ -149,6 +161,10 @@ class TeacherScope
      * Constrain a LessonPlan query. Lesson plans are per-course/level, not per-teacher,
      * so we scope to plans that are either attached to one of the teacher's classes
      * (`edu_classes.lesson_plan_id`) or share a course with one of those classes.
+     *
+     * Deliberately broad: curricula are shared per course, so every teacher on a
+     * course sees — and, via {@see authorizeLessonPlan()}, may edit — that course's
+     * plans, including drafts authored by a colleague.
      */
     public function constrainLessonPlans(Builder $query): void
     {
@@ -177,6 +193,116 @@ class TeacherScope
     }
 
     /**
+     * Guard a lesson-plan write: owned when the plan is attached to one of the
+     * teacher's classes, or shares a course with one of them — same ownership
+     * test as {@see constrainLessonPlans()}, applied to a single id.
+     *
+     * @throws AuthorizationException
+     */
+    public function authorizeLessonPlan(int $planId, ?int $courseId): void
+    {
+        $owned = in_array($planId, $this->lessonPlanIds(), true)
+            || ($courseId !== null && in_array($courseId, $this->courseIds(), true));
+
+        if (! $owned) {
+            throw new AuthorizationException('Bạn không có quyền truy cập giáo án này.');
+        }
+    }
+
+    /**
+     * Guard a student write: throws 403 when the student is not enrolled in any
+     * of the teacher's classes.
+     *
+     * @throws AuthorizationException
+     */
+    public function authorizeStudent(int $studentId): void
+    {
+        $owned = DB::table('edu_class_students')
+            ->where('student_id', $studentId)
+            ->whereIn('class_id', $this->classIds())
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (! $owned) {
+            throw new AuthorizationException('Bạn không có quyền truy cập học viên này.');
+        }
+    }
+
+    /**
+     * Constrain an ExamSession query: sessions of the teacher's classes, or where
+     * the teacher is the session's invigilator. Sessions with no class_room_id
+     * (e.g. standalone placement sittings) are only visible via the invigilator branch.
+     */
+    public function constrainExamSessions(Builder $query): void
+    {
+        $classIds = $this->classIds();
+
+        $query->where(function (Builder $q) use ($classIds) {
+            $q->whereIn('class_room_id', $classIds)
+                ->orWhere('teacher_id', $this->teacherId);
+        });
+    }
+
+    /**
+     * Constrain a query joined to `edu_exam_sessions` (e.g. exam results/registrations,
+     * which carry no class/teacher column of their own) to sessions owned per
+     * {@see constrainExamSessions()}.
+     */
+    public function constrainByExamSession(Builder $query, string $sessionIdColumn): void
+    {
+        $classIds = $this->classIds();
+        $teacherId = $this->teacherId;
+
+        $query->whereExists(function ($sub) use ($classIds, $teacherId, $sessionIdColumn) {
+            $sub->selectRaw('1')
+                ->from('edu_exam_sessions')
+                ->whereColumn('edu_exam_sessions.id', $sessionIdColumn)
+                ->where(function ($q) use ($classIds, $teacherId) {
+                    $q->whereIn('edu_exam_sessions.class_room_id', $classIds)
+                        ->orWhere('edu_exam_sessions.teacher_id', $teacherId);
+                });
+        });
+    }
+
+    /**
+     * Constrain a LeaveRequest query: the teacher's own leave requests, or a
+     * student's leave request against one of the teacher's classes.
+     */
+    public function constrainLeaveRequests(Builder $query): void
+    {
+        $classIds = $this->classIds();
+        $teacherId = $this->teacherId;
+
+        $query->where(function (Builder $q) use ($classIds, $teacherId) {
+            $q->where(function (Builder $qq) use ($teacherId) {
+                $qq->where('requester_type', LeaveRequestType::TeacherLeave->requesterType())
+                    ->where('requester_id', $teacherId);
+            })->orWhere(function (Builder $qq) use ($classIds) {
+                $qq->where('requester_type', LeaveRequestType::StudentLeave->requesterType())
+                    ->whereIn('class_room_id', $classIds);
+            });
+        });
+    }
+
+    /**
+     * Constrain a query whose given column references a student id (e.g. a
+     * per-student record with no class_id of its own, such as edu_student_levels)
+     * to students enrolled in the teacher's classes.
+     */
+    public function constrainByStudentId(Builder $query, string $studentIdColumn): void
+    {
+        $classIds = $this->classIds();
+
+        $query->whereExists(function ($sub) use ($classIds, $studentIdColumn) {
+            $sub->selectRaw('1')
+                ->from('edu_class_students')
+                ->whereColumn('edu_class_students.student_id', $studentIdColumn)
+                ->whereIn('edu_class_students.class_id', $classIds)
+                ->whereNull('edu_class_students.deleted_at');
+        });
+    }
+
+    /**
      * Guard a session-detail read: owned when the session's class is the teacher's,
      * or the teacher is its (substitute) teacher.
      *
@@ -194,6 +320,10 @@ class TeacherScope
     }
 
     /**
+     * The instance (and via {@see current()} the whole request) sees the
+     * ownership snapshot taken on first use — a mutation that reassigns a class
+     * mid-request is not reflected until the next request.
+     *
      * @return array<int, object>
      */
     private function classes(): array

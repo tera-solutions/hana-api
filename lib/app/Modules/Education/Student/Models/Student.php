@@ -4,6 +4,7 @@ namespace App\Modules\Education\Student\Models;
 
 use App\Models\User;
 use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\Level\Models\Level;
 use App\Modules\Education\Student\Enums\StudentStatus;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Branch\Models\Branch;
@@ -63,6 +64,11 @@ class Student extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function level(): BelongsTo
+    {
+        return $this->belongsTo(Level::class, 'level_id');
     }
 
     public function profile(): HasOne

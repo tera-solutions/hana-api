@@ -101,6 +101,10 @@ class ClassSessionService
             $classId = $data['class_id'];
             ClassRoom::findOrFail($classId);
 
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeClass((int) $classId);
+            }
+
             $this->assertNoConflict($classId, $data['session_date'], $data['start_time'], $data['end_time'], $data);
 
             $tagIds = $data['tag_ids'] ?? null;
@@ -129,6 +133,10 @@ class ClassSessionService
     {
         return DB::transaction(function () use ($classId, $data) {
             ClassRoom::findOrFail($classId);
+
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeClass((int) $classId);
+            }
 
             $from = $data['from_date'];
             $to = $data['to_date'];
@@ -195,6 +203,10 @@ class ClassSessionService
         return DB::transaction(function () use ($id, $data) {
             $session = ClassSession::findOrFail($id);
 
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeSession($session);
+            }
+
             if ($session->attendance_locked) {
                 throw new \RuntimeException('Buổi học đã chốt điểm danh, không thể cập nhật.');
             }
@@ -227,6 +239,10 @@ class ClassSessionService
     {
         $session = ClassSession::findOrFail($id);
 
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeSession($session);
+        }
+
         if ($session->status === ClassSession::STATUS_CANCELLED) {
             throw new \RuntimeException('Buổi học đã được hủy.');
         }
@@ -246,7 +262,13 @@ class ClassSessionService
 
     public function delete($id): void
     {
-        ClassSession::findOrFail($id)->delete();
+        $session = ClassSession::findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeSession($session);
+        }
+
+        $session->delete();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

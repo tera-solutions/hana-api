@@ -39,9 +39,23 @@ class MaterialService
             }
         }
 
+        // Scope to materials linked to a specific entity (course/lesson_plan/lesson/…),
+        // e.g. the teacher app's classroom "Tài liệu" tab filtering by the class's course.
+        if (! empty($params['entity_type']) && ! empty($params['entity_id'])) {
+            $entityType = $params['entity_type'];
+            $entityId = $params['entity_id'];
+            $query->whereExists(function ($sub) use ($entityType, $entityId) {
+                $sub->selectRaw('1')
+                    ->from('edu_material_mappings')
+                    ->whereColumn('edu_material_mappings.material_id', 'edu_materials.id')
+                    ->where('edu_material_mappings.entity_type', $entityType)
+                    ->where('edu_material_mappings.entity_id', $entityId);
+            });
+        }
+
         $this->applySort($query, $params, ['material_code', 'material_name', 'material_type', 'current_version', 'status', 'created_at']);
 
-        return $query->with('category')->paginate($this->resolvePerPage($params));
+        return $query->with(['category', 'versions'])->paginate($this->resolvePerPage($params));
     }
 
     public function find($id): Material

@@ -85,6 +85,10 @@ class ClassService
             $query->where('course_id', $params['course_id']);
         }
 
+        if (! empty($params['lesson_plan_id'])) {
+            $query->where('lesson_plan_id', $params['lesson_plan_id']);
+        }
+
         if (! empty($params['teacher_id'])) {
             $query->where('teacher_id', $params['teacher_id']);
         }
@@ -210,6 +214,10 @@ class ClassService
     public function update($id, array $data): ClassRoom
     {
         return DB::transaction(function () use ($id, $data) {
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeClass((int) $id);
+            }
+
             $class = $this->find($id);
 
             if ($this->hasSessions($id)) {
@@ -255,6 +263,10 @@ class ClassService
      */
     public function suspend($id, array $data): ClassRoom
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $id);
+        }
+
         $class = ClassRoom::findOrFail($id);
 
         if ($class->status === ClassRoom::STATUS_SUSPENDED) {
@@ -280,6 +292,10 @@ class ClassService
      */
     public function restore($id): ClassRoom
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $id);
+        }
+
         $class = $this->find($id);
 
         if ($class->status !== ClassRoom::STATUS_SUSPENDED) {

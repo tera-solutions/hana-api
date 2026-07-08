@@ -128,6 +128,15 @@ class AssignmentService
     public function create(array $data): Assignment
     {
         return DB::transaction(function () use ($data) {
+            if ($scope = TeacherScope::current()) {
+                if (! empty($data['class_room_id'])) {
+                    $scope->authorizeClass((int) $data['class_room_id']);
+                }
+                if (! empty($data['lesson_id'])) {
+                    $scope->authorizeClass((int) Lesson::findOrFail($data['lesson_id'])->class_room_id);
+                }
+            }
+
             $assignment = new Assignment($data);
             $assignment->assignment_code = $this->generateCode();
             $assignment->status = Assignment::STATUS_DRAFT;
@@ -149,7 +158,7 @@ class AssignmentService
 
     public function update($id, array $data): Assignment
     {
-        $assignment = Assignment::findOrFail($id);
+        $assignment = $this->scopedAssignment($id);
 
         unset($data['id'], $data['assignment_code'], $data['status']);
 
@@ -165,7 +174,7 @@ class AssignmentService
      */
     public function publish($id): Assignment
     {
-        $assignment = Assignment::findOrFail($id);
+        $assignment = $this->scopedAssignment($id);
 
         if ($assignment->status === Assignment::STATUS_PUBLISHED) {
             throw new \RuntimeException('Bài tập đã được giao.');
@@ -178,7 +187,7 @@ class AssignmentService
 
     public function delete($id): void
     {
-        Assignment::findOrFail($id)->delete();
+        $this->scopedAssignment($id)->delete();
     }
 
     // ── Assigning (assignment.md §VII) ───────────────────────────────────────────
@@ -260,7 +269,7 @@ class AssignmentService
     private function seedTargets($id, Collection $studentIds): array
     {
         return DB::transaction(function () use ($id, $studentIds) {
-            $assignment = Assignment::findOrFail($id);
+            $assignment = $this->scopedAssignment($id);
 
             if ($assignment->status !== Assignment::STATUS_PUBLISHED) {
                 throw new \RuntimeException('Chỉ bài tập đã giao (published) mới có thể gán cho học viên.');
@@ -386,6 +395,8 @@ class AssignmentService
     {
         $submission = AssignmentSubmission::with('assignment')->findOrFail($submissionId);
 
+        $this->scopedAssignment($submission->assignment_id);
+
         // BR008: score cannot exceed the assignment's max score.
         if ((float) $data['score'] > (float) $submission->assignment->max_score) {
             throw new \RuntimeException('Điểm không được vượt quá điểm tối đa.');
@@ -408,6 +419,8 @@ class AssignmentService
     public function publishResult($submissionId): AssignmentSubmission
     {
         $submission = AssignmentSubmission::findOrFail($submissionId);
+
+        $this->scopedAssignment($submission->assignment_id);
 
         if (! in_array($submission->status, [AssignmentSubmission::STATUS_GRADED, AssignmentSubmission::STATUS_REVIEWED], true)) {
             throw new \RuntimeException('Chỉ có thể công bố bài đã chấm điểm.');
@@ -467,7 +480,11 @@ class AssignmentService
      */
     public function submissionDetail($id): AssignmentSubmission
     {
-        return AssignmentSubmission::with(['assignment', 'student', 'files'])->findOrFail($id);
+        $submission = AssignmentSubmission::with(['assignment', 'student', 'files'])->findOrFail($id);
+
+        $this->scopedAssignment($submission->assignment_id);
+
+        return $submission;
     }
 
     /**
@@ -479,6 +496,8 @@ class AssignmentService
     public function updateGrade($id, array $data): AssignmentSubmission
     {
         $submission = AssignmentSubmission::with('assignment')->findOrFail($id);
+
+        $this->scopedAssignment($submission->assignment_id);
 
         if (! in_array($submission->status, [AssignmentSubmission::STATUS_GRADED, AssignmentSubmission::STATUS_REVIEWED], true)) {
             throw new \RuntimeException('Chỉ có thể cập nhật điểm cho bài đã chấm.');

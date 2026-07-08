@@ -25,6 +25,7 @@ Route::group(['middleware' => ['cors', 'json.response'], 'prefix' => 'auth'], fu
     });
     Route::group(['namespace' => 'Auth'], function () {
         Route::post('/login', 'ApiAuthController@login');
+        Route::post('/refresh-token', 'ApiAuthController@refreshToken');
         Route::post('/verify-otp', 'ApiAuthController@verifyOTP');
         Route::post('/check-auth', 'ApiAuthController@checkAuth');
         Route::post('/forgot-password', 'ApiAuthController@forgotPassword');

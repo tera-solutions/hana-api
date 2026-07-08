@@ -26,8 +26,9 @@ use Illuminate\Support\Facades\DB;
  *  - `edu_classes` has no level column, so `level` is always null.
  *  - lesson-plan `taught_percent` is a curriculum-completion proxy: completed sessions
  *    ÷ total sessions of the teacher's classes that use the plan (0 when none).
- *  - attendance is sourced from `edu_attendances` joined to the day's sessions; null
- *    when no attendance has been recorded for the date.
+ *  - attendance `total` is today's enrolled roster (not just students with a saved
+ *    record yet), so present/absent/late fill in progressively as the teacher marks
+ *    them; the whole block is null only when the teacher has no session today.
  */
 class DashboardService
 {
@@ -239,24 +240,27 @@ class DashboardService
 
     private function attendance(?TeacherScope $scope, string $today): ?array
     {
-        $sessionIds = $this->scopedSessions($scope)
+        $sessions = $this->scopedSessions($scope)
             ->whereDate('session_date', $today)
-            ->pluck('id');
+            ->where('status', '!=', ClassSession::STATUS_CANCELLED)
+            ->get(['id', 'class_id']);
 
-        if ($sessionIds->isEmpty()) {
+        if ($sessions->isEmpty()) {
             return null;
         }
 
-        $counts = Attendance::whereIn('session_id', $sessionIds)
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-
-        $total = (int) $counts->sum();
+        $total = array_sum($this->activeStudentCounts(
+            $sessions->pluck('class_id')->filter()->unique()->all()
+        ));
 
         if ($total === 0) {
             return null;
         }
+
+        $counts = Attendance::whereIn('session_id', $sessions->pluck('id'))
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
 
         return [
             'present' => (int) ($counts['present'] ?? 0),

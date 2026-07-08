@@ -32,7 +32,7 @@ class StudentService
 
         $this->applySort($query, $params, ['code', 'name', 'enrollment_date', 'created_at']);
 
-        return $query->with(['business', 'branch', 'parents'])
+        return $query->with(['business', 'branch', 'level', 'parents'])
             ->paginate($this->resolvePerPage($params));
     }
 
@@ -119,7 +119,7 @@ class StudentService
 
     public function find($id)
     {
-        return Student::with(['business', 'branch', 'profile', 'parents'])->findOrFail($id);
+        return Student::with(['business', 'branch', 'level', 'profile', 'parents'])->findOrFail($id);
     }
 
     /**
@@ -127,6 +127,10 @@ class StudentService
      */
     public function detail($id): array
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeStudent((int) $id);
+        }
+
         return [
             'student' => $this->find($id),
             'statistics' => $this->statistics($id),
@@ -172,6 +176,10 @@ class StudentService
     public function update($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeStudent((int) $id);
+            }
+
             $student = $this->find($id);
 
             // Immutable: identity & enrollment context (see student.md §3).
@@ -203,6 +211,10 @@ class StudentService
      */
     public function suspend($id, array $data)
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeStudent((int) $id);
+        }
+
         $student = $this->find($id);
 
         if ($student->status === Student::STATUS_SUSPENDED) {
@@ -231,6 +243,10 @@ class StudentService
      */
     public function restore($id, array $data = [])
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeStudent((int) $id);
+        }
+
         $student = $this->find($id);
 
         if ($student->status !== Student::STATUS_SUSPENDED) {
@@ -257,6 +273,10 @@ class StudentService
      */
     public function delete($id)
     {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeStudent((int) $id);
+        }
+
         $student = $this->find($id);
 
         if ($this->hasLinkedData($id, Student::LINKED_TABLES)) {

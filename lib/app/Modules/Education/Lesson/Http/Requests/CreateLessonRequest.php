@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\Lesson\Http\Requests;
 
+use App\Modules\Education\Lesson\Enums\LessonActivityStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateLessonRequest extends FormRequest
 {
@@ -25,9 +27,14 @@ class CreateLessonRequest extends FormRequest
             'objective' => ['nullable', 'string', 'max:5000'],
             'vocabulary' => ['nullable', 'string', 'max:5000'],
             'grammar' => ['nullable', 'string', 'max:5000'],
-            'activities' => ['nullable', 'string', 'max:5000'],
             'homework' => ['nullable', 'string', 'max:5000'],
             'lesson_note' => ['nullable', 'string', 'max:5000'],
+            'activities' => ['nullable', 'array'],
+            'activities.*.avatar' => ['nullable', 'string', 'max:1000'],
+            'activities.*.title' => ['required', 'string', 'max:255'],
+            'activities.*.description' => ['nullable', 'string', 'max:5000'],
+            'activities.*.duration' => ['nullable', 'integer', 'min:1'],
+            'activities.*.status' => ['nullable', Rule::enum(LessonActivityStatus::class)],
         ];
     }
 
@@ -56,6 +63,7 @@ class CreateLessonRequest extends FormRequest
             'end_time' => ['description' => 'End time (H:i).', 'example' => '10:00'],
             'room_id' => ['description' => 'Room id.', 'example' => 1],
             'teacher_id' => ['description' => 'Teacher id.', 'example' => 1],
+            'objective' => ['description' => 'Learning objectives, multiple values joined by ";".'],
         ];
     }
 }

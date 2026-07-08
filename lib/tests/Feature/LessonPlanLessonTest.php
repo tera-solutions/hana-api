@@ -83,6 +83,51 @@ class LessonPlanLessonTest extends TestCase
         $this->assertDatabaseHas('edu_lesson_plan_lessons', ['id' => $lessonId, 'lesson_title' => 'One Updated']);
     }
 
+    public function test_add_lesson_with_activities_persists_ordered_list(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->createPlan();
+
+        $lessonId = $this->postJson("/v1/edu/lesson-plan/lesson/create/{$planId}", [
+            'lesson_title' => 'Hello',
+            'objective' => 'Chào hỏi;Giới thiệu bản thân',
+            'activities' => [
+                ['title' => 'Warm-up', 'duration' => 5, 'status' => 'completed'],
+                ['title' => 'Practice', 'duration' => 15],
+            ],
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.objective', 'Chào hỏi;Giới thiệu bản thân')
+            ->assertJsonPath('data.activities.0.title', 'Warm-up')
+            ->assertJsonPath('data.activities.0.sort_order', 1)
+            ->assertJsonPath('data.activities.1.title', 'Practice')
+            ->json('data.id');
+
+        $this->assertDatabaseHas('edu_lesson_plan_lesson_activities', ['lesson_plan_lesson_id' => $lessonId, 'title' => 'Warm-up', 'status' => 'completed']);
+    }
+
+    public function test_update_lesson_replaces_activities(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->createPlan();
+        $lessonId = $this->addLesson($planId, 'One');
+
+        $this->putJson("/v1/edu/lesson-plan/lesson/update/{$lessonId}", [
+            'activities' => [['title' => 'Warm-up', 'duration' => 5]],
+        ])->assertStatus(200)->assertJsonPath('data.activities.0.title', 'Warm-up');
+
+        $this->putJson("/v1/edu/lesson-plan/lesson/update/{$lessonId}", [
+            'activities' => [['title' => 'Wrap-up', 'duration' => 10]],
+        ])
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data.activities')
+            ->assertJsonPath('data.activities.0.title', 'Wrap-up');
+
+        $this->assertDatabaseMissing('edu_lesson_plan_lesson_activities', ['lesson_plan_lesson_id' => $lessonId, 'title' => 'Warm-up']);
+    }
+
     public function test_reorder_lessons(): void
     {
         $this->actingAsAdmin();

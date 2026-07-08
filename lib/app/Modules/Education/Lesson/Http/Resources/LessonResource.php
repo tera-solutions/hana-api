@@ -28,7 +28,7 @@ class LessonResource extends JsonResource
             'objective' => $this->objective,
             'vocabulary' => $this->vocabulary,
             'grammar' => $this->grammar,
-            'activities' => $this->activities,
+            'activities' => LessonActivityResource::collection($this->whenLoaded('activities')),
             'homework' => $this->homework,
 
             'lesson_note' => $this->lesson_note,

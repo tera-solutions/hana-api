@@ -132,12 +132,22 @@ class LessonTest extends TestCase
         ]);
 
         for ($i = 1; $i <= $lessons; $i++) {
-            DB::table('edu_lesson_plan_lessons')->insert([
+            $lessonId = DB::table('edu_lesson_plan_lessons')->insertGetId([
                 'lesson_plan_id' => $planId,
                 'lesson_no' => $i,
                 'lesson_title' => "Lesson {$i}",
                 'objective' => "Objective {$i}",
                 'vocabulary' => "Vocab {$i}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('edu_lesson_plan_lesson_activities')->insert([
+                'lesson_plan_lesson_id' => $lessonId,
+                'sort_order' => 1,
+                'title' => "Warm-up {$i}",
+                'duration' => 5,
+                'status' => 'pending',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -199,6 +209,7 @@ class LessonTest extends TestCase
         $this->assertSame('Lesson 1', $first->lesson_title);
         $this->assertSame('Objective 1', $first->objective);
         $this->assertSame('scheduled', $first->status);
+        $this->assertDatabaseHas('edu_lesson_activities', ['lesson_id' => $first->id, 'title' => 'Warm-up 1', 'status' => 'pending']);
 
         // Idempotent.
         $this->postJson("/v1/edu/lesson/generate/{$classId}", ['from_date' => '2026-07-01'])

@@ -5,6 +5,7 @@ namespace App\Modules\Education\Lesson\Services;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\Lesson\Models\LessonActivity;
 use App\Modules\Education\Lesson\Models\LessonHistory;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\Support\TeacherScope;
@@ -68,12 +69,12 @@ class LessonService
 
     public function find($id): Lesson
     {
-        return Lesson::with(['classRoom', 'teacher', 'room'])->findOrFail($id);
+        return Lesson::with(['classRoom', 'teacher', 'room', 'activities'])->findOrFail($id);
     }
 
     public function detail($id): array
     {
-        $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories', 'lessonPlanLesson.materials'])->findOrFail($id);
+        $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories', 'activities', 'lessonPlanLesson.materials'])->findOrFail($id);
 
         if ($scope = TeacherScope::current()) {
             $scope->authorizeClass((int) $lesson->class_room_id);
@@ -98,11 +99,16 @@ class LessonService
             if (! $class) {
                 throw new \RuntimeException('Lớp học không tồn tại.');
             }
+
+            if ($scope = TeacherScope::current()) {
+                $scope->authorizeClass((int) $classId);
+            }
+
             if (! $class->lesson_plan_id) {
                 throw new \RuntimeException('Lớp học chưa được gắn giáo án.');
             }
 
-            $plan = LessonPlan::with('lessons')->findOrFail($class->lesson_plan_id);
+            $plan = LessonPlan::with('lessons.activities')->findOrFail($class->lesson_plan_id);
 
             if ($plan->status !== LessonPlan::STATUS_PUBLISHED) {
                 throw new \RuntimeException('Chỉ giáo án đã xuất bản mới có thể sinh buổi học.');
@@ -150,7 +156,7 @@ class LessonService
                         continue;
                     }
 
-                    Lesson::create([
+                    $lesson = Lesson::create([
                         'class_room_id' => $classId,
                         'lesson_plan_id' => $plan->id,
                         'lesson_plan_lesson_id' => $template->id,
@@ -164,10 +170,20 @@ class LessonService
                         'objective' => $template->objective,
                         'vocabulary' => $template->vocabulary,
                         'grammar' => $template->grammar,
-                        'activities' => $template->activities,
                         'homework' => $template->homework,
                         'status' => Lesson::STATUS_SCHEDULED,
                     ]);
+
+                    foreach ($template->activities as $activity) {
+                        $lesson->activities()->create([
+                            'sort_order' => $activity->sort_order,
+                            'avatar' => $activity->avatar,
+                            'title' => $activity->title,
+                            'description' => $activity->description,
+                            'duration' => $activity->duration,
+                            'status' => LessonActivity::STATUS_PENDING,
+                        ]);
+                    }
 
                     $created++;
                     $index++;
@@ -190,6 +206,7 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
             $this->assertMutable($lesson);
 
             // BR006: a teacher change must not clash with the teacher's other lessons.
@@ -224,6 +241,7 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
             $this->assertMutable($lesson);
 
             $date = $data['lesson_date'];
@@ -265,6 +283,8 @@ class LessonService
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
+
             // BR010: a completed (or locked) lesson cannot be cancelled.
             if (in_array($lesson->status, [Lesson::STATUS_COMPLETED, Lesson::STATUS_LOCKED], true)) {
                 throw new \RuntimeException('Buổi học đã hoàn thành hoặc đã khóa, không thể hủy.');
@@ -293,6 +313,8 @@ class LessonService
         return DB::transaction(function () use ($id) {
             $lesson = Lesson::findOrFail($id);
 
+            $this->authorizeLesson($lesson);
+
             if (in_array($lesson->status, [Lesson::STATUS_CANCELLED, Lesson::STATUS_LOCKED, Lesson::STATUS_COMPLETED], true)) {
                 throw new \RuntimeException('Buổi học không thể chuyển sang hoàn thành từ trạng thái hiện tại.');
             }
@@ -314,6 +336,8 @@ class LessonService
     {
         return DB::transaction(function () use ($id) {
             $lesson = Lesson::findOrFail($id);
+
+            $this->authorizeLesson($lesson);
 
             if ($lesson->isLocked()) {
                 throw new \RuntimeException('Buổi học đã được khóa.');
@@ -340,6 +364,8 @@ class LessonService
     {
         return DB::transaction(function () use ($id, $data) {
             $lesson = Lesson::findOrFail($id);
+
+            $this->authorizeLesson($lesson);
 
             if (! $lesson->isLocked()) {
                 throw new \RuntimeException('Buổi học chưa bị khóa.');
@@ -413,6 +439,13 @@ class LessonService
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
+
+    private function authorizeLesson(Lesson $lesson): void
+    {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeClass((int) $lesson->class_room_id);
+        }
+    }
 
     /**
      * @throws \RuntimeException BR004 (completed) / BR005 (locked).

@@ -33,6 +33,7 @@ use App\Modules\Education\LeaveRequest\Enums\LeaveReasonType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveRequestType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveStatus;
 use App\Modules\Education\LeaveRequest\Enums\MakeupStatus;
+use App\Modules\Education\Lesson\Enums\LessonActivityStatus;
 use App\Modules\Education\Lesson\Enums\LessonStatus;
 use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlanMaterial\Enums\MaterialType as LessonPlanMaterialType;
@@ -126,6 +127,7 @@ class MetadataRegistry
                 'room_type' => RoomType::options(),
                 'lesson_plan_status' => LessonPlanStatus::options(),
                 'lesson_status' => LessonStatus::options(),
+                'lesson_activity_status' => LessonActivityStatus::options(),
                 'evaluation_type' => EvaluationType::options(),
                 'evaluator_type' => EvaluatorType::options(),
                 'evaluation_period' => EvaluationPeriod::options(),

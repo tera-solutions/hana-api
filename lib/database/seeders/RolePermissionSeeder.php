@@ -8,15 +8,21 @@ use Illuminate\Support\Facades\DB;
 class RolePermissionSeeder extends Seeder
 {
     /**
-     * Grant permissions to each role.
+     * Sync each role's permissions to $map — grants what's configured and
+     * revokes anything previously granted that the current config no longer
+     * allows, so narrowing a role's access here takes effect on re-seed.
      *
-     * Super Admin is intentionally omitted — those accounts use the `is_admin`
-     * flag and bypass the permission checks entirely.
+     * ADMIN_ROLE accounts also carry the `is_admin` flag and bypass the
+     * permission checks entirely; the full grant here keeps the role coherent
+     * for non-flagged admins.
      *
      * Each role is described by the modules it can manage:
-     *   - `all`  => every seeded permission (BUSINESS_ADMIN).
-     *   - `full` => every action of the listed module prefixes (e.g. course.* ).
-     *   - `view` => the read actions (`.list` / `.view`) of the listed prefixes.
+     *   - `all`     => every seeded permission.
+     *   - `full`    => every action of the listed module prefixes (e.g. course.* ).
+     *   - `view`    => the read actions (`.list` / `.view`) of the listed prefixes.
+     *   - `actions` => an explicit action allowlist per prefix, for a module
+     *                  where a role needs more than `view` but less than `full`
+     *                  (e.g. lesson_plan.* for TEACHER_ROLE, below).
      *
      * Module prefix = the part before the first dot (course, student_level,
      * fin_invoice, …). New permissions are picked up automatically.
@@ -24,53 +30,44 @@ class RolePermissionSeeder extends Seeder
     private const READ_ACTIONS = ['list', 'view'];
 
     private array $map = [
-        'BUSINESS_ADMIN' => ['all' => true],
+        'ADMIN_ROLE' => ['all' => true],
 
-        'BRANCH_MANAGER' => [
+        // Daily teaching work: authors draft lesson plans/templates (publishing
+        // is an admin review step, not a teacher action) and manages their
+        // classes' homework, attendance, evaluations and lessons; reads the
+        // surrounding catalog. Row-level isolation between teachers is enforced
+        // by TeacherScope, not here.
+        'TEACHER_ROLE' => [
             'full' => [
-                'branch', 'user', 'teacher', 'student', 'class', 'enrollment', 'room',
-                'lesson', 'course', 'level', 'student_level', 'lesson_plan', 'material', 'assignment',
-                'timetable', 'leave', 'evaluation', 'task',
+                'assignment', 'material', 'evaluation', 'task', 'attendance',
+                'lesson', 'session', 'leave',
             ],
             'view' => [
-                'business', 'session', 'crm_lead', 'parent', 'parent_student',
-                'fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'activity_log',
-                'exam', 'question', 'attendance', 'promotion', 'wallet',
+                'student', 'student_level', 'class', 'course', 'level',
+                'exam', 'question', 'timetable', 'room', 'parent', 'dashboard',
+            ],
+            'actions' => [
+                'lesson_plan' => ['list', 'view', 'create', 'update'],
             ],
         ],
 
-        'ACADEMIC_STAFF' => [
-            'full' => [
-                'course', 'level', 'student_level', 'class', 'room', 'lesson', 'session',
-                'lesson_plan', 'material', 'assignment', 'student', 'enrollment',
-                'exam', 'question', 'timetable', 'leave', 'evaluation', 'task',
-            ],
-            'view' => ['business', 'branch', 'teacher', 'parent', 'parent_student', 'attendance'],
-        ],
-
-        'TEACHER' => [
-            'full' => ['assignment', 'material', 'evaluation', 'task', 'attendance'],
+        // Own learning view: schedule, lessons, homework, results; may file
+        // leave requests.
+        'STUDENT_ROLE' => [
+            'full' => ['leave'],
             'view' => [
-                'student', 'student_level', 'lesson', 'session', 'class', 'course', 'level', 'lesson_plan',
-                'exam', 'question', 'timetable', 'leave', 'dashboard',
+                'class', 'course', 'level', 'lesson', 'session', 'assignment', 'material',
+                'exam', 'timetable', 'evaluation', 'attendance', 'student_level', 'dashboard',
             ],
         ],
 
-        'STAFF' => [
-            'full' => ['student', 'parent', 'parent_student', 'task'],
+        // Children's progress + billing view; may file leave requests for a child.
+        'PARENT_ROLE' => [
+            'full' => ['leave'],
             'view' => [
-                'business', 'branch', 'course', 'class', 'room', 'enrollment', 'crm_lead', 'lesson', 'timetable',
+                'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
+                'assignment', 'timetable', 'fin_invoice', 'fin_payment', 'fin_debt', 'dashboard',
             ],
-        ],
-
-        'ACCOUNTANT' => [
-            'full' => ['fin_invoice', 'fin_payment', 'fin_account', 'fin_debt', 'wallet', 'promotion', 'task'],
-            'view' => ['business', 'branch', 'student', 'enrollment', 'parent'],
-        ],
-
-        'CRM_STAFF' => [
-            'full' => ['crm_lead', 'parent', 'parent_student', 'task'],
-            'view' => ['business', 'branch', 'student', 'enrollment', 'course', 'class', 'promotion'],
         ],
     ];
 
@@ -85,16 +82,25 @@ class RolePermissionSeeder extends Seeder
                 continue;
             }
 
+            $grantedIds = [];
+
             foreach ($permissions as $code => $permissionId) {
                 if (! $this->grants($config, $code)) {
                     continue;
                 }
+
+                $grantedIds[] = $permissionId;
 
                 DB::table('role_has_permissions')->updateOrInsert(
                     ['role_id' => $roleId, 'permission_id' => $permissionId],
                     ['code' => $roleId.'.'.$code],
                 );
             }
+
+            DB::table('role_has_permissions')
+                ->where('role_id', $roleId)
+                ->whereNotIn('permission_id', $grantedIds)
+                ->delete();
         }
     }
 
@@ -108,6 +114,10 @@ class RolePermissionSeeder extends Seeder
         }
 
         [$prefix, $action] = array_pad(explode('.', $code, 2), 2, '');
+
+        if (isset($config['actions'][$prefix])) {
+            return in_array($action, $config['actions'][$prefix], true);
+        }
 
         if (in_array($prefix, $config['full'] ?? [], true)) {
             return true;
