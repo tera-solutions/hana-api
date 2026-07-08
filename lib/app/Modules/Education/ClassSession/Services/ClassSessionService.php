@@ -260,6 +260,33 @@ class ClassSessionService
         return $this->find($id);
     }
 
+    /**
+     * End an in-progress session early (room-detail.md §6.2 "Dừng lại"): marks it
+     * completed as of now, keeping revenue intact (unlike cancel()).
+     *
+     * @throws \RuntimeException when the session is not currently ongoing
+     */
+    public function endEarly($id, array $data = []): ClassSession
+    {
+        $session = ClassSession::findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeSession($session);
+        }
+
+        if ($session->status !== ClassSession::STATUS_ONGOING) {
+            throw new \RuntimeException('Chỉ có thể kết thúc sớm buổi học đang diễn ra.');
+        }
+
+        $session->update([
+            'status' => ClassSession::STATUS_COMPLETED,
+            'end_time' => now()->format('H:i:s'),
+            'note' => $data['note'] ?? $session->note,
+        ]);
+
+        return $this->find($id);
+    }
+
     public function delete($id): void
     {
         $session = ClassSession::findOrFail($id);

@@ -28,6 +28,19 @@ class RoomResource extends JsonResource
             ]),
 
             'active_classes_count' => $this->when(isset($this->active_classes_count), fn () => (int) $this->active_classes_count),
+            // First active class using the room (room.md list §5.2 "Lớp học đang sử dụng").
+            'active_class' => $this->whenLoaded('classes', function () {
+                $class = $this->classes->first();
+
+                return $class ? [
+                    'id' => $class->id,
+                    'name' => $class->name,
+                    'current_students' => (int) $class->enrollments_count,
+                    'max_capacity' => $class->max_capacity,
+                ] : null;
+            }),
+            // Nearest upcoming booking (room.md list §5.2 "Lịch học tiếp theo"); set by RoomService::attachNextSessions().
+            'next_session' => $this->when(isset($this->next_session), fn () => $this->next_session),
 
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,

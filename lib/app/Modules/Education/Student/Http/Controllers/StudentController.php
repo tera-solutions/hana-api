@@ -7,6 +7,7 @@ use App\Modules\Education\Student\Actions\CreateStudentAction;
 use App\Modules\Education\Student\Actions\DeleteStudentAction;
 use App\Modules\Education\Student\Actions\ExportStudentAction;
 use App\Modules\Education\Student\Actions\GetStudentAction;
+use App\Modules\Education\Student\Actions\GetStudentLearningStatsAction;
 use App\Modules\Education\Student\Actions\ListStudentAction;
 use App\Modules\Education\Student\Actions\RestoreStudentAction;
 use App\Modules\Education\Student\Actions\SummaryStudentAction;
@@ -115,6 +116,33 @@ class StudentController extends Controller
             'student' => new StudentResource($result['student']),
             'statistics' => $result['statistics'],
         ]);
+    }
+
+    /**
+     * Student learning stats
+     *
+     * Attendance rate, average exam score, homework completion and per-skill
+     * averages for the student detail screen's overview cards/charts.
+     *
+     * @urlParam id integer required The student ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {
+     *     "attendance_rate": 85,
+     *     "total_sessions": 12,
+     *     "avg_score": 8.2,
+     *     "homework_completion": 98,
+     *     "skills": {"listening": 82, "speaking": 70, "reading": 78, "writing": 65}
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function stats($id, GetStudentLearningStatsAction $action)
+    {
+        return $this->respondSuccess($action->handle($id));
     }
 
     /**

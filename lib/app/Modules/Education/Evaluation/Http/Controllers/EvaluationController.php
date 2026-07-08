@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Education\Evaluation\Actions\CreateEvaluationAction;
 use App\Modules\Education\Evaluation\Actions\DeleteEvaluationAction;
 use App\Modules\Education\Evaluation\Actions\GetEvaluationAction;
+use App\Modules\Education\Evaluation\Actions\GetStudentEvaluationSummaryAction;
 use App\Modules\Education\Evaluation\Actions\ListEvaluationAction;
 use App\Modules\Education\Evaluation\Actions\TransitionEvaluationAction;
 use App\Modules\Education\Evaluation\Actions\UpdateEvaluationAction;
@@ -52,6 +53,27 @@ class EvaluationController extends Controller
     public function list(Request $request, ListEvaluationAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), EvaluationResource::class);
+    }
+
+    /**
+     * Student evaluation summary
+     *
+     * Class-wide (or, when class_room_id is omitted, all of the caller's classes)
+     * evaluation counters for the teacher "Nhận xét & Đánh giá" screen.
+     *
+     * @queryParam class_room_id integer Optional class filter. Example: 10
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"total_students": 18, "evaluated_rate": 86, "total_comments": 124, "avg_rating": 4.8, "satisfaction_rate": 98},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function studentSummary(Request $request, GetStudentEvaluationSummaryAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**
