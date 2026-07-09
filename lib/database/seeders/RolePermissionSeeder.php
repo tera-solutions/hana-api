@@ -44,10 +44,13 @@ class RolePermissionSeeder extends Seeder
             ],
             'view' => [
                 'student', 'student_level', 'class', 'course', 'level',
-                'exam', 'question', 'timetable', 'room', 'parent', 'dashboard',
+                'question', 'timetable', 'room', 'parent', 'dashboard',
+                'achievement', 'teacher',
             ],
             'actions' => [
                 'lesson_plan' => ['list', 'view', 'create', 'update'],
+                'enrollment' => ['list', 'view', 'create', 'transfer'],
+                'exam' => ['list', 'view', 'create', 'update'],
             ],
         ],
 
@@ -67,6 +70,9 @@ class RolePermissionSeeder extends Seeder
             'view' => [
                 'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
                 'assignment', 'timetable', 'fin_invoice', 'fin_payment', 'fin_debt', 'dashboard',
+            ],
+            'actions' => [
+                'teacher_review' => ['create'],
             ],
         ],
     ];

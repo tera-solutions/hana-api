@@ -2,10 +2,12 @@
 
 namespace App\Modules\Education\Evaluation\Services;
 
+use App\Module\Portal\Model\Notification;
 use App\Modules\Education\Evaluation\Enums\EvaluationType;
 use App\Modules\Education\Evaluation\Models\Evaluation;
 use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
@@ -162,8 +164,28 @@ class EvaluationService
 
             $evaluation = Evaluation::create($data);
 
+            if ($type === EvaluationType::Student && ! empty($data['class_room_id'])) {
+                $this->notifyClass((int) $data['class_room_id'], $evaluation->id);
+            }
+
             return $this->find($evaluation->id);
         });
+    }
+
+    /**
+     * Posts a "Thông báo lớp học" (class notification) entry when a new
+     * student evaluation is recorded for the class.
+     */
+    private function notifyClass(int $classRoomId, int $evaluationId): void
+    {
+        Notification::create([
+            'title' => 'Có nhận xét học viên mới',
+            'object_id' => $evaluationId,
+            'object_type' => 'evaluation',
+            'class_id' => $classRoomId,
+            'type' => 'evaluation',
+            'created_by' => Auth::id(),
+        ]);
     }
 
     /**

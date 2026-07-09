@@ -4,9 +4,11 @@ namespace App\Modules\Education\Attendance\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Education\Attendance\Actions\CreateAttendanceAction;
+use App\Modules\Education\Attendance\Actions\ExportAttendanceAction;
 use App\Modules\Education\Attendance\Actions\ListAttendanceAction;
 use App\Modules\Education\Attendance\Actions\UpdateAttendanceAction;
 use App\Modules\Education\Attendance\Http\Requests\CreateAttendanceRequest;
+use App\Modules\Education\Attendance\Http\Requests\ExportAttendanceRequest;
 use App\Modules\Education\Attendance\Http\Requests\UpdateAttendanceRequest;
 use App\Modules\Education\Attendance\Http\Resources\AttendanceResource;
 use Illuminate\Http\Request;
@@ -117,5 +119,29 @@ class AttendanceController extends Controller
         }
 
         return $this->respondSuccess(new AttendanceResource($attendance), 'Cập nhật điểm danh thành công.');
+    }
+
+    /**
+     * Export attendance
+     *
+     * Exports the filtered attendance list ("Xuất báo cáo") as a CSV file
+     * and returns a downloadable link.
+     *
+     * @bodyParam class_id integer Filter by the session's class id. Example: 1
+     * @bodyParam session_id integer Filter by session id. Example: 1
+     * @bodyParam date_from date Session date on/after (Y-m-d). Example: 2026-06-01
+     * @bodyParam date_to date Session date on/before (Y-m-d). Example: 2026-06-30
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Thao tác thành công",
+     *   "data": {"file_name": "export_attendance_1776351343.csv", "created_at": "2026-07-09T10:00:00.000000Z", "link": "http://localhost/storage/assets/export/attendance/export_attendance_1776351343.csv"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function export(ExportAttendanceRequest $request, ExportAttendanceAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->validated()));
     }
 }

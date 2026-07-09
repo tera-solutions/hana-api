@@ -11,6 +11,8 @@ use App\Models\StockCRM;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 /**
  * @group Core - User
@@ -85,6 +87,76 @@ class UserController extends Controller
             return $this->respondWithError("Tài khoản của bạn đã hết hạn!", [], 401);
         }
         return $this->respondSuccess($data);
+    }
+
+    /**
+     * Update current profile
+     *
+     * Updates the logged-in user's own basic info. `avatar` is a URL already
+     * uploaded via `POST /file/upload`.
+     *
+     * @authenticated
+     *
+     * @bodyParam full_name string The user's name. Example: Cô Ngọc
+     * @bodyParam dob string Date of birth (Y-m-d). Example: 1990-03-15
+     * @bodyParam gender string male, female or other. Example: female
+     * @bodyParam phone string Phone number. Example: 0901234567
+     * @bodyParam avatar string Avatar URL. Example: https://cdn.hana.edu.vn/a.png
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+
+        if (! $user) {
+            return $this->respondWithError('No permision!!', [], 401);
+        }
+
+        $data = $request->validate([
+            'full_name' => ['sometimes', 'string', 'max:255'],
+            'dob' => ['sometimes', 'nullable', 'date'],
+            'gender' => ['sometimes', 'nullable', Rule::in(['male', 'female', 'other'])],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'avatar' => ['sometimes', 'nullable', 'string', 'max:1000'],
+        ]);
+
+        $user->fill($data);
+        $user->save();
+
+        return $this->respondSuccess($user->fresh(), 'Cập nhật thông tin thành công.');
+    }
+
+    /**
+     * Change current password
+     *
+     * Changes the logged-in user's own password (requires knowing the current one) —
+     * distinct from the forgot-password/admin-reset flows.
+     *
+     * @authenticated
+     *
+     * @bodyParam current_password string required The user's current password.
+     * @bodyParam new_password string required The new password (min 8 chars).
+     */
+    public function changePassword(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+
+        if (! $user) {
+            return $this->respondWithError('No permision!!', [], 401);
+        }
+
+        $data = $request->validate([
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8'],
+        ]);
+
+        if (! Hash::check($data['current_password'], $user->password)) {
+            return $this->respondWithError('Mật khẩu hiện tại không đúng.', [], 422);
+        }
+
+        $user->password = Hash::make($data['new_password']);
+        $user->save();
+
+        return $this->respondSuccess(null, 'Đổi mật khẩu thành công.');
     }
 
     public function getPermission(Request $request)

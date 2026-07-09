@@ -53,6 +53,8 @@ class AssignmentController extends Controller
      * @queryParam assignment_type string Filter by type. Example: homework
      * @queryParam course_id integer Filter by course ID. Example: 1
      * @queryParam class_room_id integer Filter by class ID. Example: 10
+     * @queryParam lesson_id integer Filter by lesson ID. Example: 5
+     * @queryParam level_id integer Filter by level ID. Example: 2
      * @queryParam status string Filter by status: draft, published, closed. Example: published
      *
      * @response 200 {

@@ -23,6 +23,11 @@ class ExamSessionService
     {
         $query = ExamSession::query();
 
+        if (! empty($params['search'])) {
+            $search = $params['search'];
+            $query->whereHas('exam', fn ($q) => $q->where('exam_name', 'like', "%{$search}%"));
+        }
+
         foreach (['exam_id', 'class_room_id', 'room_id', 'teacher_id', 'status'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
