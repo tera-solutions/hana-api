@@ -57,6 +57,10 @@ class NotificationRepository extends BasicEntity implements RepositoryInterface
                 $activity->where("sys_notifications.object_type", $request->object_type);
             }
 
+            if (isset($request->class_id) && $request->class_id) {
+                $activity->where("sys_notifications.class_id", $request->class_id);
+            }
+
             if (isset($request->type) && $request->type) {
                 $activity->where("sys_notifications.type", $request->type);
             }
@@ -79,7 +83,9 @@ class NotificationRepository extends BasicEntity implements RepositoryInterface
                 $activity->whereDate('sys_notifications.created_at', '<=', $end_date->toDateString());
             }
 
-            if (isset($request->limit) && $request->limit) {
+            if (isset($request->per_page) && $request->per_page) {
+                $limit = $request->per_page;
+            } elseif (isset($request->limit) && $request->limit) {
                 $limit = $request->limit;
             }
 
@@ -115,7 +121,7 @@ class NotificationRepository extends BasicEntity implements RepositoryInterface
         DB::beginTransaction();
 
         try {
-            $input = $request->only(['title', 'content', 'object_id', 'object_type', 'parent_id', 'type']);
+            $input = $request->only(['title', 'content', 'object_id', 'object_type', 'class_id', 'parent_id', 'type']);
             $user_id = Auth::guard('api')->user()->id;
 
             $input['created_by'] = $user_id;

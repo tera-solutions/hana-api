@@ -2,11 +2,13 @@
 
 namespace App\Modules\Education\ClassRoom\Services;
 
+use App\Modules\Education\Assignment\Models\Assignment;
 use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\Exam\Models\ExamResult;
 use App\Modules\Education\Support\SummarizesByStatus;
 use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,6 +35,7 @@ class ClassService
             ->paginate($this->resolvePerPage($params));
 
         $this->attachCurrentStudents($result->getCollection());
+        $this->attachAttendanceRate($result->getCollection());
 
         return $result;
     }
@@ -344,12 +347,70 @@ class ClassService
         // Every lesson is either completed or pending, so pending is derivable.
         $pending = max(0, $total - $completed);
 
+        $attendance = $this->guard(
+            fn () => DB::table('edu_attendances')
+                ->join('edu_sessions', 'edu_sessions.id', '=', 'edu_attendances.session_id')
+                ->where('edu_sessions.class_id', $classId)
+                ->whereNull('edu_attendances.deleted_at')
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN edu_attendances.status IN ('present', 'late') THEN 1 ELSE 0 END) as attended")
+                ->first(),
+            (object) ['total' => 0, 'attended' => 0],
+        );
+
+        $totalAttendance = (int) ($attendance->total ?? 0);
+        $avgAttendanceRate = $totalAttendance > 0
+            ? (int) round(((int) $attendance->attended / $totalAttendance) * 100)
+            : 0;
+
+        // Average exam score, and grade distribution, of the class's currently
+        // active students.
+        $examResultsQuery = fn () => DB::table('edu_exam_results')
+            ->join('edu_class_students', 'edu_class_students.student_id', '=', 'edu_exam_results.student_id')
+            ->where('edu_class_students.class_id', $classId)
+            ->where('edu_class_students.status', 'active');
+
+        $avgScore = $this->guard(fn () => $examResultsQuery()->avg('edu_exam_results.total_score'));
+
+        $gradeCounts = $this->guard(
+            fn () => $examResultsQuery()
+                ->groupBy('edu_exam_results.grade')
+                ->selectRaw('edu_exam_results.grade, COUNT(*) as aggregate')
+                ->pluck('aggregate', 'grade'),
+            collect(),
+        );
+        $gradeCounts = is_iterable($gradeCounts) ? collect($gradeCounts) : collect();
+        $scoreDistribution = collect([ExamResult::GRADE_EXCELLENT, ExamResult::GRADE_GOOD, ExamResult::GRADE_PASS, ExamResult::GRADE_FAIL])
+            ->map(fn ($grade) => ['grade' => $grade, 'count' => (int) ($gradeCounts[$grade] ?? 0)])
+            ->all();
+
+        $assignmentsCount = $this->guard(fn () =>
+            Assignment::where('class_room_id', $classId)->count()
+        );
+
+        $homework = $this->guard(
+            fn () => DB::table('edu_assignment_submissions')
+                ->join('edu_assignments', 'edu_assignments.id', '=', 'edu_assignment_submissions.assignment_id')
+                ->where('edu_assignments.class_room_id', $classId)
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN edu_assignment_submissions.status IN ('submitted', 'late_submitted', 'graded', 'reviewed') THEN 1 ELSE 0 END) as completed")
+                ->first(),
+            (object) ['total' => 0, 'completed' => 0],
+        );
+
+        $homeworkTotal = (int) ($homework->total ?? 0);
+        $homeworkCompletionRate = $homeworkTotal > 0
+            ? (int) round(((int) $homework->completed / $homeworkTotal) * 100)
+            : 0;
+
         return [
             'total_sessions' => $total,
             'completed_sessions' => $completed,
             'pending_sessions' => $pending,
             'completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0,
-            'avg_attendance_rate' => 0,
+            'avg_attendance_rate' => $avgAttendanceRate,
+            'avg_score' => $avgScore !== null ? round((float) $avgScore, 1) : null,
+            'score_distribution' => $scoreDistribution,
+            'assignments_count' => (int) $assignmentsCount,
+            'homework_completion_rate' => $homeworkCompletionRate,
         ];
     }
 
@@ -460,6 +521,39 @@ class ClassService
 
         foreach ($classes as $class) {
             $class->current_students = (int) ($counts[$class->id] ?? 0);
+        }
+    }
+
+    /**
+     * Attaches `avg_attendance_rate` ("Chuyên cần") to each class for the list
+     * view, batched in a single query to avoid N+1 lookups per row.
+     */
+    private function attachAttendanceRate($classes): void
+    {
+        if ($classes->isEmpty()) {
+            return;
+        }
+
+        $ids = $classes->pluck('id')->all();
+
+        $rows = $this->guard(fn () => DB::table('edu_attendances')
+            ->join('edu_sessions', 'edu_sessions.id', '=', 'edu_attendances.session_id')
+            ->whereIn('edu_sessions.class_id', $ids)
+            ->whereNull('edu_attendances.deleted_at')
+            ->groupBy('edu_sessions.class_id')
+            ->selectRaw("edu_sessions.class_id, COUNT(*) as total, SUM(CASE WHEN edu_attendances.status IN ('present', 'late') THEN 1 ELSE 0 END) as attended")
+            ->get()
+        );
+
+        $rows = is_iterable($rows) ? collect($rows) : collect();
+        $rates = $rows->mapWithKeys(function ($row) {
+            $total = (int) $row->total;
+            $rate = $total > 0 ? (int) round(((int) $row->attended / $total) * 100) : 0;
+            return [$row->class_id => $rate];
+        });
+
+        foreach ($classes as $class) {
+            $class->avg_attendance_rate = (int) ($rates[$class->id] ?? 0);
         }
     }
 }

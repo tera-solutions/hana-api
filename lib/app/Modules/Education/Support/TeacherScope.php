@@ -145,15 +145,21 @@ class TeacherScope
     public function constrainAssignments(Builder $query): void
     {
         $classIds = $this->classIds();
+        $userId = $this->userId;
 
-        $query->where(function (Builder $q) use ($classIds) {
+        $query->where(function (Builder $q) use ($classIds, $userId) {
             $q->whereIn('class_room_id', $classIds)
                 ->orWhereExists(function ($sub) use ($classIds) {
                     $sub->selectRaw('1')
                         ->from('edu_lessons')
                         ->whereColumn('edu_lessons.id', 'edu_assignments.lesson_id')
                         ->whereIn('edu_lessons.class_room_id', $classIds);
-                });
+                })
+                // A freshly created assignment has neither class_room_id nor
+                // lesson_id yet (assignment.md §VI: the class/level scope is set
+                // via a follow-up update) — without this, the teacher can't see
+                // their own draft to finish assigning it.
+                ->orWhere('created_by', $userId);
         });
     }
 

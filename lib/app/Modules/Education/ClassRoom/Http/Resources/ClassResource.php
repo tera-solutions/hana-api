@@ -64,6 +64,7 @@ class ClassResource extends JsonResource
             'capacity_warning' => $this->capacityWarning(),
 
             'total_students' => $this->whenCounted('enrollments'),
+            'avg_attendance_rate' => $this->avg_attendance_rate,
 
             'use_course_curriculum' => $this->use_course_curriculum,
             'description' => $this->description,

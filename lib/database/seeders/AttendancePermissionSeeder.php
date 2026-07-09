@@ -14,6 +14,7 @@ class AttendancePermissionSeeder extends PermissionSeeder
             'attendance.view' => 'Xem chi tiết chuyên cần',
             'attendance.create' => 'Điểm danh học viên',
             'attendance.update' => 'Cập nhật điểm danh',
+            'attendance.export' => 'Xuất báo cáo chuyên cần',
         ]);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Modules\Education\Assignment\Services;
 
 use App\Helpers\Task;
+use App\Models\ReferenceCount;
+use App\Module\Portal\Model\Notification;
 use App\Modules\Education\Assignment\Enums\AssignmentStatus;
 use App\Modules\Education\Assignment\Models\Assignment;
 use App\Modules\Education\Assignment\Models\AssignmentSubmission;
@@ -86,7 +88,7 @@ class AssignmentService
             });
         }
 
-        foreach (['assignment_type', 'course_id', 'class_room_id', 'lesson_id', 'status'] as $filter) {
+        foreach (['assignment_type', 'course_id', 'class_room_id', 'lesson_id', 'level_id', 'status'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
             }
@@ -147,13 +149,49 @@ class AssignmentService
     }
 
     /**
-     * Generate the next human-readable assignment code (e.g. ASG000001).
+     * Generate the next human-readable assignment code (e.g. ASG000001),
+     * unique against `edu_assignments`.
+     *
+     * `sys_reference_counts` is a separate side-table from the actual data,
+     * so it can start out (or drift) behind the highest code already in use
+     * — e.g. rows seeded/imported without going through this counter. Self-
+     * healing it against the real max avoids generating a code that already
+     * exists, and the loop is a last-resort guard against any residual race
+     * between concurrent requests.
      */
     private function generateCode(): string
     {
-        $count = Task::setAndGetReferenceCount('assignment');
+        return DB::transaction(function () {
+            $maxExisting = (int) Assignment::query()
+                ->selectRaw("MAX(CAST(SUBSTRING(assignment_code, 4) AS UNSIGNED)) as max_seq")
+                ->value('max_seq');
 
-        return Task::generateReferenceNumber('assignment', $count, 'ASG');
+            $ref = ReferenceCount::where('ref_type', 'assignment')
+                ->lockForUpdate()
+                ->first();
+            $storedCount = $ref->ref_count ?? 0;
+
+            $code = null;
+            $count = max($storedCount, $maxExisting);
+
+            for ($attempt = 0; $attempt < 5 && $code === null; $attempt++) {
+                $count++;
+                $candidate = Task::generateReferenceNumber('assignment', $count, 'ASG');
+
+                if (! Assignment::where('assignment_code', $candidate)->exists()) {
+                    $code = $candidate;
+                }
+            }
+
+            if ($ref) {
+                $ref->ref_count = $count;
+                $ref->save();
+            } else {
+                ReferenceCount::create(['ref_type' => 'assignment', 'ref_count' => $count, 'business_id' => 0]);
+            }
+
+            return $code ?? Task::generateReferenceNumber('assignment', $count, 'ASG');
+        });
     }
 
     public function update($id, array $data): Assignment
@@ -201,7 +239,11 @@ class AssignmentService
      */
     public function assignByClass($id, int $classRoomId): array
     {
-        return $this->seedTargets($id, $this->activeClassStudents($classRoomId));
+        $result = $this->seedTargets($id, $this->activeClassStudents($classRoomId));
+
+        $this->notifyClass($classRoomId, $id, 'Bài tập mới được giao');
+
+        return $result;
     }
 
     /**
@@ -529,5 +571,24 @@ class AssignmentService
         }
 
         return $query->findOrFail($assignmentId);
+    }
+
+    /**
+     * Posts a "Thông báo lớp học" (class notification) entry when an
+     * assignment is given to a class.
+     */
+    private function notifyClass(int $classRoomId, int $assignmentId, string $title): void
+    {
+        $assignment = Assignment::find($assignmentId);
+
+        Notification::create([
+            'title' => $title,
+            'content' => $assignment?->assignment_name,
+            'object_id' => $assignmentId,
+            'object_type' => 'assignment',
+            'class_id' => $classRoomId,
+            'type' => 'assignment',
+            'created_by' => Auth::id(),
+        ]);
     }
 }
