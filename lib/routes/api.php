@@ -45,6 +45,8 @@ Route::group(['middleware' => ['cors', 'json.response'], 'prefix' => 'auth'], fu
 
     Route::group(['namespace' => 'User'], function () {
         Route::get('/profile', 'UserController@getProfile');
+        Route::put('/profile', 'UserController@updateProfile');
+        Route::post('/profile/change-password', 'UserController@changePassword');
     });
 
     // Frontend bootstrap: all model enumerations (status/type/gender/…). Auth-guarded.
