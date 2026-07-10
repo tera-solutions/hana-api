@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Material\Services;
 
 use App\Helpers\Task;
+use App\Models\ReferenceCount;
 use App\Modules\Education\Material\Enums\MaterialEntityType;
 use App\Modules\Education\Material\Models\Material;
 use App\Modules\Education\Material\Models\MaterialMapping;
@@ -99,13 +100,49 @@ class MaterialService
     }
 
     /**
-     * Generate the next human-readable material code (e.g. MAT000001).
+     * Generate the next human-readable material code (e.g. MAT000001),
+     * unique against `edu_materials`.
+     *
+     * `sys_reference_counts` is a separate side-table from the actual data,
+     * so it can start out (or drift) behind the highest code already in use
+     * — e.g. rows seeded/imported without going through this counter. Self-
+     * healing it against the real max avoids generating a code that already
+     * exists, and the loop is a last-resort guard against any residual race
+     * between concurrent requests.
      */
     private function generateCode(): string
     {
-        $count = Task::setAndGetReferenceCount('material');
+        return DB::transaction(function () {
+            $maxExisting = (int) Material::query()
+                ->selectRaw("MAX(CAST(SUBSTRING(material_code, 4) AS UNSIGNED)) as max_seq")
+                ->value('max_seq');
 
-        return Task::generateReferenceNumber('material', $count, 'MAT');
+            $ref = ReferenceCount::where('ref_type', 'material')
+                ->lockForUpdate()
+                ->first();
+            $storedCount = $ref->ref_count ?? 0;
+
+            $code = null;
+            $count = max($storedCount, $maxExisting);
+
+            for ($attempt = 0; $attempt < 5 && $code === null; $attempt++) {
+                $count++;
+                $candidate = Task::generateReferenceNumber('material', $count, 'MAT');
+
+                if (! Material::where('material_code', $candidate)->exists()) {
+                    $code = $candidate;
+                }
+            }
+
+            if ($ref) {
+                $ref->ref_count = $count;
+                $ref->save();
+            } else {
+                ReferenceCount::create(['ref_type' => 'material', 'ref_count' => $count, 'business_id' => 0]);
+            }
+
+            return $code ?? Task::generateReferenceNumber('material', $count, 'MAT');
+        });
     }
 
     public function update($id, array $data): Material

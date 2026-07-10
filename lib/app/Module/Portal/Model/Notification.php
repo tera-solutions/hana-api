@@ -17,6 +17,8 @@ class Notification extends Model
         "user_id",
         "object_id",
         "object_type",
+        "class_id",
+        "type",
         "is_view",
         "title",
         "content",

@@ -5,6 +5,8 @@ namespace App\Modules\Education\Attendance\Services;
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Support\TeacherScope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 class AttendanceService
@@ -17,6 +19,19 @@ class AttendanceService
      * Paginated, filterable attendance list ("Danh sách chuyên cần").
      */
     public function paginate(array $params = [])
+    {
+        $query = $this->filteredQuery($params);
+
+        $this->applySort($query, $params, ['status', 'checkin_time', 'created_at']);
+
+        return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * The filtered, teacher-scoped base query shared by paginate() and
+     * export() — no sort or eager-loads applied.
+     */
+    private function filteredQuery(array $params): Builder
     {
         $query = Attendance::query();
 
@@ -52,9 +67,51 @@ class AttendanceService
             $query->whereHas('session', fn ($q) => $scope->constrainSessions($q));
         }
 
-        $this->applySort($query, $params, ['status', 'checkin_time', 'created_at']);
+        return $query;
+    }
 
-        return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
+    /**
+     * Exports the filtered attendance list as a CSV, stored under the public
+     * disk and returned as a downloadable link (spec: "Xuất báo cáo").
+     */
+    public function export(array $params = []): array
+    {
+        $rows = $this->filteredQuery($params)
+            ->with(self::RELATIONS)
+            ->orderBy('created_at')
+            ->get();
+
+        $now = now();
+        $fileName = "export_attendance_{$now->getTimestamp()}.csv";
+        $relativePath = "assets/export/attendance/{$fileName}";
+
+        $handle = fopen('php://temp', 'w+');
+        // UTF-8 BOM so Excel opens Vietnamese diacritics correctly.
+        fwrite($handle, "\xEF\xBB\xBF");
+        fputcsv($handle, ['Mã HV', 'Học viên', 'Buổi học', 'Ngày', 'Trạng thái', 'Ghi chú']);
+
+        foreach ($rows as $row) {
+            fputcsv($handle, [
+                $row->student?->code,
+                $row->student?->name,
+                $row->session?->name,
+                optional($row->session?->session_date)->format('Y-m-d') ?? $row->session?->session_date,
+                $row->status,
+                $row->note,
+            ]);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        Storage::disk('public')->put($relativePath, $csv);
+
+        return [
+            'file_name' => $fileName,
+            'created_at' => $now,
+            'link' => Storage::disk('public')->url($relativePath),
+        ];
     }
 
     /**

@@ -32,7 +32,7 @@ class TeacherService
         }
 
         // Filters.
-        foreach (['status', 'teacher_type', 'employment_type', 'branch_id', 'manager_id', 'business_id'] as $filter) {
+        foreach (['status', 'teacher_type', 'employment_type', 'branch_id', 'manager_id', 'business_id', 'user_id'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
             }

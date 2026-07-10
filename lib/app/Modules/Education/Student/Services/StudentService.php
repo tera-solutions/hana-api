@@ -13,6 +13,7 @@ use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 class StudentService
@@ -354,14 +355,48 @@ class StudentService
         return $student->delete();
     }
 
-    public function export(array $data)
+    /**
+     * Exports the filtered student list (e.g. a class roster via `class_id`)
+     * as a CSV, stored under the public disk and returned as a link.
+     */
+    public function export(array $data): array
     {
-        $now = now()->getTimestamp();
+        $students = $this->baseQuery($data)
+            ->with(['branch', 'level'])
+            ->orderBy('name')
+            ->get();
+
+        $now = now();
+        $fileName = "export_student_{$now->getTimestamp()}.csv";
+        $relativePath = "assets/export/student/{$fileName}";
+
+        $handle = fopen('php://temp', 'w+');
+        fwrite($handle, "\xEF\xBB\xBF");
+        fputcsv($handle, ['Mã HV', 'Họ tên', 'Ngày sinh', 'Email', 'Điện thoại', 'Cấp độ', 'Chi nhánh', 'Trạng thái']);
+
+        foreach ($students as $student) {
+            fputcsv($handle, [
+                $student->code,
+                $student->name,
+                $student->dob,
+                $student->email,
+                $student->phone,
+                $student->level?->name,
+                $student->branch?->name,
+                $student->status,
+            ]);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        Storage::disk('public')->put($relativePath, $csv);
 
         return [
-            'file_name' => "export_student_{$now}.xlsx",
-            'created_at' => now(),
-            'link' => asset('/assets/export/student/export_student_1776351343.xlsx'),
+            'file_name' => $fileName,
+            'created_at' => $now,
+            'link' => Storage::disk('public')->url($relativePath),
         ];
     }
 
