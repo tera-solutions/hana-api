@@ -176,7 +176,11 @@ class ClassController extends Controller
      */
     public function create(CreateClassRequest $request, CreateClassAction $action)
     {
-        $class = $action->handle($request->validated());
+        try {
+            $class = $action->handle($request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
 
         return $this->respondSuccess(new ClassResource($class), 'Tạo lớp học thành công.');
     }
@@ -202,7 +206,11 @@ class ClassController extends Controller
      */
     public function update(UpdateClassRequest $request, $id, UpdateClassAction $action)
     {
-        $class = $action->handle($id, $request->validated());
+        try {
+            $class = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
 
         return $this->respondSuccess(new ClassResource($class), 'Cập nhật lớp học thành công.');
     }

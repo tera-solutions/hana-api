@@ -8,6 +8,6 @@ class GetExamAction
 {
     public function handle(...$params)
     {
-        return app(ExamService::class)->find(...$params);
+        return app(ExamService::class)->detail(...$params);
     }
 }

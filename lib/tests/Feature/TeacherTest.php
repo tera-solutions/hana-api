@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Modules\HR\Teacher\Models\Teacher;
-use Database\Seeders\TeacherPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -22,7 +22,7 @@ class TeacherTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(TeacherPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId($this->businessId);

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use Carbon\Carbon;
-use Database\Seeders\ClassSessionPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -24,7 +24,7 @@ class ClassSessionTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(ClassSessionPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->courseId = DB::table('edu_courses')->insertGetId([

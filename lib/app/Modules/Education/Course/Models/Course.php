@@ -45,4 +45,9 @@ class Course extends Model
     {
         return $this->hasMany(CourseHistory::class, 'course_id');
     }
+
+    public function curriculums(): HasMany
+    {
+        return $this->hasMany(CourseCurriculum::class, 'course_id')->orderBy('order');
+    }
 }

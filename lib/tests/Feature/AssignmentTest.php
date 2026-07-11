@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\AssignmentPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -24,7 +24,7 @@ class AssignmentTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(AssignmentPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId();

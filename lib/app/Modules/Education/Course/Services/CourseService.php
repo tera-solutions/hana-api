@@ -71,7 +71,7 @@ class CourseService
 
     public function find($id)
     {
-        return Course::with('business')->findOrFail($id);
+        return Course::with('business', 'curriculums')->findOrFail($id);
     }
 
     /**

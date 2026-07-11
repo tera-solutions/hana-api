@@ -2,7 +2,7 @@
 
 namespace Tests\Concerns;
 
-use Database\Seeders\LessonPlanPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +20,7 @@ trait BuildsLessonPlans
 
     protected function seedLessonPlanContext(): void
     {
-        $this->seed(LessonPlanPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->courseId = $this->makeCourseId();
