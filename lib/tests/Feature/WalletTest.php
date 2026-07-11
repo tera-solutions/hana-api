@@ -3,8 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\ParentPermissionSeeder;
-use Database\Seeders\WalletPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -19,8 +18,7 @@ class WalletTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(WalletPermissionSeeder::class);
-        $this->seed(ParentPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
     }
 
     private function makeWallet(User $user, array $overrides = []): int

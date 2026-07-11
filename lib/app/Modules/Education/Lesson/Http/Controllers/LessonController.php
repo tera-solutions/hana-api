@@ -5,7 +5,6 @@ namespace App\Modules\Education\Lesson\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Education\Lesson\Actions\CancelLessonAction;
 use App\Modules\Education\Lesson\Actions\CompleteLessonAction;
-use App\Modules\Education\Lesson\Actions\GenerateLessonAction;
 use App\Modules\Education\Lesson\Actions\GetLessonAction;
 use App\Modules\Education\Lesson\Actions\ListLessonAction;
 use App\Modules\Education\Lesson\Actions\LockLessonAction;
@@ -13,7 +12,6 @@ use App\Modules\Education\Lesson\Actions\RescheduleLessonAction;
 use App\Modules\Education\Lesson\Actions\UnlockLessonAction;
 use App\Modules\Education\Lesson\Actions\UpdateLessonAction;
 use App\Modules\Education\Lesson\Http\Requests\CancelLessonRequest;
-use App\Modules\Education\Lesson\Http\Requests\GenerateLessonRequest;
 use App\Modules\Education\Lesson\Http\Requests\RescheduleLessonRequest;
 use App\Modules\Education\Lesson\Http\Requests\UnlockLessonRequest;
 use App\Modules\Education\Lesson\Http\Requests\UpdateLessonRequest;
@@ -80,29 +78,6 @@ class LessonController extends Controller
         return $this->respondSuccess(['lesson' => new LessonResource($result['lesson'])]);
     }
 
-    /**
-     * Generate lessons for a class from its lesson plan
-     *
-     * @urlParam classId integer required The class ID. Example: 1
-     *
-     * @response 200 {
-     *   "success": true,
-     *   "msg": "Sinh buổi học thành công.",
-     *   "data": {"created": 20, "skipped": 0},
-     *   "code": 200,
-     *   "errors": null
-     * }
-     */
-    public function generate(GenerateLessonRequest $request, $classId, GenerateLessonAction $action)
-    {
-        try {
-            $result = $action->handle($classId, $request->validated());
-        } catch (\RuntimeException $e) {
-            return $this->respondWithError($e->getMessage());
-        }
-
-        return $this->respondSuccess($result, 'Sinh buổi học thành công.');
-    }
 
     /**
      * Update a lesson

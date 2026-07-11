@@ -5,6 +5,7 @@ namespace App\Modules\Education\Exam\Services;
 use App\Helpers\Task;
 use App\Modules\Education\Exam\Models\Exam;
 use App\Modules\Education\Exam\Models\ExamQuestion;
+use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -34,6 +35,10 @@ class ExamService
             }
         }
 
+        if ($scope = TeacherScope::current()) {
+            $scope->constrainExams($query);
+        }
+
         $this->applySort($query, $params, ['exam_code', 'exam_name', 'exam_type', 'status', 'created_at']);
 
         return $query->with(['course', 'level'])->withCount('questions')->paginate($this->resolvePerPage($params));
@@ -42,6 +47,20 @@ class ExamService
     public function find($id): Exam
     {
         return Exam::with(['course', 'level', 'questions'])->findOrFail($id);
+    }
+
+    /**
+     * Exam detail, scoped for teachers (exam.md §VI).
+     *
+     * @throws \Package\Exception\AuthorizationException
+     */
+    public function detail($id): Exam
+    {
+        $exam = $this->find($id);
+
+        $this->authorize($exam);
+
+        return $exam;
     }
 
     public function create(array $data): Exam
@@ -66,6 +85,8 @@ class ExamService
     {
         return DB::transaction(function () use ($id, $data) {
             $exam = Exam::with('questions')->findOrFail($id);
+
+            $this->authorize($exam);
 
             unset($data['id'], $data['exam_code'], $data['version'], $data['root_exam_id'], $data['status']);
 
@@ -111,7 +132,11 @@ class ExamService
 
     public function delete($id): void
     {
-        Exam::findOrFail($id)->delete();
+        $exam = Exam::findOrFail($id);
+
+        $this->authorize($exam);
+
+        $exam->delete();
     }
 
     /**
@@ -122,6 +147,8 @@ class ExamService
     {
         return DB::transaction(function () use ($id) {
             $source = Exam::with('questions')->findOrFail($id);
+
+            $this->authorize($source);
 
             $copy = $this->duplicate($source, version: 1, rootExamId: null);
 
@@ -196,6 +223,8 @@ class ExamService
     {
         $exam = Exam::findOrFail($examId);
 
+        $this->authorize($exam);
+
         $data['exam_id'] = $exam->id;
 
         return ExamQuestion::create($data);
@@ -203,7 +232,9 @@ class ExamService
 
     public function updateQuestion($questionId, array $data): ExamQuestion
     {
-        $question = ExamQuestion::findOrFail($questionId);
+        $question = ExamQuestion::with('exam')->findOrFail($questionId);
+
+        $this->authorize($question->exam);
 
         unset($data['id'], $data['exam_id']);
 
@@ -214,7 +245,27 @@ class ExamService
 
     public function deleteQuestion($questionId): void
     {
-        ExamQuestion::findOrFail($questionId)->delete();
+        $question = ExamQuestion::with('exam')->findOrFail($questionId);
+
+        $this->authorize($question->exam);
+
+        $question->delete();
+    }
+
+    /**
+     * TeacherScope guard shared by every single-exam write/read (exam.md §VI).
+     *
+     * @throws \Package\Exception\AuthorizationException
+     */
+    private function authorize(Exam $exam): void
+    {
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeExam(
+                (int) $exam->id,
+                $exam->course_id ? (int) $exam->course_id : null,
+                $exam->created_by ? (int) $exam->created_by : null,
+            );
+        }
     }
 
     /**

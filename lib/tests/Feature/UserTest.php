@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\UserPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +23,7 @@ class UserTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(UserPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
         $this->businessId = $this->makeBusinessId();
         $this->roleId = $this->makeRoleId($this->businessId);
     }

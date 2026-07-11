@@ -24,6 +24,13 @@ class CourseResource extends JsonResource
                 'name' => $this->business?->name,
             ]),
 
+            'curriculums' => $this->whenLoaded('curriculums', fn () => $this->curriculums->map(fn ($c) => [
+                'id' => $c->id,
+                'order' => $c->order,
+                'title' => $c->title,
+                'content' => $c->content,
+            ])),
+
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'deleted_by' => $this->deleted_by,

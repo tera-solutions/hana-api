@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Modules\Education\Lesson\Services\LessonService;
-use Database\Seeders\LessonPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -28,7 +28,7 @@ class LessonTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(LessonPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId();
@@ -89,11 +89,10 @@ class LessonTest extends TestCase
         ]);
     }
 
-    private function makeClassId(?int $planId = null): int
+    private function makeClassId(): int
     {
         return DB::table('edu_classes')->insertGetId([
             'course_id' => $this->courseId,
-            'lesson_plan_id' => $planId,
             'business_id' => $this->businessId,
             'room_id' => $this->roomId,
             'teacher_id' => $this->teacherId,
@@ -103,57 +102,6 @@ class LessonTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-    }
-
-    private function makeSchedule(int $classId, int $weekday, string $start = '08:00:00', string $end = '10:00:00'): void
-    {
-        DB::table('edu_class_schedules')->insert([
-            'class_id' => $classId,
-            'weekday' => $weekday,
-            'start_time' => $start,
-            'end_time' => $end,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    private function makePublishedPlan(int $lessons = 3): int
-    {
-        $planId = DB::table('edu_lesson_plans')->insertGetId([
-            'plan_code' => 'P_'.strtoupper(uniqid()),
-            'plan_name' => 'Plan',
-            'course_id' => $this->courseId,
-            'version' => 1,
-            'total_lessons' => $lessons,
-            'status' => 'published',
-            'published_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        for ($i = 1; $i <= $lessons; $i++) {
-            $lessonId = DB::table('edu_lesson_plan_lessons')->insertGetId([
-                'lesson_plan_id' => $planId,
-                'lesson_no' => $i,
-                'lesson_title' => "Lesson {$i}",
-                'objective' => "Objective {$i}",
-                'vocabulary' => "Vocab {$i}",
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            DB::table('edu_lesson_plan_lesson_activities')->insert([
-                'lesson_plan_lesson_id' => $lessonId,
-                'sort_order' => 1,
-                'title' => "Warm-up {$i}",
-                'duration' => 5,
-                'status' => 'pending',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        return $planId;
     }
 
     /** Seed a lesson directly (lessons are generated from plans, not created via API). */
@@ -187,53 +135,6 @@ class LessonTest extends TestCase
         $this->actingAsManager([]);
 
         $this->getJson('/v1/edu/lesson/list')->assertJsonPath('code', 403);
-    }
-
-    public function test_generate_lessons_from_plan_snapshots_content(): void
-    {
-        $this->actingAsAdmin();
-
-        $planId = $this->makePublishedPlan(3);
-        $classId = $this->makeClassId($planId);
-        $this->makeSchedule($classId, 1); // Monday
-        $this->makeSchedule($classId, 3); // Wednesday
-
-        $this->postJson("/v1/edu/lesson/generate/{$classId}", ['from_date' => '2026-07-01'])
-            ->assertStatus(200)
-            ->assertJsonPath('data.created', 3)
-            ->assertJsonPath('data.skipped', 0);
-
-        $this->assertSame(3, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
-
-        $first = DB::table('edu_lessons')->where('class_room_id', $classId)->orderBy('lesson_no')->first();
-        $this->assertSame('Lesson 1', $first->lesson_title);
-        $this->assertSame('Objective 1', $first->objective);
-        $this->assertSame('scheduled', $first->status);
-        $this->assertDatabaseHas('edu_lesson_activities', ['lesson_id' => $first->id, 'title' => 'Warm-up 1', 'status' => 'pending']);
-
-        // Idempotent.
-        $this->postJson("/v1/edu/lesson/generate/{$classId}", ['from_date' => '2026-07-01'])
-            ->assertStatus(200)
-            ->assertJsonPath('data.created', 0)
-            ->assertJsonPath('data.skipped', 3);
-    }
-
-    public function test_generate_requires_plan_and_schedule(): void
-    {
-        $this->actingAsAdmin();
-
-        // No lesson plan on the class.
-        $classId = $this->makeClassId();
-        $this->postJson("/v1/edu/lesson/generate/{$classId}", ['from_date' => '2026-07-01'])
-            ->assertStatus(200)
-            ->assertJsonPath('success', false);
-
-        // Plan but no schedule.
-        $planId = $this->makePublishedPlan(2);
-        $classId2 = $this->makeClassId($planId);
-        $this->postJson("/v1/edu/lesson/generate/{$classId2}", ['from_date' => '2026-07-01'])
-            ->assertStatus(200)
-            ->assertJsonPath('success', false);
     }
 
     public function test_update_changes_teacher_and_logs_audit(): void

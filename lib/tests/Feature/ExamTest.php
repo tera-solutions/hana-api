@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\ExamPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -28,7 +28,7 @@ class ExamTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(ExamPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId();
@@ -570,5 +570,83 @@ class ExamTest extends TestCase
             'to_level_id' => $this->level2,
             'exam_result_id' => $resultId,
         ]);
+    }
+
+    // ── TeacherScope ─────────────────────────────────────────────────────────
+
+    /** A non-admin, hr_teachers-linked user — TeacherScope::current() applies to it. */
+    private function actingAsTeacher(array $permissions = []): int
+    {
+        $roleId = $this->makeRoleId($this->businessId);
+        $this->grantPermissions($roleId, $permissions);
+        $user = $this->makeUser(false, $roleId, $this->businessId);
+
+        $teacherId = DB::table('hr_teachers')->insertGetId([
+            'user_id' => $user->id,
+            'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()),
+            'full_name' => 'Teacher '.uniqid(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAsApi($user);
+
+        return $teacherId;
+    }
+
+    public function test_teacher_can_manage_own_exam_with_no_linked_class(): void
+    {
+        $this->actingAsTeacher(['exam.list', 'exam.view', 'exam.create', 'exam.update', 'exam.delete']);
+
+        // No class links this teacher to the course — only authorship does.
+        $examId = $this->postJson('/v1/edu/exam/create', $this->examPayload())->json('data.id');
+
+        $this->getJson("/v1/edu/exam/detail/{$examId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.id', $examId);
+
+        $this->putJson("/v1/edu/exam/update/{$examId}", ['exam_name' => 'Renamed by author'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.exam_name', 'Renamed by author');
+
+        $this->deleteJson("/v1/edu/exam/delete/{$examId}")->assertStatus(200);
+    }
+
+    public function test_teacher_cannot_access_an_unrelated_exam_they_did_not_create(): void
+    {
+        $this->actingAsAdmin();
+        $examId = $this->createExam();
+
+        // Different teacher: no class on the exam's course, and not the author.
+        $this->actingAsTeacher(['exam.list', 'exam.view', 'exam.update', 'exam.delete']);
+
+        $this->getJson("/v1/edu/exam/detail/{$examId}")->assertJsonPath('code', 403);
+        $this->putJson("/v1/edu/exam/update/{$examId}", ['exam_name' => 'Hijacked'])->assertJsonPath('code', 403);
+        $this->deleteJson("/v1/edu/exam/delete/{$examId}")->assertJsonPath('code', 403);
+    }
+
+    public function test_teacher_with_class_on_the_course_can_access_a_colleagues_exam(): void
+    {
+        $this->actingAsAdmin();
+        $examId = $this->createExam();
+
+        $teacherId = $this->actingAsTeacher(['exam.list', 'exam.view', 'exam.update']);
+        DB::table('edu_classes')->insert([
+            'code' => 'CLS_'.strtoupper(uniqid()),
+            'name' => 'Owned Class',
+            'course_id' => $this->courseId,
+            'business_id' => $this->businessId,
+            'teacher_id' => $teacherId,
+            'learning_type' => 'flexible',
+            'status' => 'upcoming',
+            'start_date' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson("/v1/edu/exam/detail/{$examId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.id', $examId);
     }
 }

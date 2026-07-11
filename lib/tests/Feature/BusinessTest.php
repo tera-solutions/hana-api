@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\BusinessPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -18,7 +18,7 @@ class BusinessTest extends TestCase
         parent::setUp();
 
         // Make the business.* permissions available for the permission guard.
-        $this->seed(BusinessPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
     }
 
     private function payload(array $overrides = []): array

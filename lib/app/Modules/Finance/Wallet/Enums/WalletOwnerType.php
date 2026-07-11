@@ -11,12 +11,14 @@ enum WalletOwnerType: string implements HasLabel
 
     case Parent = 'parent';
     case Customer = 'customer';
+    case Teacher = 'teacher';
 
     public function label(): string
     {
         return match ($this) {
             self::Parent => 'Phụ huynh',
             self::Customer => 'Khách hàng',
+            self::Teacher => 'Giáo viên',
         };
     }
 }

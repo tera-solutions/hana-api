@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\ClassRoomPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -20,7 +20,7 @@ class ClassRoomTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(ClassRoomPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->courseId = $this->makeCourseId();
@@ -187,6 +187,120 @@ class ClassRoomTest extends TestCase
             ->assertStatus(200)->json('data.id');
 
         $this->assertEquals(0, DB::table('edu_class_curriculums')->where('class_id', $id)->count());
+    }
+
+    // ── Create + generate lessons ───────────────────────────────────────────────
+
+    private function makePublishedPlan(int $lessons = 3): int
+    {
+        $planId = DB::table('edu_lesson_plans')->insertGetId([
+            'plan_code' => 'P_'.strtoupper(uniqid()),
+            'plan_name' => 'Plan',
+            'course_id' => $this->courseId,
+            'version' => 1,
+            'total_lessons' => $lessons,
+            'status' => 'published',
+            'published_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        for ($i = 1; $i <= $lessons; $i++) {
+            $lessonId = DB::table('edu_lesson_plan_lessons')->insertGetId([
+                'lesson_plan_id' => $planId,
+                'lesson_no' => $i,
+                'lesson_title' => "Lesson {$i}",
+                'objective' => "Objective {$i}",
+                'vocabulary' => "Vocab {$i}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('edu_lesson_plan_lesson_activities')->insert([
+                'lesson_plan_lesson_id' => $lessonId,
+                'sort_order' => 1,
+                'title' => "Warm-up {$i}",
+                'duration' => 5,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $planId;
+    }
+
+    public function test_create_generates_lessons_from_plan_when_from_date_given(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->makePublishedPlan(3);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-GEN',
+            'learning_type' => 'scheduled',
+            'lesson_plan_id' => $planId,
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+                ['weekday' => 3, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+            'generate_from_date' => '2026-07-01',
+        ]))->assertStatus(200)->json('data.id');
+
+        $this->assertSame(3, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+
+        $first = DB::table('edu_lessons')->where('class_room_id', $id)->orderBy('lesson_no')->first();
+        $this->assertSame('Lesson 1', $first->lesson_title);
+        $this->assertSame('Objective 1', $first->objective);
+        $this->assertSame('scheduled', $first->status);
+        $this->assertDatabaseHas('edu_lesson_activities', ['lesson_id' => $first->id, 'title' => 'Warm-up 1', 'status' => 'pending']);
+    }
+
+    public function test_create_without_generate_from_date_does_not_generate_lessons(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->makePublishedPlan(3);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-NOGEN',
+            'learning_type' => 'scheduled',
+            'lesson_plan_id' => $planId,
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+        ]))->assertStatus(200)->json('data.id');
+
+        $this->assertSame(0, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+    }
+
+    public function test_create_generate_fails_when_plan_not_published(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = DB::table('edu_lesson_plans')->insertGetId([
+            'plan_code' => 'P_'.strtoupper(uniqid()),
+            'plan_name' => 'Draft Plan',
+            'course_id' => $this->courseId,
+            'version' => 1,
+            'total_lessons' => 0,
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-DRAFTPLAN',
+            'learning_type' => 'scheduled',
+            'lesson_plan_id' => $planId,
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+            'generate_from_date' => '2026-07-01',
+        ]))->assertJsonPath('success', false);
+
+        // The whole creation rolled back — no orphaned class left behind.
+        $this->assertDatabaseMissing('edu_classes', ['code' => 'CLS-DRAFTPLAN']);
     }
 
     // ── List ─────────────────────────────────────────────────────────────────
@@ -379,6 +493,112 @@ class ClassRoomTest extends TestCase
             ->assertJsonCount(2, 'data.schedules');
 
         $this->assertEquals(2, DB::table('edu_class_schedules')->where('class_id', $id)->count());
+    }
+
+    public function test_update_generates_lessons_when_attaching_plan_for_the_first_time(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->makePublishedPlan(2);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-ATTACH',
+            'learning_type' => 'scheduled',
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+        ]))->json('data.id');
+
+        $this->putJson("/v1/edu/class-room/update/{$id}", [
+            'lesson_plan_id' => $planId,
+            'generate_from_date' => '2026-07-01',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.lesson_plan_id', $planId);
+
+        $this->assertSame(2, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+    }
+
+    public function test_update_does_not_regenerate_when_class_already_has_a_plan(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->makePublishedPlan(2);
+        $otherPlanId = $this->makePublishedPlan(3);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-ALREADY',
+            'learning_type' => 'scheduled',
+            'lesson_plan_id' => $planId,
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+            'generate_from_date' => '2026-07-01',
+        ]))->json('data.id');
+
+        $this->assertSame(2, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+
+        // Class already had a plan before this update — swapping the plan
+        // must not implicitly regenerate lessons from the new one.
+        $this->putJson("/v1/edu/class-room/update/{$id}", [
+            'lesson_plan_id' => $otherPlanId,
+            'generate_from_date' => '2026-08-01',
+        ])->assertStatus(200);
+
+        $this->assertSame(2, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+        $this->assertDatabaseHas('edu_classes', ['id' => $id, 'lesson_plan_id' => $otherPlanId]);
+    }
+
+    public function test_update_without_generate_from_date_does_not_generate_lessons(): void
+    {
+        $this->actingAsAdmin();
+
+        $planId = $this->makePublishedPlan(2);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-NOFLAG',
+            'learning_type' => 'scheduled',
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+        ]))->json('data.id');
+
+        $this->putJson("/v1/edu/class-room/update/{$id}", ['lesson_plan_id' => $planId])
+            ->assertStatus(200);
+
+        $this->assertSame(0, DB::table('edu_lessons')->where('class_room_id', $id)->count());
+    }
+
+    public function test_update_generate_fails_when_plan_not_published(): void
+    {
+        $this->actingAsAdmin();
+
+        $draftPlanId = DB::table('edu_lesson_plans')->insertGetId([
+            'plan_code' => 'P_'.strtoupper(uniqid()),
+            'plan_name' => 'Draft Plan',
+            'course_id' => $this->courseId,
+            'version' => 1,
+            'total_lessons' => 0,
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $id = $this->postJson('/v1/edu/class-room/create', $this->payload([
+            'code' => 'CLS-DRAFTPLAN-UPD',
+            'learning_type' => 'scheduled',
+            'schedules' => [
+                ['weekday' => 1, 'start_time' => '08:00', 'end_time' => '10:00'],
+            ],
+        ]))->json('data.id');
+
+        $this->putJson("/v1/edu/class-room/update/{$id}", [
+            'lesson_plan_id' => $draftPlanId,
+            'generate_from_date' => '2026-07-01',
+        ])->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('edu_classes', ['id' => $id, 'lesson_plan_id' => null]);
     }
 
     public function test_update_code_and_status_are_immutable(): void

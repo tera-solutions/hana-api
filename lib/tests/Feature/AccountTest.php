@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\AccountPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\SeedsAuthContext;
 use Tests\TestCase;
@@ -18,7 +18,7 @@ class AccountTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(AccountPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
     }

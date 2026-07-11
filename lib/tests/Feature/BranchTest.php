@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\BranchPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -17,7 +17,7 @@ class BranchTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(BranchPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
     }
 
     private function payload(int $businessId, array $overrides = []): array

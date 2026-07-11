@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\MaterialPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -20,7 +20,7 @@ class MaterialTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(MaterialPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
         $this->businessId = $this->makeBusinessId();
     }
 

@@ -200,18 +200,57 @@ class TeacherScope
 
     /**
      * Guard a lesson-plan write: owned when the plan is attached to one of the
-     * teacher's classes, or shares a course with one of them — same ownership
-     * test as {@see constrainLessonPlans()}, applied to a single id.
+     * teacher's classes, shares a course with one of them (same ownership test
+     * as {@see constrainLessonPlans()}), or the teacher authored the plan
+     * themselves — a teacher must be able to keep working a plan they just
+     * created, before any class has been linked to it.
      *
      * @throws AuthorizationException
      */
-    public function authorizeLessonPlan(int $planId, ?int $courseId): void
+    public function authorizeLessonPlan(int $planId, ?int $courseId, ?int $createdBy = null): void
     {
         $owned = in_array($planId, $this->lessonPlanIds(), true)
-            || ($courseId !== null && in_array($courseId, $this->courseIds(), true));
+            || ($courseId !== null && in_array($courseId, $this->courseIds(), true))
+            || ($createdBy !== null && $createdBy === $this->userId);
 
         if (! $owned) {
             throw new AuthorizationException('Bạn không có quyền truy cập giáo án này.');
+        }
+    }
+
+    /**
+     * Constrain an Exam query to exams that share a course with one of the
+     * teacher's classes, or that the teacher authored themselves — same shape
+     * as {@see constrainLessonPlans()}.
+     */
+    public function constrainExams(Builder $query): void
+    {
+        $courseIds = $this->courseIds();
+        $userId = $this->userId;
+
+        $query->where(function (Builder $q) use ($courseIds, $userId) {
+            $q->where('created_by', $userId);
+
+            if (! empty($courseIds)) {
+                $q->orWhereIn('course_id', $courseIds);
+            }
+        });
+    }
+
+    /**
+     * Guard an exam-template write: owned when the exam shares a course with
+     * one of the teacher's classes, or the teacher authored it themselves —
+     * same ownership test as {@see constrainExams()}, applied to a single id.
+     *
+     * @throws AuthorizationException
+     */
+    public function authorizeExam(int $examId, ?int $courseId, ?int $createdBy = null): void
+    {
+        $owned = ($courseId !== null && in_array($courseId, $this->courseIds(), true))
+            || ($createdBy !== null && $createdBy === $this->userId);
+
+        if (! $owned) {
+            throw new AuthorizationException('Bạn không có quyền truy cập bài kiểm tra này.');
         }
     }
 
