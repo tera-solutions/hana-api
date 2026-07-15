@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\QuestionPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -27,7 +27,7 @@ class QuestionTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(QuestionPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->courseId = $this->makeCourseId();

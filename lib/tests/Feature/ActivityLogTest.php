@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\ActivityLogPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -17,7 +17,7 @@ class ActivityLogTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(ActivityLogPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
     }
 
     private function makeLog(array $overrides = []): int

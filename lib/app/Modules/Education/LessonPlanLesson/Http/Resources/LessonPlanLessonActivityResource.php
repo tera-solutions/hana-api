@@ -10,6 +10,7 @@ class LessonPlanLessonActivityResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'lesson_plan_lesson_id' => $this->lesson_plan_lesson_id,
             'sort_order' => $this->sort_order,
             'avatar' => $this->avatar,
             'avatar_url' => $this->avatar_url,

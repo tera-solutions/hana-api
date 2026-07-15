@@ -33,7 +33,7 @@ class WalletController extends Controller
      * List wallets
      *
      * @queryParam business_id integer Filter by business. Example: 1
-     * @queryParam owner_type string Filter: parent|customer. Example: parent
+     * @queryParam owner_type string Filter: parent|customer|teacher. Example: parent
      * @queryParam owner_id integer Filter by owner id. Example: 1
      * @queryParam status string Filter: active|locked|closed. Example: active
      * @queryParam balance_from number Minimum available balance. Example: 0

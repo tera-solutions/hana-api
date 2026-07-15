@@ -231,6 +231,26 @@ class LessonService
     }
 
     /**
+     * Update the status of a single activity within a lesson.
+     *
+     * @throws \RuntimeException
+     */
+    public function updateActivityStatus($activityId, array $data): LessonActivity
+    {
+        return DB::transaction(function () use ($activityId, $data) {
+            $activity = LessonActivity::with('lesson')->findOrFail($activityId);
+            $lesson = $activity->lesson;
+
+            $this->authorizeLesson($lesson);
+            $this->assertMutable($lesson);
+
+            $activity->update(['status' => $data['status']]);
+
+            return $activity;
+        });
+    }
+
+    /**
      * Reschedule a lesson (lesson.md §9): enforces teacher/room conflicts and no
      * past dates (BR006/BR007/BR008).
      *

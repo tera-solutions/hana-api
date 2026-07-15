@@ -261,6 +261,32 @@ class ClassSessionService
     }
 
     /**
+     * Start an upcoming session (teaching runtime "Start Lesson" step): marks it
+     * ongoing so attendance/notes can be taken and it becomes eligible for endEarly().
+     *
+     * @throws \RuntimeException when the session is not currently upcoming
+     */
+    public function start($id, array $data = []): ClassSession
+    {
+        $session = ClassSession::findOrFail($id);
+
+        if ($scope = TeacherScope::current()) {
+            $scope->authorizeSession($session);
+        }
+
+        if ($session->status !== ClassSession::STATUS_UPCOMING) {
+            throw new \RuntimeException('Chỉ có thể bắt đầu buổi học ở trạng thái sắp diễn ra.');
+        }
+
+        $session->update([
+            'status' => ClassSession::STATUS_ONGOING,
+            'note' => $data['note'] ?? $session->note,
+        ]);
+
+        return $this->find($id);
+    }
+
+    /**
      * End an in-progress session early (room-detail.md §6.2 "Dừng lại"): marks it
      * completed as of now, keeping revenue intact (unlike cancel()).
      *

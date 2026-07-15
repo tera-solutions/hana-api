@@ -31,7 +31,7 @@ enum EvaluationType: string implements HasLabel
     {
         return match ($this) {
             self::Teacher => ['expertise', 'teaching_method', 'communication', 'interaction', 'attitude', 'punctuality'],
-            self::Student => ['knowledge', 'pronunciation', 'vocabulary', 'grammar', 'communication', 'diligence', 'interaction', 'discipline', 'homework'],
+            self::Student => ['knowledge', 'pronunciation', 'vocabulary', 'grammar', 'communication', 'diligence', 'interaction', 'discipline', 'homework', 'listening', 'speaking', 'reading', 'writing'],
             self::Parent => ['cooperation', 'learning_follow_up', 'on_time_payment', 'meeting_attendance', 'feedback'],
         };
     }

@@ -58,12 +58,13 @@ class ApiAuthController extends Controller
     /**
      * Login
      *
-     * Authenticates a user and returns an access token. Requires a `device-code` header
-     * (obtain one from `POST /api/auth/device/init`).
+     * Authenticates a user and returns an access token. Accepts the account's
+     * username, email or phone number as the `username` field. Requires a
+     * `device-code` header (obtain one from `POST /api/auth/device/init`).
      *
      * @header Device-code {your-device-code}
      *
-     * @bodyParam username string required The username. Example: super
+     * @bodyParam username string required Username, email or phone. Example: super
      * @bodyParam password string required The password. Example: 12345678
      *
      * @response 200 {
@@ -110,7 +111,8 @@ class ApiAuthController extends Controller
                 return $this->respondWithError($message, [], 422);
             }
 
-            $user = User::where('email', $input->username)
+            $user = User::where('username', $input->username)
+                ->orWhere('email', $input->username)
                 ->orWhere('phone', $input->username)
                 ->first();
 

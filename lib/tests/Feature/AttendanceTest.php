@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\AttendancePermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -25,7 +25,7 @@ class AttendanceTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(AttendancePermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId();

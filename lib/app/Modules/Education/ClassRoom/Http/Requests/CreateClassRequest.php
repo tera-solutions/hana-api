@@ -39,6 +39,10 @@ class CreateClassRequest extends FormRequest
             'schedules.*.weekday' => ['required', 'integer', 'between:1,7'],
             'schedules.*.start_time' => ['required', 'date_format:H:i'],
             'schedules.*.end_time' => ['required', 'date_format:H:i', 'after:schedules.*.start_time'],
+
+            // When set alongside lesson_plan_id + schedules, lessons are generated
+            // from the plan as part of class creation (Lớp học + Giáo án + Lịch học -> Sinh buổi học).
+            'generate_from_date' => ['nullable', 'date'],
         ];
     }
 
@@ -115,6 +119,10 @@ class CreateClassRequest extends FormRequest
             'schedules[].weekday' => ['description' => 'Thứ trong tuần (1=T2 … 7=CN).', 'example' => 2],
             'schedules[].start_time' => ['description' => 'Giờ bắt đầu (HH:MM).', 'example' => '19:00'],
             'schedules[].end_time' => ['description' => 'Giờ kết thúc (HH:MM).', 'example' => '20:30'],
+            'generate_from_date' => [
+                'description' => 'Nếu có, sinh buổi học từ giáo án (lesson_plan_id) và lịch học (schedules) kể từ ngày này (Y-m-d). Bỏ qua nếu lớp chưa có giáo án hoặc lịch học.',
+                'example' => '2026-07-01',
+            ],
         ];
     }
 }

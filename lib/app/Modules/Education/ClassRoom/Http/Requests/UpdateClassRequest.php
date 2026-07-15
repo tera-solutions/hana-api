@@ -35,6 +35,8 @@ class UpdateClassRequest extends FormRequest
             'schedules.*.weekday' => ['required', 'integer', 'between:1,7'],
             'schedules.*.start_time' => ['required', 'date_format:H:i'],
             'schedules.*.end_time' => ['required', 'date_format:H:i', 'after:schedules.*.start_time'],
+
+            'generate_from_date' => ['nullable', 'date'],
         ];
     }
 
@@ -52,6 +54,10 @@ class UpdateClassRequest extends FormRequest
                 'example' => [
                     ['weekday' => 2, 'start_time' => '19:00', 'end_time' => '20:30'],
                 ],
+            ],
+            'generate_from_date' => [
+                'description' => 'Nếu có và lớp CHƯA có giáo án trước đó, sinh buổi học từ giáo án (lesson_plan_id) và lịch học kể từ ngày này (Y-m-d) sau khi cập nhật. Bỏ qua nếu lớp đã có giáo án từ trước.',
+                'example' => '2026-07-01',
             ],
         ];
     }

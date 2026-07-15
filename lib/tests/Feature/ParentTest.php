@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\ParentPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -21,7 +21,7 @@ class ParentTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(ParentPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->branchId = $this->makeBranchId($this->businessId);

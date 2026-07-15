@@ -10,11 +10,13 @@ use App\Modules\Education\ClassSession\Actions\EndSessionAction;
 use App\Modules\Education\ClassSession\Actions\GenerateSessionAction;
 use App\Modules\Education\ClassSession\Actions\GetSessionAction;
 use App\Modules\Education\ClassSession\Actions\ListSessionAction;
+use App\Modules\Education\ClassSession\Actions\StartSessionAction;
 use App\Modules\Education\ClassSession\Actions\UpdateSessionAction;
 use App\Modules\Education\ClassSession\Http\Requests\CancelSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\CreateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\EndSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\GenerateSessionRequest;
+use App\Modules\Education\ClassSession\Http\Requests\StartSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\UpdateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Resources\ClassSessionResource;
 use Illuminate\Http\Request;
@@ -219,6 +221,40 @@ class ClassSessionController extends Controller
         }
 
         return $this->respondSuccess(new ClassSessionResource($session), 'Hủy buổi học thành công.');
+    }
+
+    /**
+     * Start session
+     *
+     * Marks an upcoming session as ongoing (teaching runtime "Start Lesson" step),
+     * making it eligible for attendance/notes and for endSession().
+     *
+     * @urlParam id integer required The session ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Bắt đầu buổi học thành công.",
+     *   "data": {"id": 1, "status": "ongoing"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Not upcoming" {
+     *   "success": false,
+     *   "msg": "Chỉ có thể bắt đầu buổi học ở trạng thái sắp diễn ra.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function startSession(StartSessionRequest $request, $id, StartSessionAction $action)
+    {
+        try {
+            $session = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new ClassSessionResource($session), 'Bắt đầu buổi học thành công.');
     }
 
     /**

@@ -182,4 +182,56 @@ class LessonPlanTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('success', false);
     }
+
+    // ── TeacherScope ─────────────────────────────────────────────────────────
+
+    /** A non-admin, hr_teachers-linked user — TeacherScope::current() applies to it. */
+    private function actingAsTeacher(array $permissions = []): int
+    {
+        $roleId = $this->makeRoleId($this->businessId);
+        $this->grantPermissions($roleId, $permissions);
+        $user = $this->makeUser(false, $roleId, $this->businessId);
+
+        $teacherId = DB::table('hr_teachers')->insertGetId([
+            'user_id' => $user->id,
+            'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()),
+            'full_name' => 'Teacher '.uniqid(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAsApi($user);
+
+        return $teacherId;
+    }
+
+    public function test_teacher_can_manage_own_plan_with_no_linked_class(): void
+    {
+        $this->actingAsTeacher(['lesson_plan.list', 'lesson_plan.view', 'lesson_plan.create', 'lesson_plan.update']);
+
+        // No class links this teacher to the course — only authorship does.
+        $planId = $this->postJson('/v1/edu/lesson-plan/create', $this->payload())->json('data.id');
+
+        $this->getJson("/v1/edu/lesson-plan/detail/{$planId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.plan.id', $planId);
+
+        $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Renamed by author'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_teacher_cannot_access_an_unrelated_plan_they_did_not_create(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->createPlan();
+
+        // Different teacher: no class on the plan's course, and not the author.
+        $this->actingAsTeacher(['lesson_plan.list', 'lesson_plan.view', 'lesson_plan.update']);
+
+        $this->getJson("/v1/edu/lesson-plan/detail/{$planId}")->assertJsonPath('code', 403);
+        $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Hijacked'])
+            ->assertJsonPath('code', 403);
+    }
 }

@@ -7,8 +7,8 @@ use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
+use App\Modules\Education\ClassSessionFeedback\Models\ClassSessionFeedback;
 use App\Modules\Education\Room\Models\Room;
-use App\Modules\Education\SessionFeedback\Models\SessionFeedback;
 use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
@@ -89,6 +89,6 @@ class ClassSession extends Model
 
     public function feedbacks(): HasMany
     {
-        return $this->hasMany(SessionFeedback::class, 'session_id');
+        return $this->hasMany(ClassSessionFeedback::class, 'session_id');
     }
 }

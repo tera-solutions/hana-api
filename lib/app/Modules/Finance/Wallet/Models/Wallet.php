@@ -26,6 +26,8 @@ class Wallet extends Model
 
     public const OWNER_CUSTOMER = 'customer';
 
+    public const OWNER_TEACHER = 'teacher';
+
     public const STATUS_ACTIVE = WalletStatus::Active->value;
 
     public const STATUS_LOCKED = WalletStatus::Locked->value;

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\LevelPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -21,7 +21,7 @@ class LevelTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(LevelPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
 
         $this->businessId = $this->makeBusinessId();
         $this->courseId = $this->makeCourseId();

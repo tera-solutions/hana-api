@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\TaskPermissionSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
@@ -18,7 +18,7 @@ class TaskTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(TaskPermissionSeeder::class);
+        $this->seed(PermissionSeeder::class);
     }
 
     /**

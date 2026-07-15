@@ -9,6 +9,7 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Exam\Models\ExamResult;
+use App\Modules\Education\Lesson\Services\LessonService;
 use App\Modules\Education\Support\SummarizesByStatus;
 use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +20,10 @@ class ClassService
 {
     use HandlesEntityQueries;
     use SummarizesByStatus;
+
+    public function __construct(private readonly LessonService $lessonService)
+    {
+    }
 
     /**
      * Paginated, searchable, filterable list (spec §2).
@@ -181,13 +186,18 @@ class ClassService
 
     /**
      * Create a class, optionally with schedules, optionally cloning the course
-     * curriculum (spec §3–5).
+     * curriculum (spec §3–5), and optionally generating its lessons in the same
+     * step when a lesson plan, schedules and `generate_from_date` are all given
+     * (Lớp học + Giáo án + Lịch học -> Sinh buổi học).
+     *
+     * @throws \RuntimeException from lesson generation (e.g. plan not published)
      */
     public function create(array $data): ClassRoom
     {
         return DB::transaction(function () use ($data) {
             $schedules = $data['schedules'] ?? [];
-            unset($data['schedules']);
+            $generateFromDate = $data['generate_from_date'] ?? null;
+            unset($data['schedules'], $data['generate_from_date']);
 
             $class = new ClassRoom($data);
             $class->status = $this->computeStatus($class, $schedules);
@@ -206,6 +216,10 @@ class ClassService
                 $this->copyCourseCurriculum($class);
             }
 
+            if ($generateFromDate && $class->lesson_plan_id && ! empty($schedules)) {
+                $this->lessonService->generate($class->id, ['from_date' => $generateFromDate]);
+            }
+
             return $this->findWithStats($class->id);
         });
     }
@@ -213,6 +227,13 @@ class ClassService
     /**
      * Update a class (spec §6). Cannot change course_id or re-clone curriculum
      * once sessions exist.
+     *
+     * Same "attach plan + schedules -> generate lessons" workflow as create()
+     * (via generate_from_date), but only when the class didn't already have a
+     * lesson plan before this update — an already-planned class keeps using
+     * the dedicated regenerate flow instead of implicitly re-syncing here.
+     *
+     * @throws \RuntimeException from lesson generation (e.g. plan not published)
      */
     public function update($id, array $data): ClassRoom
     {
@@ -222,13 +243,15 @@ class ClassService
             }
 
             $class = $this->find($id);
+            $hadLessonPlan = (bool) $class->lesson_plan_id;
 
             if ($this->hasSessions($id)) {
                 unset($data['course_id'], $data['use_course_curriculum']);
             }
 
             $schedules = $data['schedules'] ?? null;
-            unset($data['schedules']);
+            $generateFromDate = $data['generate_from_date'] ?? null;
+            unset($data['schedules'], $data['generate_from_date']);
 
             unset($data['id'], $data['code'], $data['status']);
 
@@ -254,6 +277,11 @@ class ClassService
             }
 
             $class->save();
+
+            if ($generateFromDate && ! $hadLessonPlan && $class->lesson_plan_id
+                && ClassSchedule::where('class_id', $class->id)->exists()) {
+                $this->lessonService->generate($class->id, ['from_date' => $generateFromDate]);
+            }
 
             return $this->findWithStats($class->id);
         });

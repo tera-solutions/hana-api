@@ -288,7 +288,11 @@ class LessonPlanService
     private function authorizePlan(LessonPlan $plan): void
     {
         if ($scope = TeacherScope::current()) {
-            $scope->authorizeLessonPlan((int) $plan->id, $plan->course_id ? (int) $plan->course_id : null);
+            $scope->authorizeLessonPlan(
+                (int) $plan->id,
+                $plan->course_id ? (int) $plan->course_id : null,
+                $plan->created_by ? (int) $plan->created_by : null,
+            );
         }
     }
 

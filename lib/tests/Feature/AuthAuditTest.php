@@ -32,9 +32,31 @@ class AuthAuditTest extends TestCase
     {
         $user = $this->makeUserWithPassword();
 
-        // The login identifier resolves by email or phone only, not username.
+        // The login identifier resolves by username, email or phone.
         $this->postJson('/api/auth/login', [
             'username' => $user->email,
+            'password' => 'definitely-wrong',
+        ], ['device-code' => 'test-device'])
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('sys_activity_logs', [
+            'module' => 'system',
+            'entity' => 'User',
+            'entity_id' => $user->id,
+            'action' => 'login',
+            'status' => 'failed',
+        ]);
+    }
+
+    public function test_login_identifier_resolves_by_actual_username(): void
+    {
+        $user = $this->makeUserWithPassword();
+
+        // Logging in with the account's `username` column (not its email) must
+        // resolve the same user — asserted via the audit log's entity_id, since
+        // a wrong password short-circuits before token issuance either way.
+        $this->postJson('/api/auth/login', [
+            'username' => $user->username,
             'password' => 'definitely-wrong',
         ], ['device-code' => 'test-device'])
             ->assertJsonPath('success', false);
