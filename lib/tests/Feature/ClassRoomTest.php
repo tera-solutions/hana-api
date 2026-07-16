@@ -14,6 +14,7 @@ class ClassRoomTest extends TestCase
     use SeedsAuthContext;
 
     private int $businessId;
+
     private int $courseId;
 
     protected function setUp(): void
@@ -30,7 +31,7 @@ class ClassRoomTest extends TestCase
     {
         return DB::table('edu_courses')->insertGetId([
             'name' => 'IELTS Foundation',
-            'code' => 'IELTS_F_' . uniqid(),
+            'code' => 'IELTS_F_'.uniqid(),
             'duration_minutes' => 90,
             'price_per_lesson' => 250000,
             'is_active' => true,
@@ -44,7 +45,7 @@ class ClassRoomTest extends TestCase
     {
         return array_merge([
             'name' => 'IELTS Foundation - Khai giảng tháng 7',
-            'code' => 'IELTS-F-' . uniqid(),
+            'code' => 'IELTS-F-'.uniqid(),
             'course_id' => $this->courseId,
             'learning_type' => 'flexible',
             'start_date' => now()->addDays(30)->toDateString(),
@@ -440,8 +441,8 @@ class ClassRoomTest extends TestCase
         }
 
         DB::table('edu_sessions')->insert([
-            ['class_id' => $id, 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()],
-            ['class_id' => $id, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()],
+            ['business_id' => $this->businessId, 'class_id' => $id, 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()],
+            ['business_id' => $this->businessId, 'class_id' => $id, 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $this->getJson("/v1/edu/class-room/detail/{$id}")
@@ -685,5 +686,4 @@ class ClassRoomTest extends TestCase
             'updated_by' => $admin->id,
         ]);
     }
-
 }

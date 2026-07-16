@@ -5,7 +5,6 @@ namespace App\Modules\Education\ClassSession\Services;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
-use App\Modules\Education\Support\TeacherScope;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -61,10 +60,6 @@ class ClassSessionService
             $query->whereHas('tags', fn ($q) => $q->whereIn('crm_tags.id', $tagIds));
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainSessions($query);
-        }
-
         $this->applySort($query, $params, ['session_no', 'name', 'session_date', 'start_time', 'status', 'created_at'], 'session_date');
 
         return $query->with(self::WITH)->paginate($this->resolvePerPage($params));
@@ -83,10 +78,6 @@ class ClassSessionService
     {
         $session = $this->find($id);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
-
         return $session;
     }
 
@@ -100,10 +91,6 @@ class ClassSessionService
         return DB::transaction(function () use ($data) {
             $classId = $data['class_id'];
             ClassRoom::findOrFail($classId);
-
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeClass((int) $classId);
-            }
 
             $this->assertNoConflict($classId, $data['session_date'], $data['start_time'], $data['end_time'], $data);
 
@@ -133,10 +120,6 @@ class ClassSessionService
     {
         return DB::transaction(function () use ($classId, $data) {
             ClassRoom::findOrFail($classId);
-
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeClass((int) $classId);
-            }
 
             $from = $data['from_date'];
             $to = $data['to_date'];
@@ -203,10 +186,6 @@ class ClassSessionService
         return DB::transaction(function () use ($id, $data) {
             $session = ClassSession::findOrFail($id);
 
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeSession($session);
-            }
-
             if ($session->attendance_locked) {
                 throw new \RuntimeException('Buổi học đã chốt điểm danh, không thể cập nhật.');
             }
@@ -239,10 +218,6 @@ class ClassSessionService
     {
         $session = ClassSession::findOrFail($id);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
-
         if ($session->status === ClassSession::STATUS_CANCELLED) {
             throw new \RuntimeException('Buổi học đã được hủy.');
         }
@@ -270,10 +245,6 @@ class ClassSessionService
     {
         $session = ClassSession::findOrFail($id);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
-
         if ($session->status !== ClassSession::STATUS_UPCOMING) {
             throw new \RuntimeException('Chỉ có thể bắt đầu buổi học ở trạng thái sắp diễn ra.');
         }
@@ -296,10 +267,6 @@ class ClassSessionService
     {
         $session = ClassSession::findOrFail($id);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
-
         if ($session->status !== ClassSession::STATUS_ONGOING) {
             throw new \RuntimeException('Chỉ có thể kết thúc sớm buổi học đang diễn ra.');
         }
@@ -316,10 +283,6 @@ class ClassSessionService
     public function delete($id): void
     {
         $session = ClassSession::findOrFail($id);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
 
         $session->delete();
     }

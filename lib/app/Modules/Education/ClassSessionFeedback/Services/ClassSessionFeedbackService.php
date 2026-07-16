@@ -4,7 +4,6 @@ namespace App\Modules\Education\ClassSessionFeedback\Services;
 
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\ClassSessionFeedback\Models\ClassSessionFeedback;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Package\Database\Concerns\HandlesEntityQueries;
 
@@ -40,10 +39,6 @@ class ClassSessionFeedbackService
             $query->whereHas('session', fn ($q) => $q->where('class_id', $params['class_id']));
         }
 
-        if ($scope = TeacherScope::current()) {
-            $query->whereHas('session', fn ($q) => $scope->constrainSessions($q));
-        }
-
         return $query;
     }
 
@@ -57,10 +52,6 @@ class ClassSessionFeedbackService
         $studentId = (int) ($data['student_id'] ?? 0);
 
         $session = ClassSession::findOrFail($sessionId);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
 
         $feedback = ClassSessionFeedback::updateOrCreate(
             ['session_id' => $sessionId, 'student_id' => $studentId],

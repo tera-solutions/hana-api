@@ -5,12 +5,15 @@ namespace App\Modules\Finance\Wallet\Models;
 use App\Modules\Finance\Wallet\Enums\WalletTransactionType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Package\Database\Concerns\BelongsToBusiness;
 
 /**
  * An immutable ledger entry against a wallet (table `fin_wallet_transactions`).
  */
 class WalletTransaction extends Model
 {
+    use BelongsToBusiness;
+
     protected $table = 'fin_wallet_transactions';
 
     protected $guarded = [];

@@ -8,7 +8,6 @@ use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Lesson\Models\LessonActivity;
 use App\Modules\Education\Lesson\Models\LessonHistory;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
-use App\Modules\Education\Support\TeacherScope;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -58,10 +57,6 @@ class LessonService
             $query->whereHas('room', fn ($q) => $q->where('branch_id', $params['branch_id']));
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByClass($query, 'class_room_id');
-        }
-
         $this->applySort($query, $params, ['lesson_no', 'lesson_date', 'start_time', 'status', 'created_at']);
 
         return $query->with(['classRoom', 'teacher', 'room'])->paginate($this->resolvePerPage($params));
@@ -75,10 +70,6 @@ class LessonService
     public function detail($id): array
     {
         $lesson = Lesson::with(['classRoom', 'teacher', 'room', 'histories', 'activities', 'lessonPlanLesson.materials'])->findOrFail($id);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $lesson->class_room_id);
-        }
 
         return ['lesson' => $lesson];
     }
@@ -98,10 +89,6 @@ class LessonService
 
             if (! $class) {
                 throw new \RuntimeException('Lớp học không tồn tại.');
-            }
-
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeClass((int) $classId);
             }
 
             if (! $class->lesson_plan_id) {
@@ -460,12 +447,7 @@ class LessonService
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
-    private function authorizeLesson(Lesson $lesson): void
-    {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $lesson->class_room_id);
-        }
-    }
+    private function authorizeLesson(Lesson $lesson): void {}
 
     /**
      * @throws \RuntimeException BR004 (completed) / BR005 (locked).

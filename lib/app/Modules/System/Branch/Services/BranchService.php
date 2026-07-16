@@ -2,6 +2,12 @@
 
 namespace App\Modules\System\Branch\Services;
 
+use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\Course\Models\Course;
+use App\Modules\Education\Room\Models\Room;
+use App\Modules\Education\Student\Models\Student;
+use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\Branch\Events\BranchCreated;
 use App\Modules\System\Branch\Models\Branch;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -71,12 +77,12 @@ class BranchService
     public function statistics($id): array
     {
         return [
-            'total_students' => $this->countLinked('edu_students', $id, 'branch_id'),
-            'total_parents' => $this->countLinked('crm_parents', $id, 'branch_id'),
-            'total_teachers' => $this->countLinked('hr_teachers', $id, 'branch_id'),
-            'total_classes' => $this->countLinked('edu_classes', $id, 'branch_id'),
-            'total_rooms' => $this->countLinked('edu_rooms', $id, 'branch_id'),
-            'total_courses' => $this->countLinked('edu_courses', $id, 'branch_id'),
+            'total_students' => $this->guard(fn () => Student::where('branch_id', $id)->count()),
+            'total_parents' => $this->guard(fn () => ParentModel::where('branch_id', $id)->count()),
+            'total_teachers' => $this->guard(fn () => Teacher::where('branch_id', $id)->count()),
+            'total_classes' => $this->guard(fn () => ClassRoom::where('branch_id', $id)->count()),
+            'total_rooms' => $this->guard(fn () => Room::where('branch_id', $id)->count()),
+            'total_courses' => $this->guard(fn () => Course::where('branch_id', $id)->count()),
         ];
     }
 

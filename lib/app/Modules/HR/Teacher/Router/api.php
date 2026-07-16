@@ -9,7 +9,8 @@ Route::prefix('teacher')->middleware('auth.tera')->group(function () {
     Route::get('/list', [TeacherController::class, 'list'])->middleware('permission:teacher.list');
     Route::get('/detail/{id}', [TeacherController::class, 'detail'])->middleware('permission:teacher.view');
 
-    Route::post('/create', [TeacherController::class, 'create'])->middleware('permission:teacher.create');
+    Route::post('/create', [TeacherController::class, 'create'])
+        ->middleware(['permission:teacher.create', 'subscription.active', 'subscription.quota:teachers']);
     Route::put('/update/{id}', [TeacherController::class, 'update'])->middleware('permission:teacher.update');
 
     Route::post('/suspend/{id}', [TeacherController::class, 'suspend'])->middleware('permission:teacher.suspend');

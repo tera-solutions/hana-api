@@ -11,7 +11,6 @@ use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Exam\Models\ExamResult;
 use App\Modules\Education\Lesson\Services\LessonService;
 use App\Modules\Education\Support\SummarizesByStatus;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -21,9 +20,7 @@ class ClassService
     use HandlesEntityQueries;
     use SummarizesByStatus;
 
-    public function __construct(private readonly LessonService $lessonService)
-    {
-    }
+    public function __construct(private readonly LessonService $lessonService) {}
 
     /**
      * Paginated, searchable, filterable list (spec §2).
@@ -137,10 +134,6 @@ class ClassService
             $query->whereDate('start_date', '<=', $params['start_to']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainClasses($query);
-        }
-
         return $query;
     }
 
@@ -168,10 +161,6 @@ class ClassService
      */
     public function detail($id): array
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $id);
-        }
-
         $class = $this->findWithStats($id);
 
         return [
@@ -238,10 +227,6 @@ class ClassService
     public function update($id, array $data): ClassRoom
     {
         return DB::transaction(function () use ($id, $data) {
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeClass((int) $id);
-            }
-
             $class = $this->find($id);
             $hadLessonPlan = (bool) $class->lesson_plan_id;
 
@@ -294,10 +279,6 @@ class ClassService
      */
     public function suspend($id, array $data): ClassRoom
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $id);
-        }
-
         $class = ClassRoom::findOrFail($id);
 
         if ($class->status === ClassRoom::STATUS_SUSPENDED) {
@@ -323,10 +304,6 @@ class ClassService
      */
     public function restore($id): ClassRoom
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $id);
-        }
-
         $class = $this->find($id);
 
         if ($class->status !== ClassRoom::STATUS_SUSPENDED) {
@@ -362,14 +339,12 @@ class ClassService
 
     public function operationalStats($classId): array
     {
-        $total = $this->guard(fn () =>
-            ClassSession::where('class_id', $classId)->count()
+        $total = $this->guard(fn () => ClassSession::where('class_id', $classId)->count()
         );
 
-        $completed = $this->guard(fn () =>
-            ClassSession::where('class_id', $classId)
-                ->where('status', 'completed')
-                ->count()
+        $completed = $this->guard(fn () => ClassSession::where('class_id', $classId)
+            ->where('status', 'completed')
+            ->count()
         );
 
         // Every lesson is either completed or pending, so pending is derivable.
@@ -411,8 +386,7 @@ class ClassService
             ->map(fn ($grade) => ['grade' => $grade, 'count' => (int) ($gradeCounts[$grade] ?? 0)])
             ->all();
 
-        $assignmentsCount = $this->guard(fn () =>
-            Assignment::where('class_room_id', $classId)->count()
+        $assignmentsCount = $this->guard(fn () => Assignment::where('class_room_id', $classId)->count()
         );
 
         $homework = $this->guard(
@@ -577,6 +551,7 @@ class ClassService
         $rates = $rows->mapWithKeys(function ($row) {
             $total = (int) $row->total;
             $rate = $total > 0 ? (int) round(((int) $row->attended / $total) * 100) : 0;
+
             return [$row->class_id => $rate];
         });
 

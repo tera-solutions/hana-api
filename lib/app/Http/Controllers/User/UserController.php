@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\RolePermission;
-use App\Models\Session;
 use App\Models\Application;
 use App\Models\PageView;
-use App\Models\StockCRM;
+use App\Models\RolePermission;
+use App\Models\Session;
 use App\Models\User;
+use App\Modules\System\Subscription\Http\Resources\SubscriptionResource;
+use App\Modules\System\Subscription\Services\SubscriptionGate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +22,6 @@ use Illuminate\Validation\Rule;
  */
 class UserController extends Controller
 {
-
     /**
      * Get current profile
      *
@@ -34,7 +34,7 @@ class UserController extends Controller
      * @response 200 {
      *   "success": true,
      *   "msg": "Thao tác thành công",
-     *   "data": {"id": 1, "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "role": "admin", "role_name": "Administrator", "access_id": 123},
+     *   "data": {"id": 1, "username": "super", "full_name": "John Doe", "email": "super@example.com", "status": "active", "role": "admin", "role_name": "Administrator", "access_id": 123, "is_superadmin": false, "subscription": {"id": 1, "status": "active", "expires_at": "2026-07-30", "package": {"id": 2, "name": "Gói Nâng cao", "feature_keys": ["assignments", "messaging", "advanced_reports"], "limits": {"students": 500}}}},
      *   "code": 200,
      *   "errors": null
      * }
@@ -48,45 +48,58 @@ class UserController extends Controller
      */
     public function getProfile(Request $request)
     {
-        if (!Auth::guard('api')->user()) {
-            return $this->respondWithError("No permision!!", [], 401);
+        if (! Auth::guard('api')->user()) {
+            return $this->respondWithError('No permision!!', [], 401);
         }
 
         $user_id = Auth::guard('api')->user()->id;
 
-        $device_code = $request->header("device-code");
+        $device_code = $request->header('device-code');
 
-        if (!$device_code) {
-            return $this->respondWithError("Thiết bị bị từ chối!", [], 500);
+        if (! $device_code) {
+            return $this->respondWithError('Thiết bị bị từ chối!', [], 500);
         }
 
         $user = User::where('users.id', $user_id)
-            ->leftJoin("sys_roles", "sys_roles.id", "users.role_id")
+            ->leftJoin('sys_roles', 'sys_roles.id', 'users.role_id')
             ->leftJoin('oauth_access_tokens', 'users.id', '=', 'oauth_access_tokens.user_id')
-            ->where("users.status", "active")
+            ->where('users.status', 'active')
             ->select([
-                "users.*",
+                'users.*',
                 'sys_roles.code as role',
                 'sys_roles.title as role_name',
-                'oauth_access_tokens.id as access_id'
+                'oauth_access_tokens.id as access_id',
             ]);
 
         $data = $user->first();
-        if (!$data) {
+        if (! $data) {
             $token = Auth::guard('api')->user()->token();
 
             $token->revoke();
 
             $user_id = Auth::guard('api')->user()->id;
 
-            $session = Session::where("user_id", $user_id)->first();
+            $session = Session::where('user_id', $user_id)->first();
             if ($session) {
                 $session->delete();
             }
 
-            return $this->respondWithError("Tài khoản của bạn đã hết hạn!", [], 401);
+            return $this->respondWithError('Tài khoản của bạn đã hết hạn!', [], 401);
         }
-        return $this->respondSuccess($data);
+
+        // The tenant's current subscription (with package feature_keys/limits) so
+        // the client can gate features/quota without a second request. Null when
+        // the business has no active subscription (grandfathered = all features).
+        $subscription = $data->business_id
+            ? app(SubscriptionGate::class)->activeSubscription((int) $data->business_id)
+            : null;
+
+        $result = $data->toArray();
+        $result['subscription'] = $subscription
+            ? (new SubscriptionResource($subscription))->resolve()
+            : null;
+
+        return $this->respondSuccess($result);
     }
 
     /**
@@ -161,38 +174,38 @@ class UserController extends Controller
 
     public function getPermission(Request $request)
     {
-        if (!Auth::guard('api')->user()) {
-            return $this->respondWithError("No permision!!", [], 401);
+        if (! Auth::guard('api')->user()) {
+            return $this->respondWithError('No permision!!', [], 401);
         }
 
         $user_id = Auth::guard('api')->user()->id;
         $role_id = Auth::guard('api')->user()->role_id;
 
-        $device_code = $request->header("device-code");
+        $device_code = $request->header('device-code');
 
-        if (!$device_code) {
-            return $this->respondWithError("Thiết bị bị từ chối!", [], 500);
+        if (! $device_code) {
+            return $this->respondWithError('Thiết bị bị từ chối!', [], 500);
         }
 
         $res = RolePermission::where('role_id', $role_id)
-            ->pluck("code");
+            ->pluck('code');
 
         return $this->respondSuccess($res);
     }
 
     public function getModules(Request $request)
     {
-        if (!Auth::guard('api')->user()) {
-            return $this->respondWithError("No permision!!", [], 401);
+        if (! Auth::guard('api')->user()) {
+            return $this->respondWithError('No permision!!', [], 401);
         }
 
         $user_id = Auth::guard('api')->user()->id;
         $role_id = Auth::guard('api')->user()->role_id;
 
-        $device_code = $request->header("device-code");
+        $device_code = $request->header('device-code');
 
-        if (!$device_code) {
-            return $this->respondWithError("Thiết bị bị từ chối!", [], 500);
+        if (! $device_code) {
+            return $this->respondWithError('Thiết bị bị từ chối!', [], 500);
         }
 
         $app = Application::all();
@@ -200,29 +213,27 @@ class UserController extends Controller
         return $this->respondSuccess($app);
     }
 
-
     public function getEpic(Request $request)
     {
-        if (!Auth::guard('api')->user()) {
-            return $this->respondWithError("No permision!!", [], 401);
+        if (! Auth::guard('api')->user()) {
+            return $this->respondWithError('No permision!!', [], 401);
         }
 
         $user_id = Auth::guard('api')->user()->id;
         $role_id = Auth::guard('api')->user()->role_id;
 
-        $device_code = $request->header("device-code");
+        $device_code = $request->header('device-code');
 
-        if (!$device_code) {
-            return $this->respondWithError("Thiết bị bị từ chối!", [], 500);
+        if (! $device_code) {
+            return $this->respondWithError('Thiết bị bị từ chối!', [], 500);
         }
 
         if (empty($request->module)) {
-            return $this->respondWithError("Bạn không có quyền sử dụng module này", [], 500);
+            return $this->respondWithError('Bạn không có quyền sử dụng module này', [], 500);
         }
 
-
         $res = PageView::where('group', $request->module)
-            ->pluck("code");
+            ->pluck('code');
 
         return $this->respondSuccess($res);
     }

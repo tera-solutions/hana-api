@@ -8,10 +8,12 @@ use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Package\Database\Concerns\BelongsToBusiness;
 use Package\Database\Concerns\HasAuditFields;
 
 class Branch extends Model
 {
+    use BelongsToBusiness;
     use HasAuditFields;
     use LogsActivity;
     use SoftDeletes;

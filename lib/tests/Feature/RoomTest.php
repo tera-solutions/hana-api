@@ -107,6 +107,7 @@ class RoomTest extends TestCase
         $classId = $this->makeClass($roomId);
 
         return DB::table('edu_sessions')->insertGetId([
+            'business_id' => $this->businessId,
             'class_id' => $classId,
             'room_id' => $roomId,
             'session_date' => $date,

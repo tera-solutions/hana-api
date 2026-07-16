@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\System\Onboarding\Http\Controllers\OnboardingController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -42,6 +44,11 @@ Route::group(['middleware' => ['cors', 'json.response'], 'prefix' => 'auth'], fu
         Route::post('/turn-off-welcome', 'ApiAuthController@turnOffWelcome');
         Route::post('/business-default/{id}', 'ApiAuthController@createBusinessDefault');
     });
+
+    // Public self-service center registration (Teacher app). Clean modular
+    // handler — kept separate from the legacy 'register' above, which is wired
+    // to external portal/CRM microservices.
+    Route::post('/register-school', [OnboardingController::class, 'register']);
 
     Route::group(['namespace' => 'User'], function () {
         Route::get('/profile', 'UserController@getProfile');

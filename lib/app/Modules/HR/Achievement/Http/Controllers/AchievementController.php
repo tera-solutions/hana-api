@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
  * @group HR - Achievement
  *
  * Teacher-facing career/achievement stats: totals, current-period overview and
- * a session/rating trend, scoped to the authenticated teacher via TeacherScope.
+ * a session/rating trend, scoped to the authenticated teacher's own record.
  *
  * @authenticated
  */

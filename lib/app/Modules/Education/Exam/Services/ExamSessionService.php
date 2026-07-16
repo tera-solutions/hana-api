@@ -6,7 +6,6 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Exam\Models\ExamRegistration;
 use App\Modules\Education\Exam\Models\ExamSession;
 use App\Modules\Education\Student\Models\Student;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,10 +37,6 @@ class ExamSessionService
             $query->whereDate('exam_date', $params['exam_date']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainExamSessions($query);
-        }
-
         $this->applySort($query, $params, ['exam_date', 'start_time', 'status', 'created_at']);
 
         return $query->with(['exam', 'classRoom', 'room', 'teacher'])
@@ -55,10 +50,6 @@ class ExamSessionService
     public function detail($id): ExamSession
     {
         $query = ExamSession::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainExamSessions($query);
-        }
 
         return $query->with([
             'exam', 'classRoom', 'room', 'teacher',
@@ -199,10 +190,6 @@ class ExamSessionService
     private function scopedSession($id): ExamSession
     {
         $query = ExamSession::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainExamSessions($query);
-        }
 
         return $query->findOrFail($id);
     }

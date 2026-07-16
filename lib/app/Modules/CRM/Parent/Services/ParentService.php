@@ -7,6 +7,9 @@ use App\Modules\CRM\Parent\Events\ParentCreated;
 use App\Modules\CRM\Parent\Models\ParentHistory;
 use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\CRM\ParentStudent\Models\ParentStudent;
+use App\Modules\Finance\Debt\Models\Debt;
+use App\Modules\Finance\Invoice\Models\Invoice;
+use App\Modules\Finance\Payment\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -90,11 +93,15 @@ class ParentService
     {
         $studentIds = ParentStudent::where('parent_id', $id)->pluck('student_id')->all();
 
+        if (empty($studentIds)) {
+            return ['total_students' => 0, 'total_invoices' => 0, 'total_payments' => 0, 'total_debts' => 0];
+        }
+
         return [
             'total_students' => count($studentIds),
-            'total_invoices' => $this->countForStudents('fin_invoices', $studentIds),
-            'total_payments' => $this->countForStudents('fin_payments', $studentIds),
-            'total_debts' => $this->countForStudents('fin_debts', $studentIds),
+            'total_invoices' => $this->guard(fn () => Invoice::whereIn('student_id', $studentIds)->count()),
+            'total_payments' => $this->guard(fn () => Payment::whereIn('student_id', $studentIds)->count()),
+            'total_debts' => $this->guard(fn () => Debt::whereIn('student_id', $studentIds)->count()),
         ];
     }
 
@@ -232,23 +239,6 @@ class ParentService
         }
 
         $parent->students()->sync($sync);
-    }
-
-    /**
-     * Count rows in a finance table for the given student ids. Missing
-     * tables/columns are treated as zero.
-     */
-    private function countForStudents(string $table, array $studentIds): int
-    {
-        if (empty($studentIds)) {
-            return 0;
-        }
-
-        try {
-            return (int) DB::table($table)->whereIn('student_id', $studentIds)->count();
-        } catch (\Throwable $e) {
-            return 0;
-        }
     }
 
     private function log(ParentModel $parent, string $action, $from = null, $to = null, $reason = null, $note = null): void

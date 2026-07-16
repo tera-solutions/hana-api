@@ -4,6 +4,7 @@ namespace App\Modules\CRM\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Package\Database\Concerns\BelongsToBusiness;
 
 /**
  * Audit-trail entry for a lead (table `crm_lead_histories`) — captures creation,
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class LeadHistory extends Model
 {
+    use BelongsToBusiness;
+
     protected $table = 'crm_lead_histories';
 
     protected $guarded = [];

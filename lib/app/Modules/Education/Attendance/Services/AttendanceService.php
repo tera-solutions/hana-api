@@ -4,7 +4,6 @@ namespace App\Modules\Education\Attendance\Services;
 
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassSession\Models\ClassSession;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -61,10 +60,6 @@ class AttendanceService
         }
         if (! empty($params['date_to'])) {
             $query->whereHas('session', fn ($q) => $q->whereDate('session_date', '<=', $params['date_to']));
-        }
-
-        if ($scope = TeacherScope::current()) {
-            $query->whereHas('session', fn ($q) => $scope->constrainSessions($q));
         }
 
         return $query;
@@ -126,10 +121,6 @@ class AttendanceService
 
         $session = ClassSession::findOrFail($sessionId);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($session);
-        }
-
         $this->guardWritable($session);
 
         $attendance = Attendance::updateOrCreate(
@@ -143,10 +134,6 @@ class AttendanceService
     public function update($id, array $data): Attendance
     {
         $attendance = Attendance::with('session')->findOrFail($id);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeSession($attendance->session);
-        }
 
         $this->guardWritable($attendance->session);
 

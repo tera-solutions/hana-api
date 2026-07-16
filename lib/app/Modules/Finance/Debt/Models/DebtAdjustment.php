@@ -6,6 +6,7 @@ use App\Modules\Finance\Debt\Enums\AdjustmentType;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Package\Database\Concerns\BelongsToBusiness;
 
 /**
  * A correction, discount or write-off recorded against an invoice's debt
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class DebtAdjustment extends Model
 {
+    use BelongsToBusiness;
+
     protected $table = 'fin_debt_adjustments';
 
     protected $guarded = [];

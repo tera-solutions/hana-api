@@ -5,6 +5,7 @@ namespace App\Modules\Finance\Wallet\Models;
 use App\Modules\Finance\Wallet\Enums\WalletStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Package\Database\Concerns\BelongsToBusiness;
 
 /**
  * A customer's internal balance (table `fin_wallets`). One wallet per owner (BR001), with
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Wallet extends Model
 {
+    use BelongsToBusiness;
+
     protected $table = 'fin_wallets';
 
     protected $guarded = [];

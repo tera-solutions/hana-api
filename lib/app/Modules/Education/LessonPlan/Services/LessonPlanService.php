@@ -7,7 +7,6 @@ use App\Modules\Education\LessonPlan\Enums\LessonPlanStatus;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanVersion\Services\LessonPlanVersionService;
 use App\Modules\Education\Support\SummarizesByStatus;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -83,10 +82,6 @@ class LessonPlanService
             $query->where('status', $params['status']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainLessonPlans($query);
-        }
-
         return $query;
     }
 
@@ -107,7 +102,7 @@ class LessonPlanService
         return [
             'plan' => $plan,
             'usage' => [
-                'classes' => $this->countLinked('edu_classes', $id, 'lesson_plan_id'),
+                'classes' => $this->guard(fn () => ClassRoom::where('lesson_plan_id', $id)->count()),
             ],
         ];
     }
@@ -285,16 +280,7 @@ class LessonPlanService
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
-    private function authorizePlan(LessonPlan $plan): void
-    {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeLessonPlan(
-                (int) $plan->id,
-                $plan->course_id ? (int) $plan->course_id : null,
-                $plan->created_by ? (int) $plan->created_by : null,
-            );
-        }
-    }
+    private function authorizePlan(LessonPlan $plan): void {}
 
     /**
      * Editability gate (§9, BR004). Public so lesson-template edits can reuse it.
