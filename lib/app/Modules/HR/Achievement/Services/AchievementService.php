@@ -2,8 +2,12 @@
 
 namespace App\Modules\HR\Achievement\Services;
 
-use App\Modules\Education\Support\TeacherScope;
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\HR\Achievement\Models\TeacherReview;
+use App\Modules\HR\Teacher\Models\Teacher;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Exception\AuthorizationException;
 
@@ -16,8 +20,8 @@ class AchievementService
      */
     public function summary(): array
     {
-        $scope = $this->requireScope();
-        $classIds = $scope->classIds();
+        [$teacherId, $userId] = $this->requireTeacher();
+        $classIds = $this->ownedClassIds($teacherId, $userId);
 
         $totalStudents = empty($classIds) ? 0 : DB::table('edu_class_students')
             ->whereIn('class_id', $classIds)
@@ -25,16 +29,16 @@ class AchievementService
             ->distinct('student_id')
             ->count('student_id');
 
-        $totalHours = round((float) $this->completedSessions($scope->teacherId)
+        $totalHours = round((float) $this->completedSessions($teacherId)
             ->sum(DB::raw('TIMESTAMPDIFF(MINUTE, start_time, end_time)')) / 60, 1);
 
-        $reviews = TeacherReview::query()->where('teacher_id', $scope->teacherId);
+        $reviews = TeacherReview::query()->where('teacher_id', $teacherId);
         $reviewCount = (clone $reviews)->count();
         $goodReviewCount = (clone $reviews)->where('rating', '>=', self::GOOD_RATING_THRESHOLD)->count();
         $avgRating = $reviewCount ? round((clone $reviews)->avg('rating'), 1) : 0;
         $satisfactionRate = $reviewCount ? round($goodReviewCount / $reviewCount * 100, 1) : 0;
 
-        $sessionsThisMonth = $this->completedSessions($scope->teacherId)
+        $sessionsThisMonth = $this->completedSessions($teacherId)
             ->whereBetween('session_date', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
@@ -64,21 +68,21 @@ class AchievementService
      */
     public function progress(string $period = 'month'): array
     {
-        $scope = $this->requireScope();
+        [$teacherId] = $this->requireTeacher();
         $format = match ($period) {
             'week' => '%x-W%v',
             'year' => '%Y',
             default => '%Y-%m',
         };
 
-        $sessionRows = $this->completedSessions($scope->teacherId)
+        $sessionRows = $this->completedSessions($teacherId)
             ->selectRaw("DATE_FORMAT(session_date, '{$format}') as bucket, COUNT(*) as sessions, GROUP_CONCAT(id) as session_ids")
             ->groupBy('bucket')
             ->orderBy('bucket')
             ->get();
 
         $reviewRows = TeacherReview::query()
-            ->where('teacher_id', $scope->teacherId)
+            ->where('teacher_id', $teacherId)
             ->selectRaw("DATE_FORMAT(created_at, '{$format}') as bucket, AVG(rating) as avg_rating")
             ->groupBy('bucket')
             ->pluck('avg_rating', 'bucket');
@@ -107,12 +111,12 @@ class AchievementService
      */
     public function reviews(array $params = [])
     {
-        $scope = $this->requireScope();
+        [$teacherId] = $this->requireTeacher();
         $perPage = min((int) ($params['per_page'] ?? 20), 100) ?: 20;
 
         return TeacherReview::query()
             ->with(['student'])
-            ->where('teacher_id', $scope->teacherId)
+            ->where('teacher_id', $teacherId)
             ->orderByDesc('created_at')
             ->paginate($perPage);
     }
@@ -130,23 +134,60 @@ class AchievementService
 
     private function completedSessions(int $teacherId)
     {
-        return DB::table('edu_sessions')
+        // ClassSession carries BusinessScope + SoftDeletes, so this is confined
+        // to the acting business and excludes soft-deleted rows automatically.
+        return ClassSession::query()
             ->where(function ($q) use ($teacherId) {
                 $q->where('teacher_id', $teacherId)
                     ->orWhere('substitute_teacher_id', $teacherId);
             })
-            ->where('status', 'completed')
-            ->whereNull('deleted_at');
+            ->where('status', 'completed');
     }
 
-    private function requireScope(): TeacherScope
+    /**
+     * The authenticated teacher's identity: [teacherId, userId]. These are
+     * personal ("my achievements") views, so a non-teacher caller is rejected.
+     *
+     * @return array{0: int, 1: int}
+     *
+     * @throws AuthorizationException
+     */
+    private function requireTeacher(): array
     {
-        $scope = TeacherScope::current();
+        $user = Auth::guard('api')->user();
 
-        if (! $scope) {
+        $teacherId = ($user && ! $user->is_admin)
+            ? Teacher::query()->where('user_id', $user->id)->value('id')
+            : null;
+
+        if (! $teacherId) {
             throw new AuthorizationException('Chỉ giáo viên mới có thể xem thành tích của mình.');
         }
 
-        return $scope;
+        return [(int) $teacherId, (int) $user->id];
+    }
+
+    /**
+     * IDs of the classes the teacher owns: primary teacher, assignee, or
+     * co-teacher. Business-isolated via BusinessScope on ClassRoom.
+     *
+     * @return array<int, int>
+     */
+    private function ownedClassIds(int $teacherId, int $userId): array
+    {
+        return ClassRoom::query()
+            ->where(function (Builder $q) use ($teacherId, $userId) {
+                $q->where('teacher_id', $teacherId)
+                    ->orWhere('assignee_id', $userId)
+                    ->orWhereExists(function ($sub) use ($teacherId) {
+                        $sub->selectRaw('1')
+                            ->from('edu_class_teacher')
+                            ->whereColumn('edu_class_teacher.class_id', 'edu_classes.id')
+                            ->where('edu_class_teacher.teacher_id', $teacherId);
+                    });
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 }

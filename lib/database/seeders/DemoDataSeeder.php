@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Hash;
  *                    phuhuynh2 / 12345678  (Anh Tuấn)
  *   Student portal:  hocvien1..hocvien4 / 12345678 (Bé An, Bình, Chi, Dũng)
  *
- * Portal users are deliberately NOT admins, so TeacherScope actually scopes them.
+ * Portal users are deliberately NOT admins, so permission-gated (non-admin) access applies.
  *
  * Runs after BusinessAndUserSeeder + permission seeders (reuses the first
  * business and the TEACHER_ROLE / STUDENT_ROLE / PARENT_ROLE roles). Standalone:

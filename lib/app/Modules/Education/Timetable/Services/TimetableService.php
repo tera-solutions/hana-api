@@ -5,7 +5,6 @@ namespace App\Modules\Education\Timetable\Services;
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Room\Models\Room;
-use App\Modules\Education\Support\TeacherScope;
 use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\Education\Timetable\Models\TimetableRule;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,10 +50,6 @@ class TimetableService
         $timetable = Timetable::with(['course', 'classRoom', 'rules', 'sessions' => fn ($q) => $q->orderBy('session_date')->orderBy('start_time')])
             ->findOrFail($id);
 
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $timetable->class_room_id);
-        }
-
         return $timetable;
     }
 
@@ -64,10 +59,6 @@ class TimetableService
     public function create(array $data): Timetable
     {
         return DB::transaction(function () use ($data) {
-            if (($scope = TeacherScope::current()) && ! empty($data['class_room_id'])) {
-                $scope->authorizeClass((int) $data['class_room_id']);
-            }
-
             $plan = $this->planSessions($data);
 
             if ($plan === []) {
@@ -119,10 +110,6 @@ class TimetableService
     public function calendar(array $params = [])
     {
         $query = $this->sessionQuery($params);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainSessions($query);
-        }
 
         return $query->orderBy('session_date')->orderBy('start_time')->get();
     }

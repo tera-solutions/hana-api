@@ -8,7 +8,7 @@ use App\Modules\Education\LeaveRequest\Models\LeaveRequest;
 use App\Modules\Education\LeaveRequest\Models\LeaveRequestLog;
 use App\Modules\Education\LeaveRequest\Models\MakeupLesson;
 use App\Modules\Education\Lesson\Models\Lesson;
-use App\Modules\Education\Support\TeacherScope;
+use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -53,10 +53,6 @@ class LeaveRequestService
             $query->whereDate('leave_date', '<=', $params['leave_date_to']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainLeaveRequests($query);
-        }
-
         $this->applySort($query, $params, ['request_code', 'leave_date', 'status', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -65,10 +61,6 @@ class LeaveRequestService
     public function find($id): LeaveRequest
     {
         $query = LeaveRequest::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainLeaveRequests($query);
-        }
 
         return $query->with([...self::RELATIONS, 'logs'])->findOrFail($id);
     }
@@ -85,22 +77,13 @@ class LeaveRequestService
             $data['requester_type'] = $type->requesterType();
 
             $this->assertRequesterExists($data['requester_type'], (int) $data['requester_id']);
+            $this->assertTeacherFilesOwnLeave($type, (int) $data['requester_id']);
 
             $lesson = ! empty($data['lesson_id']) ? Lesson::findOrFail($data['lesson_id']) : null;
 
             if ($lesson) {
                 $this->assertLessonBookable($lesson, $data);
                 $data['class_room_id'] = $data['class_room_id'] ?? $lesson->class_room_id;
-            }
-
-            if ($scope = TeacherScope::current()) {
-                if ($data['requester_type'] === LeaveRequestType::TeacherLeave->requesterType()) {
-                    if ((int) $data['requester_id'] !== $scope->teacherId) {
-                        throw new AuthorizationException('Bạn chỉ có thể tạo đơn nghỉ cho chính mình.');
-                    }
-                } else {
-                    $scope->authorizeStudent((int) $data['requester_id']);
-                }
             }
 
             $request = new LeaveRequest($data);
@@ -112,6 +95,32 @@ class LeaveRequestService
 
             return $this->find($request->id);
         });
+    }
+
+    /**
+     * A teacher may only file a teacher-leave request for themselves. Admins and
+     * non-teacher staff (e.g. a manager) filing on someone's behalf are not
+     * restricted; student-leave requests are unaffected.
+     *
+     * @throws AuthorizationException
+     */
+    private function assertTeacherFilesOwnLeave(LeaveRequestType $type, int $requesterId): void
+    {
+        if ($type !== LeaveRequestType::TeacherLeave) {
+            return;
+        }
+
+        $user = Auth::guard('api')->user();
+
+        if (! $user || $user->is_admin) {
+            return;
+        }
+
+        $teacherId = Teacher::query()->where('user_id', $user->id)->value('id');
+
+        if ($teacherId !== null && (int) $teacherId !== $requesterId) {
+            throw new AuthorizationException('Bạn chỉ có thể tạo đơn nghỉ cho chính mình.');
+        }
     }
 
     /**

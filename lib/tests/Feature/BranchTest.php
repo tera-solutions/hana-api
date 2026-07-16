@@ -55,8 +55,8 @@ class BranchTest extends TestCase
 
     public function test_can_create_branch(): void
     {
-        $this->actingAsAdmin();
-        $businessId = $this->makeBusinessId();
+        $admin = $this->actingAsAdmin();
+        $businessId = $admin->business_id;
 
         $this->postJson('/v1/sys/branch/create', $this->payload($businessId))
             ->assertStatus(200)
@@ -68,8 +68,8 @@ class BranchTest extends TestCase
 
     public function test_create_rejects_duplicate_code_in_same_business(): void
     {
-        $this->actingAsAdmin();
-        $businessId = $this->makeBusinessId();
+        $admin = $this->actingAsAdmin();
+        $businessId = $admin->business_id;
 
         $this->postJson('/v1/sys/branch/create', $this->payload($businessId))->assertStatus(200);
 
@@ -79,10 +79,16 @@ class BranchTest extends TestCase
 
     public function test_create_allows_same_code_in_different_business(): void
     {
-        $this->actingAsAdmin();
+        // Tenant isolation: a branch is created in the acting admin's own
+        // business, so the same code in two businesses requires two admins.
+        $bizA = $this->makeBusinessId();
+        $bizB = $this->makeBusinessId();
 
-        $this->postJson('/v1/sys/branch/create', $this->payload($this->makeBusinessId()))->assertStatus(200);
-        $this->postJson('/v1/sys/branch/create', $this->payload($this->makeBusinessId()))->assertStatus(200);
+        $this->actingAsAdmin($bizA);
+        $this->postJson('/v1/sys/branch/create', $this->payload($bizA))->assertStatus(200);
+
+        $this->actingAsAdmin($bizB);
+        $this->postJson('/v1/sys/branch/create', $this->payload($bizB))->assertStatus(200);
     }
 
     public function test_create_rejects_inactive_business(): void
@@ -132,8 +138,8 @@ class BranchTest extends TestCase
 
     public function test_update_cannot_change_code_or_business(): void
     {
-        $this->actingAsAdmin();
-        $businessId = $this->makeBusinessId();
+        $admin = $this->actingAsAdmin();
+        $businessId = $admin->business_id;
         $id = $this->postJson('/v1/sys/branch/create', $this->payload($businessId))->json('data.id');
 
         $this->putJson("/v1/sys/branch/update/{$id}", [

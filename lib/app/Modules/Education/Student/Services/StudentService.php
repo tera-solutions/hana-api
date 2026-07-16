@@ -4,12 +4,14 @@ namespace App\Modules\Education\Student\Services;
 
 use App\Helpers\Task;
 use App\Modules\CRM\Parent\Models\ParentModel;
+use App\Modules\Education\Enrollment\Models\Enrollment;
+use App\Modules\Education\Exam\Models\ExamResult;
 use App\Modules\Education\Student\Enums\StudentStatus;
 use App\Modules\Education\Student\Events\StudentCreated;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\Student\Models\StudentHistory;
 use App\Modules\Education\Support\SummarizesByStatus;
-use App\Modules\Education\Support\TeacherScope;
+use App\Modules\Finance\Invoice\Models\Invoice;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,10 +113,6 @@ class StudentService
             $query->whereDate('enrollment_date', '<=', $params['enrolled_to']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainStudents($query);
-        }
-
         return $query;
     }
 
@@ -128,10 +126,6 @@ class StudentService
      */
     public function detail($id): array
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeStudent((int) $id);
-        }
-
         return [
             'student' => $this->find($id),
             'statistics' => $this->statistics($id),
@@ -141,9 +135,9 @@ class StudentService
     public function statistics($id): array
     {
         return [
-            'total_enrollments' => $this->countLinked('edu_enrollments', $id, 'student_id'),
-            'total_invoices' => $this->countLinked('fin_invoices', $id, 'student_id'),
-            'total_exam_results' => $this->countLinked('edu_exam_results', $id, 'student_id'),
+            'total_enrollments' => $this->guard(fn () => Enrollment::where('student_id', $id)->count()),
+            'total_invoices' => $this->guard(fn () => Invoice::where('student_id', $id)->count()),
+            'total_exam_results' => $this->guard(fn () => ExamResult::where('student_id', $id)->count()),
         ];
     }
 
@@ -156,10 +150,6 @@ class StudentService
      */
     public function learningStats($id): array
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeStudent((int) $id);
-        }
-
         $attendance = $this->guard(
             fn () => DB::table('edu_attendances')
                 ->where('student_id', $id)
@@ -245,10 +235,6 @@ class StudentService
     public function update($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeStudent((int) $id);
-            }
-
             $student = $this->find($id);
 
             // Immutable: identity & enrollment context (see student.md §3).
@@ -280,10 +266,6 @@ class StudentService
      */
     public function suspend($id, array $data)
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeStudent((int) $id);
-        }
-
         $student = $this->find($id);
 
         if ($student->status === Student::STATUS_SUSPENDED) {
@@ -312,10 +294,6 @@ class StudentService
      */
     public function restore($id, array $data = [])
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeStudent((int) $id);
-        }
-
         $student = $this->find($id);
 
         if ($student->status !== Student::STATUS_SUSPENDED) {
@@ -342,10 +320,6 @@ class StudentService
      */
     public function delete($id)
     {
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeStudent((int) $id);
-        }
-
         $student = $this->find($id);
 
         if ($this->hasLinkedData($id, Student::LINKED_TABLES)) {

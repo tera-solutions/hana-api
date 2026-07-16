@@ -10,25 +10,24 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\Room\Models\Room;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 /**
- * Aggregated teacher dashboard (dashboard_summary_backend_prompt.md). One request
+ * Aggregated dashboard (dashboard_summary_backend_prompt.md). One request
  * replaces the ~6 separate /v1/edu/* calls the portal used to make.
  *
- * Everything is scoped to the authenticated teacher via {@see TeacherScope}; an admin
- * caller (no scope) sees the business-wide figures.
+ * Business-wide: every figure covers the current business's classes (isolated by
+ * BusinessScope on ClassRoom). Sessions and lesson plans carry no business_id of
+ * their own, so they are confined via the business's class-id list.
  *
  * Assumptions (documented per the prompt):
  *  - `edu_classes` has no level column, so `level` is always null.
  *  - lesson-plan `taught_percent` is a curriculum-completion proxy: completed sessions
- *    ÷ total sessions of the teacher's classes that use the plan (0 when none).
+ *    ÷ total sessions of the classes that use the plan (0 when none).
  *  - attendance `total` is today's enrolled roster (not just students with a saved
- *    record yet), so present/absent/late fill in progressively as the teacher marks
- *    them; the whole block is null only when the teacher has no session today.
+ *    record yet), so present/absent/late fill in progressively as they are marked;
+ *    the whole block is null only when there is no session today.
  */
 class DashboardService
 {
@@ -39,24 +38,23 @@ class DashboardService
         $weekStart = $day->copy()->startOfWeek();   // Monday
         $weekEnd = $day->copy()->endOfWeek();       // Sunday
 
-        $scope = TeacherScope::current();
-        $classIds = $scope ? $scope->classIds() : ClassRoom::query()->pluck('id')->all();
+        $classIds = ClassRoom::query()->pluck('id')->all();
 
         return [
-            'stats' => $this->stats($classIds, $scope, $today),
-            'schedule_today' => $this->scheduleToday($scope, $today),
-            'schedule_week' => $this->scheduleWeek($scope, $weekStart, $weekEnd),
+            'stats' => $this->stats($classIds, $today),
+            'schedule_today' => $this->scheduleToday($classIds, $today),
+            'schedule_week' => $this->scheduleWeek($classIds, $weekStart, $weekEnd),
             'homework_pending' => $this->homeworkPending($classIds),
-            'lesson_plans' => $this->lessonPlans($scope, $classIds),
+            'lesson_plans' => $this->lessonPlans($classIds),
             'my_classes' => $this->myClasses($classIds),
-            'attendance' => $this->attendance($scope, $today),
+            'attendance' => $this->attendance($classIds, $today),
         ];
     }
 
     /**
      * @param  array<int, int>  $classIds
      */
-    private function stats(array $classIds, ?TeacherScope $scope, string $today): array
+    private function stats(array $classIds, string $today): array
     {
         $studentsEnrolled = ClassStudent::whereIn('class_id', $classIds)
             ->where('status', 'active')
@@ -68,7 +66,7 @@ class DashboardService
             ->where('status', ClassRoom::STATUS_ACTIVE)
             ->count();
 
-        $todaySessions = $this->scopedSessions($scope)
+        $todaySessions = $this->sessionsOf($classIds)
             ->whereDate('session_date', $today)
             ->where('status', '!=', ClassSession::STATUS_CANCELLED)
             ->get(['status']);
@@ -84,9 +82,12 @@ class DashboardService
         ];
     }
 
-    private function scheduleToday(?TeacherScope $scope, string $today): array
+    /**
+     * @param  array<int, int>  $classIds
+     */
+    private function scheduleToday(array $classIds, string $today): array
     {
-        $sessions = $this->scopedSessions($scope)
+        $sessions = $this->sessionsOf($classIds)
             ->whereDate('session_date', $today)
             ->where('status', '!=', ClassSession::STATUS_CANCELLED)
             ->orderBy('start_time')
@@ -130,10 +131,12 @@ class DashboardService
      * One entry per day of the ISO week (Mon→Sun, always 7), with the session count
      * and how many of those are completed — lets the dashboard show a weekly
      * teaching-progress rate, not just today's.
+     *
+     * @param  array<int, int>  $classIds
      */
-    private function scheduleWeek(?TeacherScope $scope, Carbon $weekStart, Carbon $weekEnd): array
+    private function scheduleWeek(array $classIds, Carbon $weekStart, Carbon $weekEnd): array
     {
-        $byDate = $this->scopedSessions($scope)
+        $byDate = $this->sessionsOf($classIds)
             ->whereDate('session_date', '>=', $weekStart->toDateString())
             ->whereDate('session_date', '<=', $weekEnd->toDateString())
             ->where('status', '!=', ClassSession::STATUS_CANCELLED)
@@ -191,15 +194,29 @@ class DashboardService
     }
 
     /**
+     * Recently updated lesson plans of the business's classes (attached to one of
+     * them, or sharing a course with them).
+     *
      * @param  array<int, int>  $classIds
      */
-    private function lessonPlans(?TeacherScope $scope, array $classIds): array
+    private function lessonPlans(array $classIds): array
     {
-        $query = LessonPlan::query()->with('course:id,name');
+        $classes = ClassRoom::query()
+            ->whereIn('id', $classIds)
+            ->get(['course_id', 'lesson_plan_id']);
 
-        if ($scope) {
-            $scope->constrainLessonPlans($query);
-        }
+        $planIds = $classes->pluck('lesson_plan_id')->filter()->unique()->all();
+        $courseIds = $classes->pluck('course_id')->filter()->unique()->all();
+
+        $query = LessonPlan::query()
+            ->with('course:id,name')
+            ->where(function (Builder $q) use ($planIds, $courseIds) {
+                $q->whereIn('id', $planIds);
+
+                if (! empty($courseIds)) {
+                    $q->orWhereIn('course_id', $courseIds);
+                }
+            });
 
         return $query->orderByDesc('updated_at')
             ->limit(5)
@@ -238,9 +255,12 @@ class DashboardService
         ])->all();
     }
 
-    private function attendance(?TeacherScope $scope, string $today): ?array
+    /**
+     * @param  array<int, int>  $classIds
+     */
+    private function attendance(array $classIds, string $today): ?array
     {
-        $sessions = $this->scopedSessions($scope)
+        $sessions = $this->sessionsOf($classIds)
             ->whereDate('session_date', $today)
             ->where('status', '!=', ClassSession::STATUS_CANCELLED)
             ->get(['id', 'class_id']);
@@ -271,7 +291,7 @@ class DashboardService
     }
 
     /**
-     * Completed ÷ total sessions of the teacher's classes that use the plan.
+     * Completed ÷ total sessions of the classes that use the plan.
      *
      * @param  array<int, int>  $classIds
      */
@@ -322,15 +342,14 @@ class DashboardService
             ->all();
     }
 
-    private function scopedSessions(?TeacherScope $scope): Builder
+    /**
+     * Sessions belonging to the given (business) classes.
+     *
+     * @param  array<int, int>  $classIds
+     */
+    private function sessionsOf(array $classIds): Builder
     {
-        $query = ClassSession::query();
-
-        if ($scope) {
-            $scope->constrainSessions($query);
-        }
-
-        return $query;
+        return ClassSession::query()->whereIn('class_id', $classIds);
     }
 
     private function hhmm(?string $time): ?string

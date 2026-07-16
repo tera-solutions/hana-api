@@ -7,7 +7,6 @@ use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\StudentLevel\Models\StudentLevel;
 use App\Modules\Education\StudentLevel\Models\StudentLevelAssessment;
 use App\Modules\Education\StudentLevel\Models\StudentLevelHistory;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -32,10 +31,6 @@ class StudentLevelService
     {
         $query = StudentLevel::with(['student', 'course', 'level'])
             ->where('student_id', $studentId);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByStudentId($query, 'edu_student_levels.student_id');
-        }
 
         $studentLevel = $query->first();
 
@@ -63,10 +58,6 @@ class StudentLevelService
     {
         return DB::transaction(function () use ($data) {
             $student = Student::findOrFail($data['student_id']);
-
-            if ($scope = TeacherScope::current()) {
-                $scope->authorizeStudent((int) $student->id);
-            }
 
             $level = $this->levelInCourse((int) $data['level_id'], (int) $data['course_id']); // BR002
 
@@ -176,10 +167,6 @@ class StudentLevelService
     private function scopedStudentLevel($id): StudentLevel
     {
         $query = StudentLevel::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByStudentId($query, 'edu_student_levels.student_id');
-        }
 
         return $query->findOrFail($id);
     }

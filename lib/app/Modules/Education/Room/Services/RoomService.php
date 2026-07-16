@@ -393,13 +393,13 @@ class RoomService
     public function usageStatistics($id): array
     {
         return [
-            'total_classes' => $this->countLinked('edu_classes', $id, 'room_id'),
+            'total_classes' => $this->guard(fn () => ClassRoom::where('room_id', $id)->count()),
             'active_classes' => $this->guard(fn () => ClassRoom::where('room_id', $id)
                 ->where('status', ClassStatus::Active->value)
                 ->whereNull('deleted_at')
                 ->count()
             ),
-            'total_sessions' => $this->countLinked('edu_sessions', $id, 'room_id'),
+            'total_sessions' => $this->guard(fn () => ClassSession::where('room_id', $id)->count()),
             'completed_sessions' => $this->guard(fn () => ClassSession::where('room_id', $id)
                 ->where('status', ClassSessionStatus::Completed->value)
                 ->whereNull('deleted_at')

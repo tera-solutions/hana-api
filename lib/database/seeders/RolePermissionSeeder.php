@@ -33,10 +33,10 @@ class RolePermissionSeeder extends Seeder
         'ADMIN_ROLE' => ['all' => true],
 
         // Daily teaching work: authors draft lesson plans/templates (publishing
-        // is an admin review step, not a teacher action) and manages their
-        // classes' homework, attendance, evaluations and lessons; reads the
-        // surrounding catalog. Row-level isolation between teachers is enforced
-        // by TeacherScope, not here.
+        // is an admin review step, not a teacher action) and manages homework,
+        // attendance, evaluations and lessons; reads the surrounding catalog.
+        // Teachers act business-wide (isolated only by business); access is
+        // governed by these permissions.
         'TEACHER_ROLE' => [
             'full' => [
                 'assignment', 'material', 'evaluation', 'task', 'attendance',
@@ -51,6 +51,7 @@ class RolePermissionSeeder extends Seeder
                 'lesson_plan' => ['list', 'view', 'create', 'update'],
                 'enrollment' => ['list', 'view', 'create', 'transfer'],
                 'exam' => ['list', 'view', 'create', 'update'],
+                'wallet' => ['view', 'transaction.view'],
             ],
         ],
 

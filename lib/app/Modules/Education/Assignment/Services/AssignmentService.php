@@ -14,7 +14,6 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Student\Models\Student;
 use App\Modules\Education\Support\SummarizesByStatus;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -94,10 +93,6 @@ class AssignmentService
             }
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainAssignments($query);
-        }
-
         return $query;
     }
 
@@ -130,15 +125,6 @@ class AssignmentService
     public function create(array $data): Assignment
     {
         return DB::transaction(function () use ($data) {
-            if ($scope = TeacherScope::current()) {
-                if (! empty($data['class_room_id'])) {
-                    $scope->authorizeClass((int) $data['class_room_id']);
-                }
-                if (! empty($data['lesson_id'])) {
-                    $scope->authorizeClass((int) Lesson::findOrFail($data['lesson_id'])->class_room_id);
-                }
-            }
-
             $assignment = new Assignment($data);
             $assignment->assignment_code = $this->generateCode();
             $assignment->status = Assignment::STATUS_DRAFT;
@@ -163,7 +149,7 @@ class AssignmentService
     {
         return DB::transaction(function () {
             $maxExisting = (int) Assignment::query()
-                ->selectRaw("MAX(CAST(SUBSTRING(assignment_code, 4) AS UNSIGNED)) as max_seq")
+                ->selectRaw('MAX(CAST(SUBSTRING(assignment_code, 4) AS UNSIGNED)) as max_seq')
                 ->value('max_seq');
 
             $ref = ReferenceCount::where('ref_type', 'assignment')
@@ -565,10 +551,6 @@ class AssignmentService
     private function scopedAssignment($assignmentId): Assignment
     {
         $query = Assignment::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainAssignments($query);
-        }
 
         return $query->findOrFail($assignmentId);
     }

@@ -90,6 +90,7 @@ class AttendanceTest extends TestCase
     private function makeSessionId(string $date, ?int $classId = null): int
     {
         return DB::table('edu_sessions')->insertGetId([
+            'business_id' => $this->businessId,
             'class_id' => $classId ?? $this->classId,
             'session_no' => 1,
             'name' => 'Session '.uniqid(),

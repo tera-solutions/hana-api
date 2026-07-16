@@ -96,7 +96,7 @@ class CourseService
     public function operationalStatistics($id): array
     {
         return [
-            'total_classes' => $this->countLinked('edu_classes', $id, 'course_id'),
+            'total_classes' => $this->guard(fn () => ClassRoom::where('course_id', $id)->count()),
             'active_classes' => $this->guard(fn () => ClassRoom::where('course_id', $id)
                 ->whereIn('status', ['opening', 'running'])
                 ->count()

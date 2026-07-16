@@ -37,7 +37,7 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    protected $appends = ['avatar_url'];
+    protected $appends = ['avatar_url', 'is_superadmin'];
 
     public function getBearerToken()
     {
@@ -50,6 +50,26 @@ class User extends Authenticatable
         }
 
         return null;
+    }
+
+    /**
+     * Platform-superadmin flag: whether this account operates the SaaS across
+     * all tenants (username listed in config('constants.administrator_usernames')).
+     * Exposed on the raw model (login/profile) so the client can gate the
+     * superadmin panel; explicit resources like UserResource omit it.
+     */
+    public function getIsSuperadminAttribute(): bool
+    {
+        if (empty($this->username)) {
+            return false;
+        }
+
+        $allowed = array_filter(array_map(
+            'trim',
+            explode(',', (string) config('constants.administrator_usernames')),
+        ));
+
+        return in_array($this->username, $allowed, true);
     }
 
     public function getAvatarUrlAttribute()

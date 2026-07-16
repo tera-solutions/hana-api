@@ -6,13 +6,14 @@ use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Enrollment\Models\Enrollment;
+use App\Modules\Education\Enrollment\Models\EnrollmentHistory;
 use App\Modules\Education\Enrollment\Models\EnrollmentSuspension;
 use App\Modules\Education\Enrollment\Models\EnrollmentTransfer;
 use App\Modules\Education\Student\Models\Student;
-use App\Modules\Education\Support\TeacherScope;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Services\InvoiceService;
 use App\Modules\Finance\Payment\Models\Payment;
+use App\Modules\Finance\Payment\Models\Refund;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -72,10 +73,6 @@ class EnrollmentService
                 : $query->where('debt_amount', '<=', 0);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByClass($query, 'class_id');
-        }
-
         $this->applySort($query, $params, ['code', 'enrolled_at', 'status', 'debt_amount', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -84,10 +81,6 @@ class EnrollmentService
     public function find($id): Enrollment
     {
         $query = Enrollment::query();
-
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByClass($query, 'class_id');
-        }
 
         return $query->with(self::RELATIONS)->findOrFail($id);
     }
@@ -119,10 +112,6 @@ class EnrollmentService
         $student = Student::findOrFail($data['student_id']);
         $course = Course::findOrFail($data['course_id']);
         $class = ClassRoom::findOrFail($data['class_id']);
-
-        if ($scope = TeacherScope::current()) {
-            $scope->authorizeClass((int) $class->id);
-        }
 
         $this->guardEnrollable($student, $course, $class);
 
@@ -288,7 +277,7 @@ class EnrollmentService
             );
 
             if ($invoiceId) {
-                $this->guard(fn () => DB::table('fin_refunds')->insert([
+                $this->guard(fn () => Refund::create([
                     'business_id' => $enrollment->business_id,
                     'invoice_id' => $invoiceId,
                     'student_id' => $enrollment->student_id,
@@ -297,8 +286,6 @@ class EnrollmentService
                     'status' => 'pending',
                     'refunded_at' => now(),
                     'created_by' => $this->actingUserId(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]));
             }
 
@@ -502,7 +489,7 @@ class EnrollmentService
             return;
         }
 
-        $this->guard(fn () => DB::table('edu_enrollment_histories')->insert([
+        $this->guard(fn () => EnrollmentHistory::create([
             'business_id' => $businessId,
             'student_id' => $studentId,
             'enrollment_id' => $enrollment->id,
@@ -511,8 +498,6 @@ class EnrollmentService
             'action' => $action,
             'created_by' => $this->actingUserId(),
             'effective_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ]));
     }
 
@@ -533,7 +518,7 @@ class EnrollmentService
 
     private function financial(Enrollment $enrollment): array
     {
-        $refunds = $this->guard(fn () => (float) DB::table('fin_refunds')
+        $refunds = $this->guard(fn () => (float) Refund::query()
             ->join('fin_invoices', 'fin_refunds.invoice_id', '=', 'fin_invoices.id')
             ->where('fin_invoices.enrollment_id', $enrollment->id)
             ->sum('fin_refunds.amount'));

@@ -572,9 +572,9 @@ class ExamTest extends TestCase
         ]);
     }
 
-    // ── TeacherScope ─────────────────────────────────────────────────────────
+    // ── Teacher access ───────────────────────────────────────────────────────
 
-    /** A non-admin, hr_teachers-linked user — TeacherScope::current() applies to it. */
+    /** A non-admin, hr_teachers-linked user (a teacher) in the acting business. */
     private function actingAsTeacher(array $permissions = []): int
     {
         $roleId = $this->makeRoleId($this->businessId);
@@ -613,17 +613,23 @@ class ExamTest extends TestCase
         $this->deleteJson("/v1/edu/exam/delete/{$examId}")->assertStatus(200);
     }
 
-    public function test_teacher_cannot_access_an_unrelated_exam_they_did_not_create(): void
+    public function test_teacher_can_access_any_exam_in_their_business(): void
     {
+        // Teacher-level row scoping was retired: a teacher with the exam
+        // permissions may reach any exam in their business, even one authored
+        // by a colleague and unrelated to their own classes. Cross-business
+        // access is still blocked by tenant isolation (see TenantIsolationTest).
         $this->actingAsAdmin();
         $examId = $this->createExam();
 
-        // Different teacher: no class on the exam's course, and not the author.
         $this->actingAsTeacher(['exam.list', 'exam.view', 'exam.update', 'exam.delete']);
 
-        $this->getJson("/v1/edu/exam/detail/{$examId}")->assertJsonPath('code', 403);
-        $this->putJson("/v1/edu/exam/update/{$examId}", ['exam_name' => 'Hijacked'])->assertJsonPath('code', 403);
-        $this->deleteJson("/v1/edu/exam/delete/{$examId}")->assertJsonPath('code', 403);
+        $this->getJson("/v1/edu/exam/detail/{$examId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.id', $examId);
+        $this->putJson("/v1/edu/exam/update/{$examId}", ['exam_name' => 'Edited by colleague'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
     }
 
     public function test_teacher_with_class_on_the_course_can_access_a_colleagues_exam(): void

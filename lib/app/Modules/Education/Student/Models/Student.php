@@ -15,11 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Package\Database\Concerns\BelongsToBusiness;
 use Package\Database\Concerns\HasAuditFields;
 use Package\Database\Concerns\HasAvatarUrl;
 
 class Student extends Model
 {
+    use BelongsToBusiness;
     use HasAuditFields;
     use HasAvatarUrl;
     use LogsActivity;

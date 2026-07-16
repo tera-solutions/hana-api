@@ -5,9 +5,12 @@ namespace App\Modules\Education\StudentLevel\Models;
 use App\Modules\Education\Level\Models\Level;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Package\Database\Concerns\BelongsToBusiness;
 
 class StudentLevelHistory extends Model
 {
+    use BelongsToBusiness;
+
     protected $table = 'edu_student_level_histories';
 
     protected $guarded = [];

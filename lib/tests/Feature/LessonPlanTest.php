@@ -183,9 +183,9 @@ class LessonPlanTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
-    // ── TeacherScope ─────────────────────────────────────────────────────────
+    // ── Teacher access ───────────────────────────────────────────────────────
 
-    /** A non-admin, hr_teachers-linked user — TeacherScope::current() applies to it. */
+    /** A non-admin, hr_teachers-linked user (a teacher) in the acting business. */
     private function actingAsTeacher(array $permissions = []): int
     {
         $roleId = $this->makeRoleId($this->businessId);
@@ -222,16 +222,22 @@ class LessonPlanTest extends TestCase
             ->assertJsonPath('success', true);
     }
 
-    public function test_teacher_cannot_access_an_unrelated_plan_they_did_not_create(): void
+    public function test_teacher_can_access_any_plan_in_their_business(): void
     {
+        // Teacher-level row scoping was retired: a teacher with the lesson-plan
+        // permissions may reach any plan in their business, including one
+        // authored by a colleague. Cross-business access stays blocked by
+        // tenant isolation (see TenantIsolationTest).
         $this->actingAsAdmin();
         $planId = $this->createPlan();
 
-        // Different teacher: no class on the plan's course, and not the author.
         $this->actingAsTeacher(['lesson_plan.list', 'lesson_plan.view', 'lesson_plan.update']);
 
-        $this->getJson("/v1/edu/lesson-plan/detail/{$planId}")->assertJsonPath('code', 403);
-        $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Hijacked'])
-            ->assertJsonPath('code', 403);
+        $this->getJson("/v1/edu/lesson-plan/detail/{$planId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.plan.id', $planId);
+        $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Edited by colleague'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
     }
 }

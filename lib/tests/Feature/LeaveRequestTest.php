@@ -320,4 +320,57 @@ class LeaveRequestTest extends TestCase
             ->assertJsonPath('data.requester_type', 'teacher')
             ->assertJsonCount(0, 'data.makeups');
     }
+
+    /** A teacher (hr_teachers-linked user) may only file a teacher-leave for themselves. */
+    private function actingAsTeacher(array $permissions = ['leave.create']): int
+    {
+        $roleId = $this->makeRoleId($this->businessId);
+        $this->grantPermissions($roleId, $permissions);
+        $user = $this->makeUser(false, $roleId, $this->businessId);
+
+        $teacherId = DB::table('hr_teachers')->insertGetId([
+            'user_id' => $user->id,
+            'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()),
+            'full_name' => 'Teacher '.uniqid(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAsApi($user);
+
+        return $teacherId;
+    }
+
+    private function teacherLeavePayload(int $requesterId, int $lessonId): array
+    {
+        $lessonDate = DB::table('edu_lessons')->where('id', $lessonId)->value('lesson_date');
+
+        return [
+            'request_type' => 'teacher_leave',
+            'requester_id' => $requesterId,
+            'lesson_id' => $lessonId,
+            'leave_date' => date('Y-m-d', strtotime($lessonDate)),
+            'reason_type' => 'personal',
+        ];
+    }
+
+    public function test_teacher_cannot_file_teacher_leave_for_another_teacher(): void
+    {
+        $ownTeacherId = $this->actingAsTeacher();
+        $otherTeacherId = $this->makeTeacherId();
+
+        $this->postJson('/v1/edu/leave/create', $this->teacherLeavePayload($otherTeacherId, $this->makeLessonId()))
+            ->assertJsonPath('code', 403);
+    }
+
+    public function test_teacher_can_file_teacher_leave_for_themselves(): void
+    {
+        $ownTeacherId = $this->actingAsTeacher();
+
+        $this->postJson('/v1/edu/leave/create', $this->teacherLeavePayload($ownTeacherId, $this->makeLessonId()))
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.requester_type', 'teacher');
+    }
 }

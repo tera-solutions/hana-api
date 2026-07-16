@@ -10,7 +10,8 @@ Route::prefix('class-room')->middleware('auth.tera')->group(function () {
     Route::get('/summary', [ClassController::class, 'summary'])->middleware('permission:class.list');
     Route::get('/detail/{id}', [ClassController::class, 'detail'])->middleware('permission:class.view');
 
-    Route::post('/create', [ClassController::class, 'create'])->middleware('permission:class.create');
+    Route::post('/create', [ClassController::class, 'create'])
+        ->middleware(['permission:class.create', 'subscription.active', 'subscription.quota:classes']);
     Route::put('/update/{id}', [ClassController::class, 'update'])->middleware('permission:class.update');
 
     Route::post('/suspend/{id}', [ClassController::class, 'suspend'])->middleware('permission:class.suspend');

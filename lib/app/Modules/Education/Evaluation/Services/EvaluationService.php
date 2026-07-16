@@ -5,7 +5,6 @@ namespace App\Modules\Education\Evaluation\Services;
 use App\Module\Portal\Model\Notification;
 use App\Modules\Education\Evaluation\Enums\EvaluationType;
 use App\Modules\Education\Evaluation\Models\Evaluation;
-use App\Modules\Education\Support\TeacherScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -53,10 +52,6 @@ class EvaluationService
             $query->whereDate('evaluated_at', '<=', $params['evaluated_to']);
         }
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByClass($query, 'class_room_id');
-        }
-
         $this->applySort($query, $params, ['evaluation_code', 'score', 'evaluated_at', 'status', 'created_at']);
 
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
@@ -74,11 +69,6 @@ class EvaluationService
     public function studentSummary(array $params = []): array
     {
         $classId = $params['class_room_id'] ?? $params['class_id'] ?? null;
-        $scope = TeacherScope::current();
-
-        if ($classId && $scope) {
-            $scope->authorizeClass((int) $classId);
-        }
 
         $studentQuery = DB::table('edu_class_students as cs')
             ->where('cs.status', 'active')
@@ -86,8 +76,6 @@ class EvaluationService
 
         if ($classId) {
             $studentQuery->where('cs.class_id', $classId);
-        } elseif ($scope) {
-            $studentQuery->whereIn('cs.class_id', $scope->classIds());
         }
 
         $studentIds = $studentQuery->distinct()->pluck('cs.student_id')->all();
@@ -135,10 +123,6 @@ class EvaluationService
     {
         $query = Evaluation::query();
 
-        if ($scope = TeacherScope::current()) {
-            $scope->constrainByClass($query, 'class_room_id');
-        }
-
         return $query->with(self::RELATIONS)->findOrFail($id);
     }
 
@@ -148,10 +132,6 @@ class EvaluationService
     public function create(array $data): Evaluation
     {
         return DB::transaction(function () use ($data) {
-            if (($scope = TeacherScope::current()) && ! empty($data['class_room_id'])) {
-                $scope->authorizeClass((int) $data['class_room_id']);
-            }
-
             $type = EvaluationType::from($data['evaluation_type']);
             $this->assertCriteriaBelongToType($type, $data['criteria'] ?? []);
             $this->assertNotSelfEvaluation($data);

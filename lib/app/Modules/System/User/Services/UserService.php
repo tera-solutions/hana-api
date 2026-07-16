@@ -4,21 +4,39 @@ namespace App\Modules\System\User\Services;
 
 use App\Models\User;
 use App\Modules\System\User\Events\UserCreated;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Package\Database\Concerns\HandlesEntityQueries;
+use Package\Tenancy\TenantContext;
 
 class UserService
 {
     use HandlesEntityQueries;
 
     /**
+     * Confine a User query to the acting business. The User model deliberately
+     * carries no global BusinessScope (it would recurse through Passport's
+     * token→user resolution), so tenant isolation for users is enforced here.
+     */
+    private function scopeToBusiness(Builder $query): Builder
+    {
+        $businessId = TenantContext::businessId();
+
+        if ($businessId !== null) {
+            $query->where('business_id', $businessId);
+        }
+
+        return $query;
+    }
+
+    /**
      * Paginated, searchable, filterable, sortable list.
      */
     public function paginate(array $params = [])
     {
-        $query = User::query();
+        $query = $this->scopeToBusiness(User::query());
 
         // Search: code (user id), full_name, email, phone
         if (! empty($params['search'])) {
@@ -52,7 +70,7 @@ class UserService
 
     public function find($id)
     {
-        return User::with(['business', 'branch', 'role'])->findOrFail($id);
+        return $this->scopeToBusiness(User::with(['business', 'branch', 'role']))->findOrFail($id);
     }
 
     public function create(array $data)
@@ -65,6 +83,12 @@ class UserService
             $data['status'] = $data['status'] ?? 'active';
             $data['is_active'] = $data['status'] === 'active';
             $data['is_admin'] = $data['is_admin'] ?? false;
+
+            // A new user always belongs to the acting business; a client-supplied
+            // business_id cannot place a user in another tenant.
+            if (($businessId = TenantContext::businessId()) !== null) {
+                $data['business_id'] = $businessId;
+            }
             // Temporary code; replaced with the USR###### code once the id is known.
             $data['code'] = 'TMP_'.Str::upper(Str::random(10));
 
@@ -121,12 +145,13 @@ class UserService
      */
     public function deletionBlockReason(User $user): ?string
     {
-        // Last remaining active super admin.
+        // Last remaining active super admin of this business.
         if ($user->is_admin) {
-            $otherAdmins = User::where('is_admin', true)
-                ->where('id', '!=', $user->id)
-                ->whereNull('deleted_at')
-                ->count();
+            $otherAdmins = $this->scopeToBusiness(
+                User::where('is_admin', true)
+                    ->where('id', '!=', $user->id)
+                    ->whereNull('deleted_at')
+            )->count();
             if ($otherAdmins === 0) {
                 return 'Không thể xóa tài khoản Super Admin cuối cùng.';
             }

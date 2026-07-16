@@ -84,6 +84,21 @@ class PermissionSeeder extends Seeder
             'activity_log.export' => 'Xuất nhật ký',
         ]);
 
+        $this->seedPermissions('System', 'Setting', [
+            'setting.list' => 'Xem danh sách cài đặt',
+            'setting.view' => 'Xem chi tiết cài đặt',
+            'setting.update' => 'Cập nhật cài đặt',
+        ]);
+
+        $this->seedPermissions('System', 'Package', [
+            'package.list' => 'Xem danh sách gói',
+        ]);
+
+        $this->seedPermissions('System', 'Subscription', [
+            'subscription.view' => 'Xem gói đang dùng',
+            'subscription.update' => 'Nâng cấp / đổi gói',
+        ]);
+
         $this->seedPermissions('System', 'Task', [
             'task.list' => 'Xem danh sách công việc',
             'task.view' => 'Xem chi tiết công việc',
@@ -287,6 +302,14 @@ class PermissionSeeder extends Seeder
             'exam.promote' => 'Xét lên cấp',
         ]);
 
+        $this->seedPermissions('Education', 'PlacementTest', [
+            'placement_test.list' => 'Xem danh sách',
+            'placement_test.view' => 'Xem chi tiết',
+            'placement_test.create' => 'Tạo mới',
+            'placement_test.update' => 'Cập nhật',
+            'placement_test.delete' => 'Xóa',
+        ]);
+
         $this->seedPermissions('Education', 'Question', [
             'question.list' => 'Xem danh sách',
             'question.view' => 'Xem câu hỏi',
@@ -307,6 +330,10 @@ class PermissionSeeder extends Seeder
             'enrollment.transfer' => 'Chuyển lớp',
             'enrollment.refund' => 'Hoàn phí',
             'enrollment.cancel' => 'Hủy ghi danh',
+        ]);
+
+        $this->seedPermissions('Education', 'TeacherReport', [
+            'teacher_report.view' => 'Xem báo cáo giảng dạy',
         ]);
 
         $this->seedPermissions('Education', 'Evaluation', [

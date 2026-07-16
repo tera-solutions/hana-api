@@ -5,6 +5,7 @@ namespace App\Modules\Finance\Wallet\Services;
 use App\Modules\Finance\Wallet\Models\Wallet;
 use App\Modules\Finance\Wallet\Models\WalletAdjustment;
 use App\Modules\Finance\Wallet\Models\WalletTransaction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -67,6 +68,84 @@ class WalletService
         $this->applySort($query, $params, ['amount', 'transaction_type', 'created_at']);
 
         return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Aggregate ledger stats for the "Tổng quan ví" widget (wallet.md), scoped to a
+     * single wallet: all-time totals in/out plus the current-vs-previous-month
+     * percentage change, computed with SQL sums instead of loading the whole ledger.
+     *
+     * The ledger has no `status` column (every row is an immutable completed entry),
+     * so `failed_count` is always 0 — kept in the response only so the FE summary
+     * tile has a stable shape to render (matches the teacher app's prior client-side
+     * placeholder pending a real "failed transaction" concept).
+     */
+    public function summary(array $params = []): array
+    {
+        $walletId = $params['wallet_id'] ?? null;
+
+        $base = WalletTransaction::query();
+        if ($walletId) {
+            $base->where('wallet_id', $walletId);
+        }
+
+        $now = now();
+        $curFrom = $now->copy()->startOfMonth();
+        $curTo = $now->copy()->endOfMonth();
+        $prevFrom = $now->copy()->subMonthNoOverflow()->startOfMonth();
+        $prevTo = $now->copy()->subMonthNoOverflow()->endOfMonth();
+
+        $totalIn = $this->directionalSum(clone $base, 'in');
+        $totalOut = $this->directionalSum(clone $base, 'out');
+        $successCount = (clone $base)->count();
+
+        $curIn = $this->directionalSum((clone $base)->whereBetween('created_at', [$curFrom, $curTo]), 'in');
+        $prevIn = $this->directionalSum((clone $base)->whereBetween('created_at', [$prevFrom, $prevTo]), 'in');
+        $curOut = $this->directionalSum((clone $base)->whereBetween('created_at', [$curFrom, $curTo]), 'out');
+        $prevOut = $this->directionalSum((clone $base)->whereBetween('created_at', [$prevFrom, $prevTo]), 'out');
+        $curCount = (clone $base)->whereBetween('created_at', [$curFrom, $curTo])->count();
+        $prevCount = (clone $base)->whereBetween('created_at', [$prevFrom, $prevTo])->count();
+
+        return [
+            'total_in' => $totalIn,
+            'total_out' => $totalOut,
+            'success_count' => $successCount,
+            'failed_count' => 0,
+            'total_in_change' => $this->pctChange($curIn, $prevIn),
+            'total_out_change' => $this->pctChange($curOut, $prevOut),
+            'success_count_change' => $this->pctChange($curCount, $prevCount),
+            'failed_count_change' => null,
+        ];
+    }
+
+    /**
+     * Sum the amount moving in the given direction. `deposit/bonus/refund` are always
+     * inbound and `payment/expire` always outbound; `adjustment` has no fixed direction
+     * (BR010 allows either), so it's classified per-row by comparing `balance_after` to
+     * `balance_before`.
+     */
+    private function directionalSum(Builder $query, string $direction): float
+    {
+        $inTypes = [WalletTransaction::TYPE_DEPOSIT, WalletTransaction::TYPE_BONUS, WalletTransaction::TYPE_REFUND];
+        $outTypes = [WalletTransaction::TYPE_PAYMENT, WalletTransaction::TYPE_EXPIRE];
+
+        $typed = (clone $query)->whereIn('transaction_type', $direction === 'in' ? $inTypes : $outTypes)->sum('amount');
+
+        $adjustment = (clone $query)
+            ->where('transaction_type', WalletTransaction::TYPE_ADJUSTMENT)
+            ->whereColumn('balance_after', $direction === 'in' ? '>' : '<', 'balance_before')
+            ->sum('amount');
+
+        return round((float) $typed + (float) $adjustment, 2);
+    }
+
+    private function pctChange(float $current, float $previous): ?float
+    {
+        if ($previous <= 0) {
+            return null;
+        }
+
+        return round(($current - $previous) / $previous * 100, 1);
     }
 
     /**

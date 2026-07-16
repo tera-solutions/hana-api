@@ -9,6 +9,7 @@ Route::prefix('wallet')->middleware('auth.tera')->group(function () {
     Route::get('/list', [WalletController::class, 'list'])->middleware('permission:wallet.view');
     Route::get('/detail/{id}', [WalletController::class, 'detail'])->middleware('permission:wallet.view');
     Route::get('/transactions', [WalletController::class, 'transactions'])->middleware('permission:wallet.transaction.view');
+    Route::get('/summary', [WalletController::class, 'summary'])->middleware('permission:wallet.transaction.view');
 
     Route::post('/lock/{id}', [WalletController::class, 'lock'])->middleware('permission:wallet.lock');
     Route::post('/unlock/{id}', [WalletController::class, 'unlock'])->middleware('permission:wallet.lock');

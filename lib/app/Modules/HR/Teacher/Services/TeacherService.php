@@ -2,9 +2,14 @@
 
 namespace App\Modules\HR\Teacher\Services;
 
+use App\Modules\Education\ClassRoom\Models\ClassTeacher;
 use App\Modules\HR\Teacher\Events\TeacherCreated;
+use App\Modules\HR\Teacher\Models\Contract;
+use App\Modules\HR\Teacher\Models\Payroll;
+use App\Modules\HR\Teacher\Models\Review;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\HR\Teacher\Models\TeacherHistory;
+use App\Modules\HR\Teacher\Models\TeachingSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -75,11 +80,11 @@ class TeacherService
     public function statistics($id): array
     {
         return [
-            'total_classes' => $this->countLinked('edu_class_teacher', $id, 'teacher_id'),
-            'total_sessions' => $this->countLinked('hr_teaching_sessions', $id, 'teacher_id'),
-            'total_contracts' => $this->countLinked('hr_contracts', $id, 'teacher_id'),
-            'total_payrolls' => $this->countLinked('hr_payrolls', $id, 'teacher_id'),
-            'total_reviews' => $this->countLinked('hr_reviews', $id, 'teacher_id'),
+            'total_classes' => $this->guard(fn () => ClassTeacher::where('teacher_id', $id)->count()),
+            'total_sessions' => $this->guard(fn () => TeachingSession::where('teacher_id', $id)->count()),
+            'total_contracts' => $this->guard(fn () => Contract::where('teacher_id', $id)->count()),
+            'total_payrolls' => $this->guard(fn () => Payroll::where('teacher_id', $id)->count()),
+            'total_reviews' => $this->guard(fn () => Review::where('teacher_id', $id)->count()),
             'average_rating' => 0, // placeholder until evaluations are modelled
         ];
     }

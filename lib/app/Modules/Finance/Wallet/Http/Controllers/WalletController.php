@@ -4,6 +4,7 @@ namespace App\Modules\Finance\Wallet\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Finance\Wallet\Actions\GetWalletAction;
+use App\Modules\Finance\Wallet\Actions\GetWalletSummaryAction;
 use App\Modules\Finance\Wallet\Actions\ListWalletAction;
 use App\Modules\Finance\Wallet\Actions\ListWalletTransactionAction;
 use App\Modules\Finance\Wallet\Actions\LockWalletAction;
@@ -81,6 +82,22 @@ class WalletController extends Controller
     public function transactions(Request $request, ListWalletTransactionAction $action)
     {
         return $this->respondPaginated($action->handle($request->all()), WalletTransactionResource::class);
+    }
+
+    /**
+     * Wallet summary
+     *
+     * All-time in/out totals, transaction count, and current-vs-previous-month
+     * percentage change, for the "Tổng quan ví" widget.
+     *
+     * @queryParam wallet_id integer Filter by wallet (recommended — omitting it sums
+     * across every wallet the caller can see). Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Thao tác thành công", "data": {"total_in": 500000, "total_out": 120000, "success_count": 12, "failed_count": 0, "total_in_change": 8.3, "total_out_change": null, "success_count_change": 20.0, "failed_count_change": null}, "code": 200, "errors": null}
+     */
+    public function summary(Request $request, GetWalletSummaryAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
     }
 
     /**

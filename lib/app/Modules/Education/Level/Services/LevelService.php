@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Level\Services;
 
 use App\Modules\Education\Level\Models\Level;
+use App\Modules\Education\StudentLevel\Models\StudentLevel;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 class LevelService
@@ -48,7 +49,7 @@ class LevelService
         return [
             'level' => $this->find($id),
             'statistics' => [
-                'students' => $this->countLinked('edu_student_levels', $id, 'level_id'),
+                'students' => $this->guard(fn () => StudentLevel::where('level_id', $id)->count()),
             ],
         ];
     }

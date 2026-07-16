@@ -12,15 +12,26 @@ use Laravel\Passport\Passport;
  */
 trait SeedsAuthContext
 {
+    /**
+     * The first business created in the test, reused as the default tenant for
+     * actingAsAdmin()/actingAsManager() so the acting user and the data the
+     * test seeds live in the same business (required by tenant scoping).
+     */
+    protected ?int $primaryBusinessId = null;
+
     protected function makeBusinessId(string $status = 'active'): int
     {
-        return DB::table('sys_business')->insertGetId([
+        $id = DB::table('sys_business')->insertGetId([
             'name' => 'Biz '.uniqid(),
             'email' => 'biz-'.uniqid().'@example.test',
             'status' => $status,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $this->primaryBusinessId ??= $id;
+
+        return $id;
     }
 
     protected function makeRoleId(int $businessId): int
@@ -81,17 +92,17 @@ trait SeedsAuthContext
     }
 
     /** Authenticate as a Super Admin / Admin (full access via is_admin bypass). */
-    protected function actingAsAdmin(): User
+    protected function actingAsAdmin(?int $businessId = null): User
     {
-        $businessId = $this->makeBusinessId();
+        $businessId ??= $this->primaryBusinessId ?? $this->makeBusinessId();
 
         return $this->actingAsApi($this->makeUser(true, $this->makeRoleId($businessId), $businessId));
     }
 
     /** Authenticate as a Manager whose role is granted the given permission codes. */
-    protected function actingAsManager(array $permissionCodes = []): User
+    protected function actingAsManager(array $permissionCodes = [], ?int $businessId = null): User
     {
-        $businessId = $this->makeBusinessId();
+        $businessId ??= $this->primaryBusinessId ?? $this->makeBusinessId();
         $roleId = $this->makeRoleId($businessId);
         $this->grantPermissions($roleId, $permissionCodes);
 

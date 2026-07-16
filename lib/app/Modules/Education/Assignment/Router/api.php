@@ -4,7 +4,7 @@ use App\Modules\Education\Assignment\Http\Controllers\AssignmentController;
 use App\Modules\Education\Assignment\Http\Controllers\SubmissionController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('assignment')->middleware('auth.tera')->group(function () {
+Route::prefix('assignment')->middleware(['auth.tera', 'subscription.feature:assignments'])->group(function () {
 
     Route::get('/list', [AssignmentController::class, 'list'])->middleware('permission:assignment.list');
     Route::get('/summary', [AssignmentController::class, 'summary'])->middleware('permission:assignment.list');
@@ -28,7 +28,7 @@ Route::prefix('assignment')->middleware('auth.tera')->group(function () {
 });
 
 // Submissions — grading queue, results, grade & publish (assignment.md §9, §10, §XII).
-Route::prefix('submission')->middleware('auth.tera')->group(function () {
+Route::prefix('submission')->middleware(['auth.tera', 'subscription.feature:assignments'])->group(function () {
 
     // Danh sách học viên nộp bài (chờ chấm) / Danh sách bài tập đã chấm / Chi tiết bài đã chấm.
     Route::get('/submitted/{assignmentId}', [SubmissionController::class, 'submitted'])->middleware('permission:assignment.grade');
