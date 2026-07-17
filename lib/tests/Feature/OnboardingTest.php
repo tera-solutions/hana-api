@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use App\Modules\System\Subscription\Models\Subscription;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +72,11 @@ class OnboardingTest extends TestCase
         $this->assertSame($business->id, $teacher->business_id);
         $this->assertStringStartsWith('GV', $teacher->code);
         $this->assertSame($payload['bio'], $teacher->note);
+
+        // A default branch exists so students/rooms/teachers can be created
+        // right away (their create endpoints all require branch_id).
+        $branch = Branch::where('business_id', $business->id)->firstOrFail();
+        $this->assertTrue((bool) $branch->is_main_branch);
 
         // A 14-day trial subscription is active.
         $subscription = Subscription::where('business_id', $business->id)->firstOrFail();

@@ -75,10 +75,12 @@ class TeacherReportService
         $overdueCount = $submissions->where('status', AssignmentSubmission::STATUS_ASSIGNED)->count();
         $homeworkCompletionRate = $totalTargets > 0 ? round($submittedCount / $totalTargets * 100, 1) : 0.0;
 
-        $teachingHours = ClassSession::whereIn('id', $sessionIds)
+        $teachingMinutes = ClassSession::whereIn('id', $sessionIds)
             ->where('status', ClassSession::STATUS_COMPLETED)
-            ->selectRaw('SUM(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as total_minutes')
-            ->value('total_minutes');
+            ->get(['start_time', 'end_time'])
+            ->sum(fn ($session) => $session->start_time && $session->end_time
+                ? Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time))
+                : 0);
 
         return [
             'overview' => [
@@ -87,7 +89,7 @@ class TeacherReportService
                 'attendance_rate' => $attendanceRate,
                 'avg_score' => $avgScore,
                 'homework_completion_rate' => $homeworkCompletionRate,
-                'teaching_minutes' => (int) ($teachingHours ?? 0),
+                'teaching_minutes' => (int) $teachingMinutes,
             ],
             'score_by_class' => $this->scoreByClass($classIds, $dateFrom, $dateTo),
             'attendance_breakdown' => [
@@ -159,14 +161,14 @@ class TeacherReportService
         return ClassSession::whereIn('class_id', $classIds)
             ->where('status', ClassSession::STATUS_COMPLETED)
             ->whereBetween('session_date', [$dateFrom, $dateTo])
-            ->selectRaw('YEARWEEK(session_date, 3) as year_week, MIN(session_date) as week_start, COUNT(*) as total')
-            ->groupBy('year_week')
-            ->orderBy('year_week')
-            ->get()
-            ->map(fn ($row) => [
-                'week_start' => $row->week_start,
-                'total_sessions' => (int) $row->total,
+            ->orderBy('session_date')
+            ->get(['session_date'])
+            ->groupBy(fn ($session) => Carbon::parse($session->session_date)->startOfWeek()->toDateString())
+            ->map(fn ($sessions, $weekStart) => [
+                'week_start' => $weekStart,
+                'total_sessions' => $sessions->count(),
             ])
+            ->values()
             ->all();
     }
 

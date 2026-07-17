@@ -15,7 +15,8 @@ Route::prefix('student')->middleware('auth.tera')->group(function () {
     Route::put('/update/{id}', [StudentController::class, 'update'])->middleware('permission:student.update');
 
     Route::post('/suspend/{id}', [StudentController::class, 'suspend'])->middleware('permission:student.suspend');
-    Route::post('/restore/{id}', [StudentController::class, 'restore'])->middleware('permission:student.restore');
+    Route::post('/restore/{id}', [StudentController::class, 'restore'])
+        ->middleware(['permission:student.restore', 'subscription.quota:students']);
 
     Route::delete('/delete/{id}', [StudentController::class, 'delete'])->middleware('permission:student.delete');
     Route::post('/export', [StudentController::class, 'export'])->middleware('permission:student.list');

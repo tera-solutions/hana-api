@@ -4,8 +4,10 @@ namespace App\Modules\System\Business\Models;
 
 use App\Models\User;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
+use App\Modules\System\Branch\Models\Branch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\HasAuditFields;
 
@@ -37,5 +39,10 @@ class Business extends Model
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class, 'business_id');
     }
 }
