@@ -54,20 +54,35 @@ class SubscriptionService
                     : now()->addMonth()->toDateString(),
             ]);
 
-            SubscriptionInvoice::create([
-                'subscription_id' => $subscription->id,
-                'business_id' => $businessId,
-                'code' => $this->generateInvoiceCode(),
-                'package_name' => $package->name,
-                'billing_cycle' => $cycle,
-                'amount' => $package->price,
-                'payment_method' => $data['payment_method'] ?? null,
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
+            $this->recordInvoice($subscription, $package, $businessId, $cycle, $data['payment_method'] ?? null);
 
             return $subscription->load('package');
         });
+    }
+
+    /**
+     * Log a billing-history row for a subscription — paid upgrades and the
+     * free trial started at signup alike, so "Lịch sử hóa đơn gói" is never
+     * empty for a business that has an active subscription.
+     */
+    public function recordInvoice(
+        Subscription $subscription,
+        Package $package,
+        int $businessId,
+        string $cycle,
+        ?string $paymentMethod,
+    ): SubscriptionInvoice {
+        return SubscriptionInvoice::create([
+            'subscription_id' => $subscription->id,
+            'business_id' => $businessId,
+            'code' => $this->generateInvoiceCode(),
+            'package_name' => $package->name,
+            'billing_cycle' => $cycle,
+            'amount' => $package->price,
+            'payment_method' => $paymentMethod,
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
     }
 
     public function invoices(array $params = [])

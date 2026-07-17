@@ -7,7 +7,10 @@ use App\Modules\Education\LeaveRequest\Enums\LeaveReasonType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveRequestType;
 use App\Modules\Education\LeaveRequest\Enums\LeaveStatus;
 use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\Student\Models\Student;
+use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -82,5 +85,23 @@ class LeaveRequest extends Model
     public function reasonTypeLabel(): ?string
     {
         return LeaveReasonType::tryFrom((string) $this->reason_type)?->label();
+    }
+
+    /**
+     * `requester_id` points at `edu_students` or `hr_teachers` depending on
+     * `requester_type` — not a true polymorphic relation (no morph map), so this
+     * resolves the name with a direct lookup rather than an eager-loadable relation.
+     */
+    protected function requesterName(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->requester_id) {
+                return null;
+            }
+
+            return $this->isStudentLeave()
+                ? Student::find($this->requester_id)?->name
+                : Teacher::find($this->requester_id)?->full_name;
+        });
     }
 }

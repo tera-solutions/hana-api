@@ -13,6 +13,7 @@ Route::prefix('parent')->middleware('auth.tera')->group(function () {
     Route::put('/update/{id}', [ParentController::class, 'update'])->middleware('permission:parent.update');
 
     Route::post('/suspend/{id}', [ParentController::class, 'suspend'])->middleware('permission:parent.suspend');
-    Route::post('/restore/{id}', [ParentController::class, 'restore'])->middleware('permission:parent.restore');
+    Route::post('/restore/{id}', [ParentController::class, 'restore'])
+        ->middleware(['permission:parent.restore', 'subscription.quota:parents']);
 
 });

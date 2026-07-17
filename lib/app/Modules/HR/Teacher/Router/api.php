@@ -14,7 +14,8 @@ Route::prefix('teacher')->middleware('auth.tera')->group(function () {
     Route::put('/update/{id}', [TeacherController::class, 'update'])->middleware('permission:teacher.update');
 
     Route::post('/suspend/{id}', [TeacherController::class, 'suspend'])->middleware('permission:teacher.suspend');
-    Route::post('/restore/{id}', [TeacherController::class, 'restore'])->middleware('permission:teacher.restore');
+    Route::post('/restore/{id}', [TeacherController::class, 'restore'])
+        ->middleware(['permission:teacher.restore', 'subscription.quota:teachers']);
     Route::post('/resign/{id}', [TeacherController::class, 'resign'])->middleware('permission:teacher.resign');
 
     // Certificates (teacher.md §7 / §11).

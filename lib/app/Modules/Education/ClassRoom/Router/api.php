@@ -15,6 +15,7 @@ Route::prefix('class-room')->middleware('auth.tera')->group(function () {
     Route::put('/update/{id}', [ClassController::class, 'update'])->middleware('permission:class.update');
 
     Route::post('/suspend/{id}', [ClassController::class, 'suspend'])->middleware('permission:class.suspend');
-    Route::post('/restore/{id}', [ClassController::class, 'restore'])->middleware('permission:class.restore');
+    Route::post('/restore/{id}', [ClassController::class, 'restore'])
+        ->middleware(['permission:class.restore', 'subscription.quota:classes']);
 
 });

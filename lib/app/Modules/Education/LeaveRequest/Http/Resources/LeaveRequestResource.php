@@ -15,6 +15,7 @@ class LeaveRequestResource extends JsonResource
             'request_type' => $this->request_type,
             'requester_type' => $this->requester_type,
             'requester_id' => $this->requester_id,
+            'requester_name' => $this->requester_name,
 
             'class_room_id' => $this->class_room_id,
             'class_room' => $this->whenLoaded('classRoom', fn () => $this->classRoom ? [

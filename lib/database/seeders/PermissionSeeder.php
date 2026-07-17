@@ -364,6 +364,15 @@ class PermissionSeeder extends Seeder
             'achievement.view' => 'Xem thành tích',
             'teacher_review.create' => 'Gửi đánh giá giáo viên',
         ]);
+
+        $this->seedPermissions('HR', 'Timesheet', [
+            'timesheet.view' => 'Xem bảng công',
+        ]);
+
+        $this->seedPermissions('HR', 'Payroll', [
+            'payroll.view' => 'Xem bảng lương',
+            'payroll.generate' => 'Tính lương',
+        ]);
     }
 
     // ── Finance ──────────────────────────────────────────────────────────────
@@ -429,6 +438,19 @@ class PermissionSeeder extends Seeder
             'wallet.refund' => 'Hoàn tiền',
             'wallet.adjust' => 'Điều chỉnh ví',
             'wallet.transaction.view' => 'Xem giao dịch ví',
+        ]);
+
+        $this->seedPermissions('Finance', 'Wallet Request', [
+            'wallet_request.list' => 'Xem danh sách yêu cầu ví',
+            'wallet_request.view' => 'Xem yêu cầu ví',
+            'wallet_request.create' => 'Tạo yêu cầu nạp/rút tiền',
+            'wallet_request.cancel' => 'Hủy yêu cầu nạp/rút tiền',
+            'wallet_request.approve' => 'Duyệt/từ chối/hoàn tất yêu cầu nạp/rút tiền',
+        ]);
+
+        $this->seedPermissions('Finance', 'Bank Account', [
+            'bank_account.view' => 'Xem tài khoản ngân hàng của bản thân',
+            'bank_account.update' => 'Cập nhật tài khoản ngân hàng của bản thân',
         ]);
     }
 }

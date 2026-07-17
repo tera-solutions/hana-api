@@ -5,11 +5,14 @@ namespace App\Modules\System\Onboarding\Services;
 use App\Models\Role;
 use App\Models\User;
 use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
 use App\Modules\System\Package\Models\Package;
 use App\Modules\System\Subscription\Models\Subscription;
+use App\Modules\System\Subscription\Services\SubscriptionService;
 use App\Modules\System\User\Services\UserService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Self-service onboarding: a new center registers itself from the Teacher app,
@@ -25,7 +28,10 @@ class OnboardingService
     /** Trial length granted on signup, in days. */
     private const TRIAL_DAYS = 14;
 
-    public function __construct(private readonly UserService $users) {}
+    public function __construct(
+        private readonly UserService $users,
+        private readonly SubscriptionService $subscriptions,
+    ) {}
 
     /**
      * @return array{business: Business, user: User}
@@ -60,6 +66,7 @@ class OnboardingService
             $business->update(['manager_id' => $user->id]);
 
             $this->createOwnerTeacher($business->id, $user->id, $data);
+            $this->createDefaultBranch($business->id, $data);
 
             $this->startTrial($business->id);
 
@@ -104,11 +111,30 @@ class OnboardingService
         return $teacher;
     }
 
+    /**
+     * A tenant needs at least one branch before it can create students/rooms/
+     * teachers through their own validated endpoints (all require branch_id).
+     * Self-signup only collects a single-location school, so this is it — the
+     * owner can add more branches later via the branch management screen.
+     */
+    private function createDefaultBranch(int $businessId, array $data): Branch
+    {
+        return Branch::create([
+            'business_id' => $businessId,
+            'name' => $data['school'],
+            'code' => 'CN-'.Str::upper(Str::random(6)),
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
+            'address' => 'Chưa cập nhật',
+            'is_main_branch' => true,
+        ]);
+    }
+
     private function startTrial(int $businessId): Subscription
     {
         $package = $this->trialPackage();
 
-        return Subscription::create([
+        $subscription = Subscription::create([
             'business_id' => $businessId,
             'package_id' => $package->id,
             'price' => 0,
@@ -117,6 +143,10 @@ class OnboardingService
             'started_at' => now()->toDateString(),
             'expires_at' => now()->addDays(self::TRIAL_DAYS)->toDateString(),
         ]);
+
+        $this->subscriptions->recordInvoice($subscription, $package, $businessId, 'month', null);
+
+        return $subscription;
     }
 
     /**

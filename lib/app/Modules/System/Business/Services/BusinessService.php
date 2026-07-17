@@ -4,8 +4,17 @@ namespace App\Modules\System\Business\Services;
 
 use App\Modules\System\Business\Events\BusinessCreated;
 use App\Modules\System\Business\Models\Business;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Package\Database\Concerns\HandlesEntityQueries;
+use Package\Tenancy\TenantContext;
 
+/**
+ * Tenant-facing view over Business (/v1/sys/business/*). Business is the tenant
+ * root and carries no BusinessScope, so every read here is confined to the
+ * acting user's own business — only a platform superadmin sees across tenants.
+ * The cross-tenant operator surface lives in the Superadmin module instead.
+ */
 class BusinessService
 {
     use HandlesEntityQueries;
@@ -15,7 +24,7 @@ class BusinessService
      */
     public function paginate(array $params = [])
     {
-        $query = Business::query();
+        $query = $this->scopeToVisible(Business::query());
 
         // Search: business_code, name, email, phone
         if (! empty($params['search'])) {
@@ -52,7 +61,25 @@ class BusinessService
 
     public function find($id)
     {
-        return Business::with('manager')->findOrFail($id);
+        return $this->scopeToVisible(Business::with('manager'))->findOrFail($id);
+    }
+
+    /**
+     * Confine a Business query to what the acting user may see: everything for a
+     * platform superadmin, only their own business otherwise. A tenant user with
+     * no business resolves to no rows rather than to an unscoped query.
+     */
+    private function scopeToVisible(Builder $query): Builder
+    {
+        if (Auth::guard('api')->user()?->is_superadmin) {
+            return $query;
+        }
+
+        $businessId = TenantContext::businessId();
+
+        return $businessId === null
+            ? $query->whereRaw('1 = 0')
+            : $query->whereKey($businessId);
     }
 
     /**

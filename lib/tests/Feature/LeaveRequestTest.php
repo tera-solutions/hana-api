@@ -373,4 +373,25 @@ class LeaveRequestTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.requester_type', 'teacher');
     }
+
+    public function test_response_resolves_requester_name(): void
+    {
+        $this->actingAsAdmin();
+
+        $studentId = DB::table('edu_students')->insertGetId([
+            'business_id' => $this->businessId,
+            'branch_id' => $this->branchId,
+            'code' => 'S_'.strtoupper(uniqid()),
+            'name' => 'Nguyễn Văn A',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $id = $this->createStudentLeave(['requester_id' => $studentId])->json('data.id');
+
+        $this->getJson("/v1/edu/leave/detail/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.requester_name', 'Nguyễn Văn A');
+    }
 }

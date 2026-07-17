@@ -68,6 +68,8 @@ use App\Modules\Finance\Wallet\Enums\WalletAdjustmentType;
 use App\Modules\Finance\Wallet\Enums\WalletOwnerType;
 use App\Modules\Finance\Wallet\Enums\WalletStatus;
 use App\Modules\Finance\Wallet\Enums\WalletTransactionType;
+use App\Modules\Finance\WalletRequest\Enums\WalletRequestStatus;
+use App\Modules\Finance\WalletRequest\Enums\WalletRequestType;
 use App\Modules\HR\Teacher\Enums\TeacherStatus;
 use App\Modules\HR\Teacher\Enums\TeacherType;
 use App\Modules\System\ActivityLog\Enums\ActivityAction;
@@ -185,6 +187,8 @@ class MetadataRegistry
                 'wallet_status' => WalletStatus::options(),
                 'wallet_transaction_type' => WalletTransactionType::options(),
                 'wallet_adjustment_type' => WalletAdjustmentType::options(),
+                'wallet_request_status' => WalletRequestStatus::options(),
+                'wallet_request_type' => WalletRequestType::options(),
 
                 'promotion_status' => PromotionStatus::options(),
                 'promotion_type' => PromotionType::options(),

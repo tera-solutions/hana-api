@@ -44,14 +44,31 @@ class RolePermissionSeeder extends Seeder
             ],
             'view' => [
                 'student', 'student_level', 'class', 'course', 'level',
-                'question', 'timetable', 'room', 'parent', 'dashboard',
-                'achievement', 'teacher', 'branch',
+                'timetable', 'room', 'parent', 'dashboard',
+                'achievement', 'teacher', 'branch', 'timesheet',
             ],
             'actions' => [
+                'payroll' => ['view'],
                 'lesson_plan' => ['list', 'view', 'create', 'update'],
                 'enrollment' => ['list', 'view', 'create', 'transfer'],
                 'exam' => ['list', 'view', 'create', 'update'],
                 'wallet' => ['view', 'transaction.view'],
+                // Request-based nạp/rút (no gateway): teacher creates/cancels/reads
+                // their own request; `approve` (which also covers reject/complete)
+                // is deliberately withheld — self-approving your own payout is a
+                // fraud vector, an admin must review it from outside this app.
+                'wallet_request' => ['list', 'view', 'create', 'cancel'],
+                // Own HR profile payout target for withdraw requests — not `teacher.update`
+                // (withheld from this role), scoped server-side to the acting user's own row.
+                'bank_account' => ['view', 'update'],
+                // Tuition invoices for the teacher's own students: full lifecycle
+                // incl. approve/cancel/refund/pay (small centers have the teacher
+                // double as billing staff, not a separate finance role).
+                'fin_invoice' => ['list', 'view', 'create', 'update', 'approve', 'cancel', 'refund', 'pay'],
+                // Author + submit-for-review, same as lesson_plan; `approve`/`activate`
+                // stay out — publishing a shared question into the live bank is a
+                // reviewer/admin step, not the authoring teacher's own call.
+                'question' => ['list', 'view', 'create', 'update', 'clone', 'review', 'archive', 'import', 'generate_exam'],
             ],
         ],
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,22 @@ class BusinessTest extends TestCase
 
         // Make the business.* permissions available for the permission guard.
         $this->seed(PermissionSeeder::class);
+    }
+
+    /**
+     * Provisioning and removing businesses are platform operations, and reads
+     * span tenants here, so these cases act as a superadmin. Per-tenant
+     * visibility is covered by BusinessTenantScopeTest.
+     */
+    private function actingAsSuperadmin(): User
+    {
+        config(['constants.administrator_usernames' => 'superop']);
+
+        $businessId = $this->primaryBusinessId ?? $this->makeBusinessId();
+
+        return $this->actingAsApi(
+            $this->makeUser(true, $this->makeRoleId($businessId), $businessId, ['username' => 'superop'])
+        );
     }
 
     private function payload(array $overrides = []): array
@@ -68,7 +85,7 @@ class BusinessTest extends TestCase
 
     public function test_can_create_business(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $response = $this->postJson('/v1/sys/business/create', $this->payload());
 
@@ -81,7 +98,7 @@ class BusinessTest extends TestCase
 
     public function test_create_rejects_duplicate_business_code(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $this->postJson('/v1/sys/business/create', $this->payload())->assertStatus(200);
 
@@ -94,7 +111,7 @@ class BusinessTest extends TestCase
 
     public function test_create_rejects_lowercase_prefix(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $response = $this->postJson('/v1/sys/business/create', $this->payload(['prefix' => 'hcm']));
 
@@ -103,7 +120,7 @@ class BusinessTest extends TestCase
 
     public function test_can_list_and_search_business(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $this->postJson('/v1/sys/business/create', $this->payload())->assertStatus(200);
         $this->postJson('/v1/sys/business/create', $this->payload([
@@ -126,7 +143,7 @@ class BusinessTest extends TestCase
 
     public function test_detail_returns_statistics(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $create = $this->postJson('/v1/sys/business/create', $this->payload())->json('data');
         $id = $create['id'];
@@ -149,7 +166,7 @@ class BusinessTest extends TestCase
 
     public function test_update_cannot_change_business_code(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $id = $this->postJson('/v1/sys/business/create', $this->payload())->json('data.id');
 
@@ -167,7 +184,7 @@ class BusinessTest extends TestCase
 
     public function test_delete_blocked_when_linked_data_exists(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $id = $this->postJson('/v1/sys/business/create', $this->payload())->json('data.id');
 
@@ -188,7 +205,7 @@ class BusinessTest extends TestCase
 
     public function test_delete_soft_deletes_when_no_linked_data(): void
     {
-        $this->actingAsAdmin();
+        $this->actingAsSuperadmin();
 
         $id = $this->postJson('/v1/sys/business/create', $this->payload())->json('data.id');
 
@@ -201,7 +218,7 @@ class BusinessTest extends TestCase
 
     public function test_stamps_audit_columns(): void
     {
-        $admin = $this->actingAsAdmin();
+        $admin = $this->actingAsSuperadmin();
 
         $id = $this->postJson('/v1/sys/business/create', $this->payload())->json('data.id');
         $this->assertDatabaseHas('sys_business', [
