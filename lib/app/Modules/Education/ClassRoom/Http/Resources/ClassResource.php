@@ -2,7 +2,7 @@
 
 namespace App\Modules\Education\ClassRoom\Http\Resources;
 
-use App\Modules\Education\ClassSchedule\Http\Resources\ClassScheduleResource;
+use App\Modules\Education\Timetable\Models\Timetable;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ClassResource extends JsonResource
@@ -69,10 +69,10 @@ class ClassResource extends JsonResource
             'use_course_curriculum' => $this->use_course_curriculum,
             'description' => $this->description,
 
-            'schedules' => $this->whenLoaded(
-                'schedules',
-                fn () => ClassScheduleResource::collection($this->schedules)
-            ),
+            // Kept as `schedules` for API/FE backward compatibility — sourced from the
+            // class's current (most recent, non-cancelled) Timetable's rules instead of
+            // the retired ClassSchedule table (timetable-management.md).
+            'schedules' => $this->whenLoaded('timetables', fn () => $this->currentScheduleRules()),
 
             'business_id' => $this->business_id,
             'business' => $this->whenLoaded('business', fn () => $this->business ? [
@@ -88,6 +88,29 @@ class ClassResource extends JsonResource
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
         ];
+    }
+
+    /**
+     * The rules of the class's current timetable (its most recent non-cancelled
+     * one), shaped like the old ClassSchedule rows so existing FE consumers of
+     * `schedules` keep working unchanged.
+     */
+    private function currentScheduleRules(): array
+    {
+        $timetable = $this->timetables
+            ->where('status', '!=', Timetable::STATUS_CANCELLED)
+            ->first();
+
+        if (! $timetable) {
+            return [];
+        }
+
+        return $timetable->rules->map(fn ($rule) => [
+            'id' => $rule->id,
+            'weekday' => $rule->day_of_week,
+            'start_time' => $rule->start_time,
+            'end_time' => $rule->end_time,
+        ])->values()->all();
     }
 
     /**

@@ -25,14 +25,6 @@ class ClassSessionResource extends JsonResource
                 'name' => $this->classRoom->name,
             ] : null),
 
-            'schedule_id' => $this->schedule_id,
-            'schedule' => $this->whenLoaded('schedule', fn () => $this->schedule ? [
-                'id' => $this->schedule->id,
-                'weekday' => $this->schedule->weekday,
-                'start_time' => $this->schedule->start_time,
-                'end_time' => $this->schedule->end_time,
-            ] : null),
-
             'room_id' => $this->room_id,
             'room' => $this->whenLoaded('room', fn () => $this->room ? [
                 'id' => $this->room->id,

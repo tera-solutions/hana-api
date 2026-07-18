@@ -6,6 +6,7 @@ use App\Helpers\Task;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Models\InvoiceHistory;
 use App\Modules\Finance\Payment\Services\PaymentService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -76,6 +77,17 @@ class InvoiceService
             'invoice' => $this->find($id),
             'histories' => InvoiceHistory::where('invoice_id', $id)->latest()->get(),
         ];
+    }
+
+    /**
+     * Render an invoice as a downloadable PDF (same data as `detail()`'s `invoice` key).
+     */
+    public function downloadPdf($id): \Barryvdh\DomPDF\PDF
+    {
+        $invoice = $this->find($id);
+
+        return Pdf::loadView('invoices.pdf', ['invoice' => $invoice])
+            ->setPaper('a4');
     }
 
     public function create(array $data): Invoice

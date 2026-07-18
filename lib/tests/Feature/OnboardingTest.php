@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Modules\Finance\Wallet\Models\Wallet;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
@@ -74,9 +75,20 @@ class OnboardingTest extends TestCase
         $this->assertSame($payload['bio'], $teacher->note);
 
         // A default branch exists so students/rooms/teachers can be created
-        // right away (their create endpoints all require branch_id).
+        // right away (their create endpoints all require branch_id) — and the
+        // owner/teacher are actually assigned to it, not left branchless.
         $branch = Branch::where('business_id', $business->id)->firstOrFail();
         $this->assertTrue((bool) $branch->is_main_branch);
+        $this->assertSame($branch->id, $user->branch_id);
+        $this->assertSame($branch->id, $teacher->branch_id);
+
+        // The owner gets a personal wallet, same as any teacher.
+        $this->assertDatabaseHas('fin_wallets', [
+            'business_id' => $business->id,
+            'owner_type' => Wallet::OWNER_TEACHER,
+            'owner_id' => $user->id,
+            'available_balance' => 0,
+        ]);
 
         // A 14-day trial subscription is active.
         $subscription = Subscription::where('business_id', $business->id)->firstOrFail();

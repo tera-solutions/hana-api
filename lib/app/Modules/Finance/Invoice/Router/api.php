@@ -8,6 +8,7 @@ Route::prefix('invoice')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [InvoiceController::class, 'list'])->middleware('permission:fin_invoice.list');
     Route::get('/detail/{id}', [InvoiceController::class, 'detail'])->middleware('permission:fin_invoice.view');
+    Route::get('/download/{id}', [InvoiceController::class, 'download'])->middleware('permission:fin_invoice.view');
 
     Route::post('/create', [InvoiceController::class, 'create'])->middleware('permission:fin_invoice.create');
     Route::put('/update/{id}', [InvoiceController::class, 'update'])->middleware('permission:fin_invoice.update');

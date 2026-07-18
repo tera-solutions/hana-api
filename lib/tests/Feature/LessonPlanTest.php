@@ -226,8 +226,8 @@ class LessonPlanTest extends TestCase
     {
         // Teacher-level row scoping was retired: a teacher with the lesson-plan
         // permissions may reach any plan in their business, including one
-        // authored by a colleague. Cross-business access stays blocked by
-        // tenant isolation (see TenantIsolationTest).
+        // authored by a colleague. Cross-business access is blocked by
+        // BelongsToBusiness (see test_plan_is_isolated_from_another_business).
         $this->actingAsAdmin();
         $planId = $this->createPlan();
 
@@ -239,5 +239,42 @@ class LessonPlanTest extends TestCase
         $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Edited by colleague'])
             ->assertStatus(200)
             ->assertJsonPath('success', true);
+    }
+
+    // ── Tenant isolation ─────────────────────────────────────────────────────
+
+    /**
+     * LessonPlan had no business_id/BelongsToBusiness at all until this was
+     * fixed — any business could reach any other business's plan by ID.
+     */
+    public function test_plan_is_isolated_from_another_business(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->createPlan();
+        $this->addLesson($planId, 'Alphabet');
+
+        // A second, unrelated business/admin.
+        $otherBusinessId = $this->makeBusinessId();
+        $this->actingAsAdmin($otherBusinessId);
+
+        $this->getJson('/v1/edu/lesson-plan/list')
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 0);
+
+        // `detail` has no try/catch, so ModelNotFoundException propagates to a
+        // real 404. The write actions below catch \RuntimeException (which
+        // ModelNotFoundException extends) and turn it into a 200 error body —
+        // a pre-existing, unrelated inconsistency; what matters here is that
+        // none of them succeed against another business's plan.
+        $this->getJson("/v1/edu/lesson-plan/detail/{$planId}")->assertStatus(404);
+        $this->putJson("/v1/edu/lesson-plan/update/{$planId}", ['plan_name' => 'Hijacked'])
+            ->assertJsonPath('success', false);
+        $this->postJson("/v1/edu/lesson-plan/publish/{$planId}")->assertJsonPath('success', false);
+        $this->postJson("/v1/edu/lesson-plan/archive/{$planId}")->assertJsonPath('success', false);
+        // `clone` also has no try/catch, same as `detail`.
+        $this->postJson("/v1/edu/lesson-plan/clone/{$planId}", ['plan_code' => 'STOLEN_V1'])
+            ->assertStatus(404);
+
+        $this->assertDatabaseHas('edu_lesson_plans', ['id' => $planId, 'plan_name' => 'Kids Starter']);
     }
 }

@@ -30,7 +30,6 @@ return [
             'Student',
             'Course',
             'ClassRoom',
-            'ClassSchedule',
             'ClassSession',
             'Enrollment',
             'LessonPlan',

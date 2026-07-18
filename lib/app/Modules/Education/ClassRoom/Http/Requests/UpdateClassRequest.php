@@ -30,13 +30,6 @@ class UpdateClassRequest extends FormRequest
             'max_warning_capacity' => ['nullable', 'integer', 'min:0'],
             'max_capacity' => ['nullable', 'integer', 'min:1'],
             'description' => ['nullable', 'string', 'max:5000'],
-
-            'schedules' => ['nullable', 'array'],
-            'schedules.*.weekday' => ['required', 'integer', 'between:1,7'],
-            'schedules.*.start_time' => ['required', 'date_format:H:i'],
-            'schedules.*.end_time' => ['required', 'date_format:H:i', 'after:schedules.*.start_time'],
-
-            'generate_from_date' => ['nullable', 'date'],
         ];
     }
 
@@ -49,16 +42,6 @@ class UpdateClassRequest extends FormRequest
             ],
             'teacher_id' => ['description' => 'ID giáo viên phụ trách.', 'example' => 2],
             'assignee_id' => ['description' => 'ID nhân viên phụ trách.', 'example' => 5],
-            'schedules' => [
-                'description' => 'Toàn bộ lịch học mới (thay thế lịch cũ). Null = giữ nguyên.',
-                'example' => [
-                    ['weekday' => 2, 'start_time' => '19:00', 'end_time' => '20:30'],
-                ],
-            ],
-            'generate_from_date' => [
-                'description' => 'Nếu có và lớp CHƯA có giáo án trước đó, sinh buổi học từ giáo án (lesson_plan_id) và lịch học kể từ ngày này (Y-m-d) sau khi cập nhật. Bỏ qua nếu lớp đã có giáo án từ trước.',
-                'example' => '2026-07-01',
-            ],
         ];
     }
 }

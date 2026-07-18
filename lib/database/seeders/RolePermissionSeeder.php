@@ -32,24 +32,28 @@ class RolePermissionSeeder extends Seeder
     private array $map = [
         'ADMIN_ROLE' => ['all' => true],
 
-        // Daily teaching work: authors draft lesson plans/templates (publishing
-        // is an admin review step, not a teacher action) and manages homework,
-        // attendance, evaluations and lessons; reads the surrounding catalog.
-        // Teachers act business-wide (isolated only by business); access is
-        // governed by these permissions.
+        // webs/teacher is an independent SaaS portal each center runs — there is
+        // no separate admin portal per business, so the owning teacher account
+        // has full run-the-center access to the catalog/roster modules below,
+        // not just read access. Sensitive cross-cutting actions (approving own
+        // wallet payouts, activating a shared question into the live bank,
+        // running payroll) stay deliberately withheld — see the per-line notes.
         'TEACHER_ROLE' => [
             'full' => [
                 'assignment', 'material', 'evaluation', 'task', 'attendance',
                 'lesson', 'session', 'leave', 'session_feedback',
-            ],
-            'view' => [
                 'student', 'student_level', 'class', 'course', 'level',
                 'timetable', 'room', 'parent', 'dashboard',
                 'achievement', 'teacher', 'branch', 'timesheet',
             ],
             'actions' => [
-                'payroll' => ['view'],
-                'lesson_plan' => ['list', 'view', 'create', 'update'],
+                // Self-service payroll: teacher can view and (re)generate
+                // their OWN payroll — PayrollController::generate() locks
+                // this down server-side (own teacher_id only, bonus/penalty
+                // ignored for non-admin) so a teacher still cannot set their
+                // own bonus/penalty or touch anyone else's payroll.
+                'payroll' => ['view', 'generate'],
+                'lesson_plan' => ['list', 'view', 'create', 'update', 'publish'],
                 'enrollment' => ['list', 'view', 'create', 'transfer'],
                 'exam' => ['list', 'view', 'create', 'update'],
                 'wallet' => ['view', 'transaction.view'],

@@ -7,6 +7,7 @@ use App\Modules\Finance\Invoice\Actions\ApproveInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\CancelInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\CreateInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\DenyInvoiceAction;
+use App\Modules\Finance\Invoice\Actions\DownloadInvoicePdfAction;
 use App\Modules\Finance\Invoice\Actions\GetInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\ListInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\RecordPaymentAction;
@@ -72,6 +73,16 @@ class InvoiceController extends Controller
             'invoice' => new InvoiceResource($result['invoice']),
             'histories' => $result['histories'],
         ]);
+    }
+
+    /**
+     * Download invoice as PDF
+     *
+     * @urlParam id integer required The invoice ID. Example: 1
+     */
+    public function download($id, DownloadInvoicePdfAction $action)
+    {
+        return $action->handle($id)->download("invoice-{$id}.pdf");
     }
 
     /**

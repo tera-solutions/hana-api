@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Modules\HR\Payroll\Services\PayrollService;
 use App\Modules\HR\Teacher\Models\Teacher;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -212,6 +213,50 @@ class TeacherTest extends TestCase
         $this->assertDatabaseHas('hr_teachers', ['id' => $id, 'full_name' => 'Jane Updated', 'code' => 'T0001']);
         $this->assertDatabaseHas('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'TOEIC']);
         $this->assertDatabaseMissing('hr_teacher_skills', ['teacher_id' => $id, 'skill_name' => 'IELTS']);
+    }
+
+    public function test_update_hourly_rate_regenerates_existing_payroll_rows(): void
+    {
+        $this->actingAsAdmin();
+
+        $teacherId = $this->postJson('/v1/hr/teacher/create', $this->payload(['hourly_rate' => 100000]))
+            ->json('data.id');
+
+        $courseId = DB::table('edu_courses')->insertGetId([
+            'business_id' => $this->businessId, 'name' => 'Course', 'code' => 'C_'.strtoupper(uniqid()),
+            'duration_minutes' => 60, 'price_per_lesson' => 100000, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $classId = DB::table('edu_classes')->insertGetId([
+            'course_id' => $courseId, 'business_id' => $this->businessId, 'code' => 'CLS_'.strtoupper(uniqid()),
+            'name' => 'Class', 'learning_type' => 'scheduled', 'status' => 'upcoming',
+            'start_date' => now()->toDateString(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $sessionId = DB::table('edu_sessions')->insertGetId([
+            'business_id' => $this->businessId, 'class_id' => $classId, 'teacher_id' => $teacherId,
+            'session_no' => 1, 'code' => 'SES_'.strtoupper(uniqid()), 'name' => 'Session',
+            'session_date' => '2026-07-05', 'start_time' => '19:00:00', 'end_time' => '20:00:00',
+            'status' => 'completed', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $studentId = DB::table('edu_students')->insertGetId([
+            'business_id' => $this->businessId, 'code' => 'S_'.strtoupper(uniqid()), 'name' => 'Student',
+            'status' => 'active', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('edu_attendances')->insert([
+            'session_id' => $sessionId, 'student_id' => $studentId, 'status' => 'present',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        // Payroll generated once at the original rate (acting admin has no
+        // teacher profile of their own, so exercise the service directly
+        // rather than the self-scoped GET /payroll/list endpoint).
+        app(PayrollService::class)->generate($teacherId, 7, 2026);
+        $this->assertDatabaseHas('hr_payrolls', ['teacher_id' => $teacherId, 'month' => 7, 'year' => 2026, 'base_salary' => 100000]);
+
+        // Changing hourly_rate should recompute that already-generated row.
+        $this->putJson("/v1/hr/teacher/update/{$teacherId}", ['hourly_rate' => 200000])
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('hr_payrolls', ['teacher_id' => $teacherId, 'month' => 7, 'year' => 2026, 'base_salary' => 200000]);
     }
 
     public function test_suspend_and_restore_lifecycle(): void

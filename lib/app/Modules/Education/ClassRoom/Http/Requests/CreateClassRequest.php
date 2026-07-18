@@ -34,15 +34,6 @@ class CreateClassRequest extends FormRequest
             'use_course_curriculum' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:5000'],
             'business_id' => ['nullable', 'integer', 'exists:sys_business,id'],
-
-            'schedules' => ['nullable', 'array'],
-            'schedules.*.weekday' => ['required', 'integer', 'between:1,7'],
-            'schedules.*.start_time' => ['required', 'date_format:H:i'],
-            'schedules.*.end_time' => ['required', 'date_format:H:i', 'after:schedules.*.start_time'],
-
-            // When set alongside lesson_plan_id + schedules, lessons are generated
-            // from the plan as part of class creation (Lớp học + Giáo án + Lịch học -> Sinh buổi học).
-            'generate_from_date' => ['nullable', 'date'],
         ];
     }
 
@@ -50,13 +41,6 @@ class CreateClassRequest extends FormRequest
     {
         $validator->after(function ($v) {
             $data = $v->getData();
-            $type = $data['learning_type'] ?? null;
-            $schedules = $data['schedules'] ?? [];
-
-            // Spec §4 validation: scheduled type requires at least one schedule.
-            if ($type === 'scheduled' && empty($schedules)) {
-                $v->errors()->add('schedules', 'Lớp học theo lịch cần ít nhất 1 lịch học.');
-            }
 
             // Capacity cross-field rules (spec §4).
             $minW = $data['min_warning_capacity'] ?? null;
@@ -110,19 +94,6 @@ class CreateClassRequest extends FormRequest
             'max_capacity' => ['description' => 'Sĩ số tối đa.', 'example' => 20],
             'use_course_curriculum' => ['description' => 'Sao chép chương trình học từ khóa học mẫu.', 'example' => true],
             'description' => ['description' => 'Mô tả lớp học.'],
-            'schedules' => [
-                'description' => 'Danh sách lịch học (array).',
-                'example' => [
-                    ['weekday' => 2, 'start_time' => '19:00', 'end_time' => '20:30'],
-                ],
-            ],
-            'schedules[].weekday' => ['description' => 'Thứ trong tuần (1=T2 … 7=CN).', 'example' => 2],
-            'schedules[].start_time' => ['description' => 'Giờ bắt đầu (HH:MM).', 'example' => '19:00'],
-            'schedules[].end_time' => ['description' => 'Giờ kết thúc (HH:MM).', 'example' => '20:30'],
-            'generate_from_date' => [
-                'description' => 'Nếu có, sinh buổi học từ giáo án (lesson_plan_id) và lịch học (schedules) kể từ ngày này (Y-m-d). Bỏ qua nếu lớp chưa có giáo án hoặc lịch học.',
-                'example' => '2026-07-01',
-            ],
         ];
     }
 }

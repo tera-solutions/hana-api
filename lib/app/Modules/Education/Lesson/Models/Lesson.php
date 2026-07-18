@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Lesson\Models;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Lesson\Enums\LessonStatus;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
@@ -59,6 +60,12 @@ class Lesson extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_room_id');
+    }
+
+    /** The ClassSession this lesson was generated for (nullable — legacy lessons predate this link). */
+    public function session(): BelongsTo
+    {
+        return $this->belongsTo(ClassSession::class, 'session_id');
     }
 
     public function lessonPlan(): BelongsTo

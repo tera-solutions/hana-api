@@ -6,11 +6,10 @@ use App\Modules\Education\Assignment\Models\Assignment;
 use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
-use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Exam\Models\ExamResult;
-use App\Modules\Education\Lesson\Services\LessonService;
 use App\Modules\Education\Support\SummarizesByStatus;
+use App\Modules\Education\Timetable\Models\Timetable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -19,8 +18,6 @@ class ClassService
 {
     use HandlesEntityQueries;
     use SummarizesByStatus;
-
-    public function __construct(private readonly LessonService $lessonService) {}
 
     /**
      * Paginated, searchable, filterable list (spec §2).
@@ -33,7 +30,7 @@ class ClassService
 
         $result = $query
             ->withCount('enrollments')
-            ->with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])
+            ->with(['course', 'teacher', 'assignee', 'timetables.rules', 'lessonPlan', 'room', 'business'])
             ->paginate($this->resolvePerPage($params));
 
         $this->attachCurrentStudents($result->getCollection());
@@ -106,12 +103,16 @@ class ClassService
             $query->where('status', $params['status']);
         }
 
-        // Weekday filter: class must have a schedule on that weekday.
+        // Weekday filter: class must have a (non-cancelled) timetable rule on that weekday.
         if (! empty($params['weekday'])) {
-            $query->whereHas('schedules', fn ($q) => $q->where('weekday', $params['weekday']));
+            $query->whereHas(
+                'timetables',
+                fn ($q) => $q->where('status', '!=', Timetable::STATUS_CANCELLED)
+                    ->whereHas('rules', fn ($q2) => $q2->where('day_of_week', $params['weekday'])),
+            );
         }
 
-        // Shift filter ("Ca học", spec §2): class must have a schedule starting
+        // Shift filter ("Ca học", spec §2): class must have a timetable rule starting
         // within the selected part of the day.
         if (! empty($params['shift'])) {
             $ranges = [
@@ -122,7 +123,11 @@ class ClassService
 
             if (isset($ranges[$params['shift']])) {
                 [$from, $to] = $ranges[$params['shift']];
-                $query->whereHas('schedules', fn ($q) => $q->whereBetween('start_time', [$from, $to]));
+                $query->whereHas(
+                    'timetables',
+                    fn ($q) => $q->where('status', '!=', Timetable::STATUS_CANCELLED)
+                        ->whereHas('rules', fn ($q2) => $q2->whereBetween('start_time', [$from, $to])),
+                );
             }
         }
 
@@ -139,7 +144,7 @@ class ClassService
 
     public function find($id): ClassRoom
     {
-        return ClassRoom::with(['course', 'teacher', 'assignee', 'schedules', 'lessonPlan', 'room', 'business'])->findOrFail($id);
+        return ClassRoom::with(['course', 'teacher', 'assignee', 'timetables.rules', 'lessonPlan', 'room', 'business'])->findOrFail($id);
     }
 
     /**
@@ -174,39 +179,21 @@ class ClassService
     }
 
     /**
-     * Create a class, optionally with schedules, optionally cloning the course
-     * curriculum (spec §3–5), and optionally generating its lessons in the same
-     * step when a lesson plan, schedules and `generate_from_date` are all given
-     * (Lớp học + Giáo án + Lịch học -> Sinh buổi học).
-     *
-     * @throws \RuntimeException from lesson generation (e.g. plan not published)
+     * Create a class, optionally cloning the course curriculum (spec §3–5). A class
+     * always starts without a schedule — that's created separately as a Timetable
+     * (timetable-management.md), which is also what generates its sessions/lessons.
      */
     public function create(array $data): ClassRoom
     {
         return DB::transaction(function () use ($data) {
-            $schedules = $data['schedules'] ?? [];
-            $generateFromDate = $data['generate_from_date'] ?? null;
-            unset($data['schedules'], $data['generate_from_date']);
-
             $class = new ClassRoom($data);
-            $class->status = $this->computeStatus($class, $schedules);
+            // A brand-new class can't have a Timetable yet, so `scheduled` classes
+            // always start in draft (spec 009 §4) until one is created for them.
+            $class->status = $this->computeStatus($class, false);
             $class->save();
-
-            foreach ($schedules as $s) {
-                ClassSchedule::create([
-                    'class_id' => $class->id,
-                    'weekday' => $s['weekday'],
-                    'start_time' => $s['start_time'],
-                    'end_time' => $s['end_time'],
-                ]);
-            }
 
             if (! empty($data['use_course_curriculum'])) {
                 $this->copyCourseCurriculum($class);
-            }
-
-            if ($generateFromDate && $class->lesson_plan_id && ! empty($schedules)) {
-                $this->lessonService->generate($class->id, ['from_date' => $generateFromDate]);
             }
 
             return $this->findWithStats($class->id);
@@ -216,57 +203,26 @@ class ClassService
     /**
      * Update a class (spec §6). Cannot change course_id or re-clone curriculum
      * once sessions exist.
-     *
-     * Same "attach plan + schedules -> generate lessons" workflow as create()
-     * (via generate_from_date), but only when the class didn't already have a
-     * lesson plan before this update — an already-planned class keeps using
-     * the dedicated regenerate flow instead of implicitly re-syncing here.
-     *
-     * @throws \RuntimeException from lesson generation (e.g. plan not published)
      */
     public function update($id, array $data): ClassRoom
     {
         return DB::transaction(function () use ($id, $data) {
             $class = $this->find($id);
-            $hadLessonPlan = (bool) $class->lesson_plan_id;
 
             if ($this->hasSessions($id)) {
                 unset($data['course_id'], $data['use_course_curriculum']);
             }
 
-            $schedules = $data['schedules'] ?? null;
-            $generateFromDate = $data['generate_from_date'] ?? null;
-            unset($data['schedules'], $data['generate_from_date']);
-
             unset($data['id'], $data['code'], $data['status']);
 
             $class->fill($data);
 
-            if ($schedules !== null) {
-                $class->schedules()->delete();
-                foreach ($schedules as $s) {
-                    ClassSchedule::create([
-                        'class_id' => $class->id,
-                        'weekday' => $s['weekday'],
-                        'start_time' => $s['start_time'],
-                        'end_time' => $s['end_time'],
-                    ]);
-                }
-                // Reload schedules for status computation.
-                $class->unsetRelation('schedules');
-            }
-
             // Recompute status only when not in a terminal/suspended state.
             if (! in_array($class->status, [ClassRoom::STATUS_SUSPENDED, ClassRoom::STATUS_COMPLETED])) {
-                $class->status = $this->computeStatus($class, $class->schedules->toArray());
+                $class->status = $this->computeStatus($class, $this->hasSchedule($class->id));
             }
 
             $class->save();
-
-            if ($generateFromDate && ! $hadLessonPlan && $class->lesson_plan_id
-                && ClassSchedule::where('class_id', $class->id)->exists()) {
-                $this->lessonService->generate($class->id, ['from_date' => $generateFromDate]);
-            }
 
             return $this->findWithStats($class->id);
         });
@@ -310,7 +266,7 @@ class ClassService
             throw new \RuntimeException('Chỉ có thể khôi phục lớp học đang tạm ngừng.');
         }
 
-        $status = $this->computeStatus($class, $class->schedules->toArray());
+        $status = $this->computeStatus($class, $this->hasSchedule($id));
         $class->update(['status' => $status]);
 
         return $this->findWithStats($id);
@@ -429,15 +385,14 @@ class ClassService
     // ── Private helpers ──────────────────────────────────────────────────────
 
     /**
-     * Determine the correct status for a class based on its data and schedules.
-     * Status transitions driven by this method: draft → upcoming/active.
+     * Determine the correct status for a class based on its data and whether it
+     * has a schedule. Status transitions driven by this method: draft → upcoming/active.
      * Suspend / complete are driven by explicit actions.
      */
-    private function computeStatus(ClassRoom $class, array $schedules = []): string
+    private function computeStatus(ClassRoom $class, bool $hasSchedule): string
     {
         if ($class->learning_type === 'scheduled') {
-            $hasSchedules = ! empty($schedules);
-            if (! $hasSchedules || ! $class->teacher_id) {
+            if (! $hasSchedule || ! $class->teacher_id) {
                 return ClassRoom::STATUS_DRAFT;
             }
         }
@@ -449,10 +404,18 @@ class ClassService
             : ClassRoom::STATUS_ACTIVE;
     }
 
+    /** Whether the class has a live (non-cancelled) Timetable — its schedule (spec 030). */
+    private function hasSchedule($classId): bool
+    {
+        return Timetable::where('class_room_id', $classId)
+            ->where('status', '!=', Timetable::STATUS_CANCELLED)
+            ->exists();
+    }
+
     /**
-     * Re-derive a class's status from its current schedules/teacher, unless it is
-     * in a terminal/suspended state. Called by ClassScheduleService after a
-     * schedule is added or removed.
+     * Re-derive a class's status from its current schedule/teacher, unless it is
+     * in a terminal/suspended state. Called by TimetableService after a timetable
+     * is created or deleted.
      */
     public function recomputeStatus($classId): void
     {
@@ -462,7 +425,7 @@ class ClassService
             return;
         }
 
-        $status = $this->computeStatus($class, $class->schedules->toArray());
+        $status = $this->computeStatus($class, $this->hasSchedule($classId));
         $class->updateQuietly(['status' => $status]);
     }
 

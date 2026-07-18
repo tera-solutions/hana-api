@@ -78,7 +78,6 @@ class LessonController extends Controller
         return $this->respondSuccess(['lesson' => new LessonResource($result['lesson'])]);
     }
 
-
     /**
      * Update a lesson
      *

@@ -15,7 +15,7 @@ class TimetableSessionResource extends JsonResource
             'id' => $this->id,
             'session_no' => $this->session_no,
             'name' => $this->name,
-            'session_date' => $this->session_date,
+            'session_date' => $this->session_date?->toDateString(),
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'status' => $this->status,

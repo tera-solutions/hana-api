@@ -74,6 +74,22 @@ class TimetableTest extends TestCase
         ]);
     }
 
+    private function makeClassIdWithPlan(int $planId): int
+    {
+        return DB::table('edu_classes')->insertGetId([
+            'code' => 'CLS_'.strtoupper(uniqid()),
+            'name' => 'TKB Class',
+            'course_id' => $this->courseId,
+            'lesson_plan_id' => $planId,
+            'business_id' => $this->businessId,
+            'learning_type' => 'scheduled',
+            'status' => 'active',
+            'start_date' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function makeRoomId(int $capacity = 30): int
     {
         return DB::table('edu_rooms')->insertGetId([
@@ -111,6 +127,38 @@ class TimetableTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    /** A published lesson plan with N template lessons (lesson.md §7). */
+    private function makePublishedPlan(int $lessons = 3): int
+    {
+        $planId = DB::table('edu_lesson_plans')->insertGetId([
+            'plan_code' => 'P_'.strtoupper(uniqid()),
+            'plan_name' => 'Plan',
+            'business_id' => $this->businessId,
+            'course_id' => $this->courseId,
+            'version' => 1,
+            'total_lessons' => $lessons,
+            'status' => 'published',
+            'published_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        for ($i = 1; $i <= $lessons; $i++) {
+            DB::table('edu_lesson_plan_lessons')->insert([
+                'lesson_plan_id' => $planId,
+                'business_id' => $this->businessId,
+                'lesson_no' => $i,
+                'lesson_title' => "Lesson {$i}",
+                'objective' => "Objective {$i}",
+                'vocabulary' => "Vocab {$i}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $planId;
     }
 
     private function linkStudent(int $studentId, ?int $classId = null): void
@@ -311,5 +359,214 @@ class TimetableTest extends TestCase
         $this->getJson("/v1/edu/timetable/student/{$studentId}/schedule")
             ->assertStatus(200)
             ->assertJsonCount(2, 'data');
+    }
+
+    private function createTimetableSessionId(array $overrides = []): int
+    {
+        $timetableId = $this->postJson('/v1/edu/timetable/create', $this->payload($overrides))->json('data.id');
+
+        return DB::table('edu_sessions')->where('timetable_id', $timetableId)->orderBy('id')->value('id');
+    }
+
+    public function test_change_teacher_updates_session_and_records_history(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+        $newTeacherId = $this->makeTeacherId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/change-teacher", [
+            'teacher_id' => $newTeacherId,
+            'reason' => 'Giáo viên A nghỉ đột xuất.',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.teacher_id', $newTeacherId);
+
+        $this->assertDatabaseHas('edu_sessions', ['id' => $sessionId, 'teacher_id' => $newTeacherId]);
+        $this->assertDatabaseHas('edu_timetable_changes', [
+            'session_id' => $sessionId,
+            'change_type' => 'teacher_change',
+            'reason' => 'Giáo viên A nghỉ đột xuất.',
+        ]);
+    }
+
+    public function test_change_room_updates_session_and_records_history(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+        $newRoomId = $this->makeRoomId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/change-room", ['room_id' => $newRoomId])
+            ->assertStatus(200)
+            ->assertJsonPath('data.room_id', $newRoomId);
+
+        $this->assertDatabaseHas('edu_sessions', ['id' => $sessionId, 'room_id' => $newRoomId]);
+        $this->assertDatabaseHas('edu_timetable_changes', [
+            'session_id' => $sessionId,
+            'change_type' => 'room_change',
+        ]);
+    }
+
+    public function test_change_room_rejects_conflict(): void
+    {
+        $this->actingAsAdmin();
+        $busyRoomId = $this->makeRoomId();
+
+        // A second timetable occupies busyRoomId at the same slot as our target session.
+        $this->postJson('/v1/edu/timetable/create', $this->payload([
+            'class_room_id' => $this->makeClassId(),
+            'room_id' => $busyRoomId,
+            'dates' => [['date' => '2026-07-06', 'start_time' => '18:00', 'end_time' => '19:30']],
+        ]))->assertJsonPath('success', true);
+
+        $sessionId = $this->createTimetableSessionId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/change-room", ['room_id' => $busyRoomId])
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_reschedule_moves_session_and_records_history(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/reschedule", [
+            'session_date' => '2026-07-21',
+            'start_time' => '20:00',
+            'end_time' => '21:30',
+            'reason' => 'Trùng lịch phòng.',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.session_date', '2026-07-21');
+
+        $this->assertDatabaseHas('edu_sessions', [
+            'id' => $sessionId,
+            'session_date' => '2026-07-21 00:00:00',
+            'start_time' => '20:00:00',
+        ]);
+        $this->assertDatabaseHas('edu_timetable_changes', [
+            'session_id' => $sessionId,
+            'change_type' => 'reschedule',
+        ]);
+    }
+
+    public function test_cancel_session_updates_status_and_records_history(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/cancel", ['reason' => 'Nghỉ lễ.'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'cancelled');
+
+        $this->assertDatabaseHas('edu_sessions', ['id' => $sessionId, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('edu_timetable_changes', [
+            'session_id' => $sessionId,
+            'change_type' => 'cancel',
+            'reason' => 'Nghỉ lễ.',
+        ]);
+    }
+
+    public function test_cancel_session_requires_reason(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/cancel", [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['reason']);
+    }
+
+    public function test_session_operations_reject_completed_session(): void
+    {
+        $this->actingAsAdmin();
+        $sessionId = $this->createTimetableSessionId();
+        DB::table('edu_sessions')->where('id', $sessionId)->update(['status' => 'completed']);
+
+        $this->postJson("/v1/edu/timetable/session/{$sessionId}/cancel", ['reason' => 'x'])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Buổi học đã hoàn thành, không thể sửa.');
+    }
+
+    public function test_session_operations_reject_session_without_timetable(): void
+    {
+        $this->actingAsAdmin();
+
+        $orphanId = DB::table('edu_sessions')->insertGetId([
+            'business_id' => $this->businessId,
+            'class_id' => $this->classId,
+            'session_no' => 1,
+            'code' => 'ORPHAN-01',
+            'name' => 'Buổi lẻ',
+            'session_date' => '2026-07-06',
+            'start_time' => '18:00:00',
+            'end_time' => '19:30:00',
+            'status' => 'upcoming',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson("/v1/edu/timetable/session/{$orphanId}/cancel", ['reason' => 'x'])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Buổi học này không thuộc thời khóa biểu nào.');
+    }
+
+    // ── Lesson generation (lesson.md §7, superseding ClassSchedule) ────────────
+
+    public function test_create_generates_lessons_paired_with_sessions_when_class_has_plan(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(2);
+        $classId = $this->makeClassIdWithPlan($planId);
+
+        $timetableId = $this->postJson('/v1/edu/timetable/create', $this->payload([
+            'class_room_id' => $classId,
+            'dates' => [
+                ['date' => '2026-07-06', 'start_time' => '18:00', 'end_time' => '19:30'],
+                ['date' => '2026-07-08', 'start_time' => '18:00', 'end_time' => '19:30'],
+            ],
+        ]))->assertJsonPath('success', true)->json('data.id');
+
+        $this->assertSame(2, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
+
+        $firstSessionId = DB::table('edu_sessions')
+            ->where('timetable_id', $timetableId)
+            ->orderBy('session_no')
+            ->value('id');
+
+        $firstLesson = DB::table('edu_lessons')->where('class_room_id', $classId)->where('lesson_no', 1)->first();
+        $this->assertSame($firstSessionId, $firstLesson->session_id);
+        $this->assertSame('Lesson 1', $firstLesson->lesson_title);
+        $this->assertSame('Objective 1', $firstLesson->objective);
+        $this->assertSame('scheduled', $firstLesson->status);
+    }
+
+    public function test_create_does_not_generate_lessons_without_a_plan(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/edu/timetable/create', $this->payload())->assertJsonPath('success', true);
+
+        $this->assertSame(0, DB::table('edu_lessons')->where('class_room_id', $this->classId)->count());
+    }
+
+    public function test_create_stops_generating_lessons_once_the_plan_is_exhausted(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(1); // Only 1 template lesson.
+        $classId = $this->makeClassIdWithPlan($planId);
+
+        $this->postJson('/v1/edu/timetable/create', $this->payload([
+            'class_room_id' => $classId,
+            'dates' => [
+                ['date' => '2026-07-06', 'start_time' => '18:00', 'end_time' => '19:30'],
+                ['date' => '2026-07-08', 'start_time' => '18:00', 'end_time' => '19:30'],
+            ],
+        ]))
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.total_sessions', 2);
+
+        // Both sessions are generated, but only 1 lesson — the plan ran out.
+        $this->assertSame(1, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
     }
 }

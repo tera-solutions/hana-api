@@ -5,7 +5,6 @@ namespace App\Modules\Education\ClassSession\Models;
 use App\Modules\CRM\Lead\Models\Tag;
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
-use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
 use App\Modules\Education\ClassSessionFeedback\Models\ClassSessionFeedback;
 use App\Modules\Education\Room\Models\Room;
@@ -48,11 +47,6 @@ class ClassSession extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
-    }
-
-    public function schedule(): BelongsTo
-    {
-        return $this->belongsTo(ClassSchedule::class, 'schedule_id');
     }
 
     public function room(): BelongsTo
