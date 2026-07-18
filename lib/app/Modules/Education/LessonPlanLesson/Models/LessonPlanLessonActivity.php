@@ -6,11 +6,13 @@ use App\Modules\Education\Lesson\Enums\LessonActivityStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Package\Database\Concerns\BelongsToBusiness;
 use Package\Database\Concerns\HasAuditFields;
 use Package\Database\Concerns\HasAvatarUrl;
 
 class LessonPlanLessonActivity extends Model
 {
+    use BelongsToBusiness;
     use HasAuditFields;
     use HasAvatarUrl;
     use SoftDeletes;

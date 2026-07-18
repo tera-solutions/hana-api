@@ -3,13 +3,19 @@
 namespace App\Modules\Education\Timetable\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
+use App\Modules\Education\ClassRoom\Services\ClassService;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\ClassSession\Services\ClassSessionService;
+use App\Modules\Education\Lesson\Services\LessonService;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\Education\Timetable\Models\Timetable;
+use App\Modules\Education\Timetable\Models\TimetableChange;
 use App\Modules\Education\Timetable\Models\TimetableRule;
+use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
@@ -21,6 +27,12 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class TimetableService
 {
     use HandlesEntityQueries;
+
+    public function __construct(
+        private ClassSessionService $sessions,
+        private LessonService $lessons,
+        private ClassService $classes,
+    ) {}
 
     public function paginate(array $params = [])
     {
@@ -85,6 +97,10 @@ class TimetableService
 
             $this->generateSessions($timetable, $plan, $data);
 
+            // A class only leaves DRAFT once it has a real schedule (spec 009 §4);
+            // that schedule is now a Timetable instead of a ClassSchedule.
+            $this->classes->recomputeStatus($timetable->class_room_id);
+
             return $this->find($timetable->id);
         });
     }
@@ -101,7 +117,162 @@ class TimetableService
 
     public function delete($id): void
     {
-        $this->find($id)->delete();
+        $timetable = $this->find($id);
+        $classId = $timetable->class_room_id;
+        $timetable->delete();
+
+        $this->classes->recomputeStatus($classId);
+    }
+
+    /**
+     * Assign a different teacher to a session that belongs to a timetable (BR-04/BR-05):
+     * blocks completed sessions, delegates the actual write + conflict-check to
+     * ClassSessionService, and records the change in edu_timetable_changes.
+     *
+     * @throws \RuntimeException
+     */
+    public function changeTeacher(int $sessionId, array $data): ClassSession
+    {
+        return DB::transaction(function () use ($sessionId, $data) {
+            $session = $this->guardSessionEditable($sessionId);
+            $oldTeacherId = $session->teacher_id;
+
+            $updated = $this->sessions->update($sessionId, ['teacher_id' => $data['teacher_id']]);
+
+            $this->recordChange(
+                $session,
+                'teacher_change',
+                $this->teacherLabel($oldTeacherId),
+                $this->teacherLabel($data['teacher_id']),
+                $data['reason'] ?? null,
+            );
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Assign a different room to a session that belongs to a timetable (BR-04/BR-05).
+     *
+     * @throws \RuntimeException
+     */
+    public function changeRoom(int $sessionId, array $data): ClassSession
+    {
+        return DB::transaction(function () use ($sessionId, $data) {
+            $session = $this->guardSessionEditable($sessionId);
+            $oldRoomId = $session->room_id;
+
+            $updated = $this->sessions->update($sessionId, ['room_id' => $data['room_id']]);
+
+            $this->recordChange(
+                $session,
+                'room_change',
+                $this->roomLabel($oldRoomId),
+                $this->roomLabel($data['room_id']),
+                $data['reason'] ?? null,
+            );
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Move a session to a different date/time (BR-04/BR-06). Attendance/Lesson records
+     * follow the session's date/time by reference (same row), so they stay in sync
+     * automatically; there is no separate copy of the schedule to update.
+     *
+     * @throws \RuntimeException
+     */
+    public function reschedule(int $sessionId, array $data): ClassSession
+    {
+        return DB::transaction(function () use ($sessionId, $data) {
+            $session = $this->guardSessionEditable($sessionId);
+            $old = sprintf('%s %s-%s', $session->session_date->toDateString(), $session->start_time, $session->end_time);
+
+            // Pass the session's current teacher/room through explicitly — ClassSessionService's
+            // conflict check only guards teacher/room clashes when those keys are present in
+            // $data, and a bare date/time move must still catch a clash at the new slot (BR-01/02).
+            $updated = $this->sessions->update($sessionId, [
+                'session_date' => $data['session_date'],
+                'start_time' => $this->time($data['start_time']),
+                'end_time' => $this->time($data['end_time']),
+                'teacher_id' => $session->teacher_id,
+                'room_id' => $session->room_id,
+            ]);
+
+            $new = sprintf('%s %s-%s', $data['session_date'], $this->time($data['start_time']), $this->time($data['end_time']));
+
+            $this->recordChange($session, 'reschedule', $old, $new, $data['reason'] ?? null);
+
+            return $updated;
+        });
+    }
+
+    /**
+     * Cancel a session that belongs to a timetable (BR-04/BR-05).
+     *
+     * @throws \RuntimeException
+     */
+    public function cancelSession(int $sessionId, array $data): ClassSession
+    {
+        return DB::transaction(function () use ($sessionId, $data) {
+            $session = $this->guardSessionEditable($sessionId);
+
+            $updated = $this->sessions->cancel($sessionId, $data);
+
+            $this->recordChange($session, 'cancel', $session->status, ClassSession::STATUS_CANCELLED, $data['reason']);
+
+            return $updated;
+        });
+    }
+
+    /**
+     * @throws \RuntimeException when the session has no timetable or is already completed (BR-04)
+     */
+    private function guardSessionEditable(int $sessionId): ClassSession
+    {
+        $session = ClassSession::findOrFail($sessionId);
+
+        if (! $session->timetable_id) {
+            throw new \RuntimeException('Buổi học này không thuộc thời khóa biểu nào.');
+        }
+
+        if ($session->status === ClassSession::STATUS_COMPLETED) {
+            throw new \RuntimeException('Buổi học đã hoàn thành, không thể sửa.'); // BR-04
+        }
+
+        return $session;
+    }
+
+    private function recordChange(ClassSession $session, string $type, ?string $old, ?string $new, ?string $reason): void
+    {
+        TimetableChange::create([
+            'timetable_id' => $session->timetable_id,
+            'session_id' => $session->id,
+            'change_type' => $type,
+            'old_value' => $old,
+            'new_value' => $new,
+            'reason' => $reason,
+            'changed_by' => Auth::guard('api')->id() ?? Auth::id(),
+        ]);
+    }
+
+    private function teacherLabel(?int $teacherId): ?string
+    {
+        if (! $teacherId) {
+            return null;
+        }
+
+        return Teacher::where('id', $teacherId)->value('full_name') ?? "#{$teacherId}";
+    }
+
+    private function roomLabel(?int $roomId): ?string
+    {
+        if (! $roomId) {
+            return null;
+        }
+
+        return Room::where('id', $roomId)->value('room_name') ?? "#{$roomId}";
     }
 
     /**
@@ -202,7 +373,7 @@ class TimetableService
         $no = 0;
         foreach ($plan as $s) {
             $no++;
-            ClassSession::create([
+            $session = ClassSession::create([
                 'class_id' => $data['class_room_id'],
                 'timetable_id' => $timetable->id,
                 'session_no' => $no,
@@ -214,6 +385,10 @@ class TimetableService
                 'room_id' => $data['room_id'] ?? null,
                 'status' => ClassSession::STATUS_UPCOMING,
             ]);
+
+            // Pairs a Lesson (curriculum snapshot) with the session when the class
+            // has a published lesson plan; no-op otherwise (lesson.md §7).
+            $this->lessons->createFromSession($session);
         }
     }
 

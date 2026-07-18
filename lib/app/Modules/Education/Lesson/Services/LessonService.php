@@ -3,12 +3,11 @@
 namespace App\Modules\Education\Lesson\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
-use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\Lesson\Models\LessonActivity;
 use App\Modules\Education\Lesson\Models\LessonHistory;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
-use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -75,110 +74,62 @@ class LessonService
     }
 
     /**
-     * Generate lessons for a class from its lesson plan (lesson.md §7).
-     * Snapshots each template (BR001/BR002) and auto-numbers them (BR003).
+     * Create the Lesson paired 1:1 with a freshly generated ClassSession, snapshotting
+     * the next unconsumed lesson-plan template in sequence (lesson.md §7, BR001/BR002/BR003).
+     * Called by TimetableService right after it creates the session — replaces the old
+     * bulk generate() that read a class's ClassSchedule rows (removed with that module).
      *
-     * @return array{created: int, skipped: int}
-     *
-     * @throws \RuntimeException
+     * No-op when the class has no (published) lesson plan, or the plan is exhausted.
      */
-    public function generate($classId, array $data): array
+    public function createFromSession(ClassSession $session): ?Lesson
     {
-        return DB::transaction(function () use ($classId, $data) {
-            $class = ClassRoom::where('id', $classId)->first();
+        $class = ClassRoom::find($session->class_id);
+        if (! $class || ! $class->lesson_plan_id) {
+            return null;
+        }
 
-            if (! $class) {
-                throw new \RuntimeException('Lớp học không tồn tại.');
-            }
+        $plan = LessonPlan::with('lessons.activities')->find($class->lesson_plan_id);
+        if (! $plan || $plan->status !== LessonPlan::STATUS_PUBLISHED || $plan->lessons->isEmpty()) {
+            return null;
+        }
 
-            if (! $class->lesson_plan_id) {
-                throw new \RuntimeException('Lớp học chưa được gắn giáo án.');
-            }
+        $nextLessonNo = ((int) Lesson::where('class_room_id', $session->class_id)->max('lesson_no')) + 1;
+        $template = $plan->lessons->firstWhere('lesson_no', $nextLessonNo);
+        if (! $template) {
+            return null; // plan exhausted — no template left for this slot.
+        }
 
-            $plan = LessonPlan::with('lessons.activities')->findOrFail($class->lesson_plan_id);
+        $lesson = Lesson::create([
+            'class_room_id' => $session->class_id,
+            'session_id' => $session->id,
+            'lesson_plan_id' => $plan->id,
+            'lesson_plan_lesson_id' => $template->id,
+            'lesson_no' => $template->lesson_no,
+            'lesson_title' => $template->lesson_title,
+            'lesson_date' => $session->session_date,
+            'start_time' => $session->start_time,
+            'end_time' => $session->end_time,
+            'room_id' => $session->room_id,
+            'teacher_id' => $session->teacher_id,
+            'objective' => $template->objective,
+            'vocabulary' => $template->vocabulary,
+            'grammar' => $template->grammar,
+            'homework' => $template->homework,
+            'status' => Lesson::STATUS_SCHEDULED,
+        ]);
 
-            if ($plan->status !== LessonPlan::STATUS_PUBLISHED) {
-                throw new \RuntimeException('Chỉ giáo án đã xuất bản mới có thể sinh buổi học.');
-            }
-            if ($plan->lessons->isEmpty()) {
-                throw new \RuntimeException('Giáo án không có buổi học để sinh.');
-            }
+        foreach ($template->activities as $activity) {
+            $lesson->activities()->create([
+                'sort_order' => $activity->sort_order,
+                'avatar' => $activity->avatar,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'duration' => $activity->duration,
+                'status' => LessonActivity::STATUS_PENDING,
+            ]);
+        }
 
-            $schedules = ClassSchedule::where('class_id', $classId)->get();
-            if ($schedules->isEmpty()) {
-                throw new \RuntimeException('Lớp học chưa có lịch học để sinh buổi học.');
-            }
-
-            if (! empty($data['override'])) {
-                Lesson::where('class_room_id', $classId)
-                    ->whereNotIn('status', [Lesson::STATUS_COMPLETED, Lesson::STATUS_LOCKED])
-                    ->delete();
-            }
-
-            $templates = $plan->lessons->values();
-            $created = 0;
-            $skipped = 0;
-            $index = 0;
-
-            foreach (CarbonPeriod::create($data['from_date'], $data['from_date'].' +1 year') as $date) {
-                if ($index >= $templates->count()) {
-                    break;
-                }
-
-                $weekday = $date->dayOfWeekIso; // 1 (Mon) … 7 (Sun)
-
-                foreach ($schedules->where('weekday', $weekday) as $schedule) {
-                    if ($index >= $templates->count()) {
-                        break;
-                    }
-
-                    $template = $templates[$index];
-                    $lessonNo = $template->lesson_no;
-
-                    $exists = Lesson::where('class_room_id', $classId)->where('lesson_no', $lessonNo)->exists();
-                    if ($exists) {
-                        $skipped++;
-                        $index++;
-
-                        continue;
-                    }
-
-                    $lesson = Lesson::create([
-                        'class_room_id' => $classId,
-                        'lesson_plan_id' => $plan->id,
-                        'lesson_plan_lesson_id' => $template->id,
-                        'lesson_no' => $lessonNo,
-                        'lesson_title' => $template->lesson_title,
-                        'lesson_date' => $date->toDateString(),
-                        'start_time' => $schedule->start_time,
-                        'end_time' => $schedule->end_time,
-                        'room_id' => $class->room_id,
-                        'teacher_id' => $class->teacher_id,
-                        'objective' => $template->objective,
-                        'vocabulary' => $template->vocabulary,
-                        'grammar' => $template->grammar,
-                        'homework' => $template->homework,
-                        'status' => Lesson::STATUS_SCHEDULED,
-                    ]);
-
-                    foreach ($template->activities as $activity) {
-                        $lesson->activities()->create([
-                            'sort_order' => $activity->sort_order,
-                            'avatar' => $activity->avatar,
-                            'title' => $activity->title,
-                            'description' => $activity->description,
-                            'duration' => $activity->duration,
-                            'status' => LessonActivity::STATUS_PENDING,
-                        ]);
-                    }
-
-                    $created++;
-                    $index++;
-                }
-            }
-
-            return ['created' => $created, 'skipped' => $skipped];
-        });
+        return $lesson;
     }
 
     /**

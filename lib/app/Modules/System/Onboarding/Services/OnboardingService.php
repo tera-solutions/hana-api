@@ -4,6 +4,8 @@ namespace App\Modules\System\Onboarding\Services;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Modules\Finance\Wallet\Models\Wallet;
+use App\Modules\Finance\Wallet\Services\WalletService;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\Branch\Models\Branch;
 use App\Modules\System\Business\Models\Business;
@@ -31,6 +33,7 @@ class OnboardingService
     public function __construct(
         private readonly UserService $users,
         private readonly SubscriptionService $subscriptions,
+        private readonly WalletService $wallets,
     ) {}
 
     /**
@@ -47,6 +50,7 @@ class OnboardingService
             ]);
 
             $role = $this->createOwnerRole($business->id);
+            $branch = $this->createDefaultBranch($business->id, $data);
 
             $user = $this->users->create([
                 'full_name' => $data['full_name'],
@@ -58,6 +62,7 @@ class OnboardingService
                 'dob' => $data['dob'] ?? null,
                 'avatar' => $data['avatar'] ?? null,
                 'business_id' => $business->id,
+                'branch_id' => $branch->id,
                 'role_id' => $role->id,
                 'is_admin' => true,
                 'status' => 'active',
@@ -65,8 +70,8 @@ class OnboardingService
 
             $business->update(['manager_id' => $user->id]);
 
-            $this->createOwnerTeacher($business->id, $user->id, $data);
-            $this->createDefaultBranch($business->id, $data);
+            $this->createOwnerTeacher($business->id, $user->id, $branch->id, $data);
+            $this->wallets->createForOwner($business->id, Wallet::OWNER_TEACHER, $user->id);
 
             $this->startTrial($business->id);
 
@@ -87,11 +92,12 @@ class OnboardingService
         ]);
     }
 
-    private function createOwnerTeacher(int $businessId, int $userId, array $data): Teacher
+    private function createOwnerTeacher(int $businessId, int $userId, int $branchId, array $data): Teacher
     {
         $teacher = Teacher::create([
             'business_id' => $businessId,
             'user_id' => $userId,
+            'branch_id' => $branchId,
             'full_name' => $data['full_name'],
             'email' => $data['email'],
             'phone' => $data['phone'],

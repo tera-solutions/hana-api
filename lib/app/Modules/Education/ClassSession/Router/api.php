@@ -10,7 +10,6 @@ Route::prefix('class-room')->middleware('auth.tera')->group(function () {
 
     Route::get('/{classId}/session/list', [ClassSessionController::class, 'list'])->middleware('permission:session.list');
     Route::post('/{classId}/session/create', [ClassSessionController::class, 'create'])->middleware('permission:session.create');
-    Route::post('/{classId}/session/generate', [ClassSessionController::class, 'generate'])->middleware('permission:session.generate');
 
 });
 

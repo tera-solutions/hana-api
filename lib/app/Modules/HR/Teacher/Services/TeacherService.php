@@ -3,13 +3,14 @@
 namespace App\Modules\HR\Teacher\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassTeacher;
+use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\HR\Payroll\Services\PayrollService;
 use App\Modules\HR\Teacher\Events\TeacherCreated;
 use App\Modules\HR\Teacher\Models\Contract;
 use App\Modules\HR\Teacher\Models\Payroll;
 use App\Modules\HR\Teacher\Models\Review;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\HR\Teacher\Models\TeacherHistory;
-use App\Modules\HR\Teacher\Models\TeachingSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -17,6 +18,8 @@ use Package\Database\Concerns\HandlesEntityQueries;
 class TeacherService
 {
     use HandlesEntityQueries;
+
+    public function __construct(private readonly PayrollService $payroll) {}
 
     /**
      * Paginated, searchable, filterable, sortable list.
@@ -81,7 +84,9 @@ class TeacherService
     {
         return [
             'total_classes' => $this->guard(fn () => ClassTeacher::where('teacher_id', $id)->count()),
-            'total_sessions' => $this->guard(fn () => TeachingSession::where('teacher_id', $id)->count()),
+            'total_sessions' => $this->guard(fn () => ClassSession::where('teacher_id', $id)
+                ->orWhere('substitute_teacher_id', $id)
+                ->count()),
             'total_contracts' => $this->guard(fn () => Contract::where('teacher_id', $id)->count()),
             'total_payrolls' => $this->guard(fn () => Payroll::where('teacher_id', $id)->count()),
             'total_reviews' => $this->guard(fn () => Review::where('teacher_id', $id)->count()),
@@ -119,6 +124,7 @@ class TeacherService
     {
         return DB::transaction(function () use ($id, $data) {
             $teacher = $this->find($id);
+            $oldRate = (float) ($teacher->hourly_rate ?? 0);
 
             // Code is immutable (teacher.md §4).
             unset($data['id'], $data['code'], $data['status']);
@@ -134,6 +140,14 @@ class TeacherService
 
             if (is_array($bankAccount)) {
                 $this->syncBankAccount($teacher, $bankAccount);
+            }
+
+            // Already-generated payroll months are never touched by
+            // PayrollService::ensureGenerated() again, so a rate change would
+            // otherwise leave them permanently stale at the old base_salary.
+            $newRate = (float) ($teacher->hourly_rate ?? 0);
+            if ($newRate !== $oldRate) {
+                $this->payroll->regenerateForTeacher($teacher->id);
             }
 
             $this->log($teacher, 'updated');

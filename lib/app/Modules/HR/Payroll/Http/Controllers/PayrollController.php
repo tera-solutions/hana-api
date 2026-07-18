@@ -18,8 +18,13 @@ use Package\Exception\AuthorizationException;
  *
  * A teacher's own payroll periods — lương = giờ dạy thực tế (nguồn Timesheet) ×
  * đơn giá/giờ + thưởng − phạt. `list`/`detail` are always scoped to the acting
- * teacher; `generate` is an admin-only action (a teacher cannot set their own
- * bonus/penalty), same principle as Wallet Request's admin approval step.
+ * teacher. `generate` is self-service for a teacher's OWN payroll (webs/teacher
+ * is the sole tenant-facing app, no separate admin portal per business) but is
+ * locked down server-side: a non-admin caller can only recompute their own
+ * `teacher_id`, and `bonus`/`penalty` are silently ignored for them — a teacher
+ * still cannot set their own bonus/penalty, same principle as Wallet Request's
+ * admin approval step. `is_admin` accounts keep full control (any teacher, any
+ * bonus/penalty).
  *
  * @authenticated
  */
@@ -63,17 +68,35 @@ class PayrollController extends Controller
     }
 
     /**
-     * Generate/recalculate a teacher's payroll for one month (admin)
+     * Generate/recalculate payroll for one month
      *
      * Idempotent: re-running for the same teacher/month/year recomputes
      * `total_hours`/`base_salary` from Timesheet, keeping `bonus`/`penalty`
-     * unless explicitly overridden in the request.
+     * unless explicitly overridden in the request. Non-admin callers may only
+     * target their own `teacher_id`, and any `bonus`/`penalty` they submit is
+     * ignored — those fields are admin-only.
      *
      * @response 200 {"success": true, "msg": "Tính lương thành công.", "data": {"id": 1, "month": 7, "year": 2026, "total_hours": 18, "base_salary": 2700000, "bonus": 500000, "penalty": 0, "total_salary": 3200000}, "code": 200, "errors": null}
      */
     public function generate(GeneratePayrollRequest $request, GeneratePayrollAction $action)
     {
         $data = $request->validated();
+        $user = Auth::guard('api')->user();
+
+        if (! $user || ! $user->is_admin) {
+            $teacherId = $this->actingTeacherId();
+
+            if (! $teacherId) {
+                throw new AuthorizationException('Bạn chưa được gán hồ sơ giáo viên.');
+            }
+
+            if ((int) $data['teacher_id'] !== $teacherId) {
+                throw new AuthorizationException('Bạn chỉ có thể tính lương cho chính mình.');
+            }
+
+            unset($data['bonus'], $data['penalty']);
+        }
+
         $payroll = $action->handle($data['teacher_id'], $data['month'], $data['year'], $data);
 
         return $this->respondSuccess(new PayrollResource($payroll), 'Tính lương thành công.');

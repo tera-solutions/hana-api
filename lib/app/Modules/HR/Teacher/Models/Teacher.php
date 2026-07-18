@@ -49,7 +49,7 @@ class Teacher extends Model
      */
     public const LINKED_TABLES = [
         'edu_class_teacher' => 'teacher_id',
-        'hr_teaching_sessions' => 'teacher_id',
+        'edu_sessions' => 'teacher_id',
         'hr_contracts' => 'teacher_id',
         'hr_payrolls' => 'teacher_id',
     ];

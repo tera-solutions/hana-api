@@ -200,7 +200,6 @@ class PermissionSeeder extends Seeder
             'session.list' => 'Xem danh sách',
             'session.view' => 'Xem chi tiết',
             'session.create' => 'Tạo mới',
-            'session.generate' => 'Sinh hàng loạt',
             'session.update' => 'Cập nhật',
             'session.start' => 'Bắt đầu buổi học',
             'session.end' => 'Kết thúc sớm',

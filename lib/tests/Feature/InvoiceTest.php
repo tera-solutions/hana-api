@@ -162,6 +162,18 @@ class InvoiceTest extends TestCase
             ->assertJsonPath('data.histories.0.action', 'created');
     }
 
+    public function test_download_returns_a_pdf(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/fin/invoice/create', $this->receivablePayload())->json('data.id');
+
+        $response = $this->get("/v1/fin/invoice/download/{$id}");
+
+        $response->assertStatus(200);
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     public function test_receivable_payment_updates_balance_and_status(): void
     {
         $this->actingAsAdmin();

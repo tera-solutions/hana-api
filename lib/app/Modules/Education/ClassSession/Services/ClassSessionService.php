@@ -3,9 +3,7 @@
 namespace App\Modules\Education\ClassSession\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
-use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
-use Carbon\CarbonPeriod;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -14,7 +12,7 @@ class ClassSessionService
 {
     use HandlesEntityQueries;
 
-    private const WITH = ['classRoom', 'schedule', 'room', 'timetable', 'teacher', 'substituteTeacher', 'tags'];
+    private const WITH = ['classRoom', 'room', 'timetable', 'teacher', 'substituteTeacher', 'tags'];
 
     /**
      * Paginated, searchable, filterable list (spec §3–§4).
@@ -108,71 +106,6 @@ class ClassSessionService
             }
 
             return $this->find($session->id);
-        });
-    }
-
-    /**
-     * Bulk-generate sessions from the class schedules over a date range (spec §6).
-     *
-     * @return array{created: int, skipped: int}
-     */
-    public function generate($classId, array $data): array
-    {
-        return DB::transaction(function () use ($classId, $data) {
-            ClassRoom::findOrFail($classId);
-
-            $from = $data['from_date'];
-            $to = $data['to_date'];
-            $override = ! empty($data['override']);
-
-            $schedules = ClassSchedule::where('class_id', $classId)->get();
-
-            if ($override) {
-                ClassSession::where('class_id', $classId)
-                    ->whereDate('session_date', '>=', $from)
-                    ->whereDate('session_date', '<=', $to)
-                    ->where('attendance_locked', false)
-                    ->delete();
-            }
-
-            $no = $this->nextSessionNo($classId);
-            $created = 0;
-            $skipped = 0;
-
-            foreach (CarbonPeriod::create($from, $to) as $date) {
-                $weekday = $date->dayOfWeekIso; // 1 (Mon) … 7 (Sun)
-                $dateStr = $date->toDateString();
-
-                foreach ($schedules->where('weekday', $weekday) as $schedule) {
-                    $exists = ClassSession::where('class_id', $classId)
-                        ->whereDate('session_date', $dateStr)
-                        ->where('start_time', $schedule->start_time)
-                        ->exists();
-
-                    if ($exists) {
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    ClassSession::create([
-                        'class_id' => $classId,
-                        'schedule_id' => $schedule->id,
-                        'session_no' => $no,
-                        'code' => $this->makeCode($classId, $no),
-                        'name' => 'Buổi '.$no,
-                        'session_date' => $dateStr,
-                        'start_time' => $schedule->start_time,
-                        'end_time' => $schedule->end_time,
-                        'status' => ClassSession::STATUS_UPCOMING,
-                    ]);
-
-                    $no++;
-                    $created++;
-                }
-            }
-
-            return ['created' => $created, 'skipped' => $skipped];
         });
     }
 

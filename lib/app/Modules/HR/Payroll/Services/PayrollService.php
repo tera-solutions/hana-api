@@ -6,15 +6,19 @@ use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\HR\Teacher\Models\Payroll;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\HR\Timesheet\Services\TimesheetService;
+use Illuminate\Support\Carbon;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 /**
  * Lương giáo viên = giờ dạy thực tế (nguồn `TimesheetService`, buổi đã điểm
  * danh) × đơn giá/giờ (`hr_teachers.hourly_rate`) + thưởng − phạt (project
  * decision 2026-07-17). Không có cổng thanh toán: `generate()` chỉ TÍNH và ghi
- * lại một dòng `hr_payrolls`, việc chi trả nằm ngoài hệ thống — admin-only,
+ * lại một dòng `hr_payrolls`, việc chi trả nằm ngoài hệ thống. `paginate()` tự
+ * backfill mọi tháng còn thiếu qua `ensureGenerated()` — teacher/FE không cần
+ * bấm "Tính lương" thủ công, trang payroll đọc như mọi trang danh sách khác.
+ * `bonus`/`penalty` vẫn admin-only khi set qua request (PayrollController),
  * cùng nguyên tắc với Wallet Request (không để giáo viên tự đặt thưởng/phạt
- * cho chính mình).
+ * cho chính mình) — backfill tự động luôn dùng bonus/penalty mặc định 0.
  */
 class PayrollService
 {
@@ -24,6 +28,8 @@ class PayrollService
 
     public function paginate(int $teacherId, array $params = [])
     {
+        $this->ensureGenerated($teacherId);
+
         $query = Payroll::query()->where('teacher_id', $teacherId);
 
         $this->applySort($query, $params, ['year', 'month', 'total_salary']);
@@ -32,6 +38,41 @@ class PayrollService
         }
 
         return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Backfill any month, from the teacher's first worked session through the
+     * current month, that doesn't have a `hr_payrolls` row yet. Idempotent and
+     * cheap once caught up — only ever generates the months actually missing.
+     */
+    public function ensureGenerated(int $teacherId): void
+    {
+        $earliest = ClassSession::query()
+            ->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)->orWhere('substitute_teacher_id', $teacherId);
+            })
+            ->whereHas('attendances')
+            ->orderBy('session_date')
+            ->value('session_date');
+
+        if (! $earliest) {
+            return;
+        }
+
+        $existing = Payroll::where('teacher_id', $teacherId)
+            ->get(['month', 'year'])
+            ->map(fn ($p) => sprintf('%04d-%02d', $p->year, $p->month))
+            ->flip();
+
+        $cursor = Carbon::parse($earliest)->startOfMonth();
+        $end = now()->startOfMonth();
+
+        while ($cursor->lte($end)) {
+            if (! isset($existing[$cursor->format('Y-m')])) {
+                $this->generate($teacherId, $cursor->month, $cursor->year);
+            }
+            $cursor->addMonth();
+        }
     }
 
     public function find(int $id): Payroll
@@ -84,6 +125,20 @@ class PayrollService
             ],
             'class_income' => $classIncome,
         ];
+    }
+
+    /**
+     * Recompute every existing payroll row for a teacher against their current
+     * `hourly_rate` — call this when the rate changes so already-generated
+     * months (which `ensureGenerated()` won't touch again, by design) don't
+     * stay stale. Preserves each row's bonus/penalty, same as any `generate()`
+     * call with no explicit override.
+     */
+    public function regenerateForTeacher(int $teacherId): void
+    {
+        Payroll::where('teacher_id', $teacherId)
+            ->get(['month', 'year'])
+            ->each(fn (Payroll $p) => $this->generate($teacherId, $p->month, $p->year));
     }
 
     /**

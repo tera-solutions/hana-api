@@ -127,12 +127,125 @@ class PayrollTest extends TestCase
         $this->getJson('/v1/hr/payroll/list')->assertJsonPath('code', 403);
     }
 
+    public function test_list_auto_generates_payroll_for_worked_months_without_manual_trigger(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher(100000);
+        $classId = $this->makeClassId();
+
+        // Buổi dạy ở 2 tháng khác nhau, chưa ai gọi POST /payroll/generate.
+        $s1 = $this->makeSessionId($classId, $teacherId, '2026-06-05', '19:00:00', '20:00:00'); // 1h, tháng 6
+        $this->makeAttendance($s1);
+        $s2 = $this->makeSessionId($classId, $teacherId, '2026-07-12', '19:00:00', '21:00:00'); // 2h, tháng 7
+        $this->makeAttendance($s2);
+
+        $this->getJson('/v1/hr/payroll/list')
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 2)
+            ->assertJsonPath('data.items.0.month', 7)
+            ->assertJsonPath('data.items.0.total_hours', 2)
+            ->assertJsonPath('data.items.0.base_salary', 200000)
+            ->assertJsonPath('data.items.1.month', 6)
+            ->assertJsonPath('data.items.1.total_hours', 1)
+            ->assertJsonPath('data.items.1.base_salary', 100000);
+    }
+
+    public function test_list_backfill_is_idempotent_and_keeps_existing_bonus(): void
+    {
+        [$user, $teacherId] = $this->actingAsTeacher(100000);
+        $classId = $this->makeClassId();
+        $s1 = $this->makeSessionId($classId, $teacherId, '2026-07-05', '19:00:00', '20:00:00');
+        $this->makeAttendance($s1);
+
+        // First list() call auto-generates July; an admin manually adds a bonus afterwards.
+        $this->getJson('/v1/hr/payroll/list')->assertStatus(200);
+        DB::table('hr_payrolls')
+            ->where('teacher_id', $teacherId)->where('month', 7)->where('year', 2026)
+            ->update(['bonus' => 50000, 'total_salary' => 150000]);
+
+        // Calling list() again must not clobber the manually-set bonus.
+        $this->getJson('/v1/hr/payroll/list')
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.items.0.bonus', 50000)
+            ->assertJsonPath('data.items.0.total_salary', 150000);
+    }
+
     public function test_teacher_cannot_generate_own_payroll(): void
     {
         $this->actingAsTeacher();
 
         $this->postJson('/v1/hr/payroll/generate', ['teacher_id' => 1, 'month' => 7, 'year' => 2026])
             ->assertJsonPath('code', 403);
+    }
+
+    /** @return array{0: User, 1: int} [acting user, hr_teachers id] */
+    private function actingAsTeacherWithGenerate(float $hourlyRate = 100000): array
+    {
+        $roleId = $this->makeRoleId($this->businessId);
+        $this->grantPermissions($roleId, ['payroll.view', 'payroll.generate']);
+        $user = $this->makeUser(false, $roleId, $this->businessId);
+
+        $teacherId = DB::table('hr_teachers')->insertGetId([
+            'user_id' => $user->id,
+            'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()),
+            'full_name' => 'Teacher '.uniqid(),
+            'hourly_rate' => $hourlyRate,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAsApi($user);
+
+        return [$user, $teacherId];
+    }
+
+    public function test_teacher_with_generate_permission_can_generate_own_payroll(): void
+    {
+        [, $teacherId] = $this->actingAsTeacherWithGenerate(100000);
+        $classId = $this->makeClassId();
+        $s1 = $this->makeSessionId($classId, $teacherId, '2026-07-05', '19:00:00', '20:30:00'); // 1.5h
+        $this->makeAttendance($s1);
+
+        $this->postJson('/v1/hr/payroll/generate', [
+            'teacher_id' => $teacherId, 'month' => 7, 'year' => 2026,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.total_hours', 1.5)
+            ->assertJsonPath('data.base_salary', 150000);
+    }
+
+    public function test_teacher_with_generate_permission_cannot_generate_another_teachers_payroll(): void
+    {
+        $this->actingAsTeacherWithGenerate();
+        $otherTeacherId = DB::table('hr_teachers')->insertGetId([
+            'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()),
+            'full_name' => 'Other',
+            'hourly_rate' => 100000,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson('/v1/hr/payroll/generate', [
+            'teacher_id' => $otherTeacherId, 'month' => 7, 'year' => 2026,
+        ])->assertJsonPath('code', 403);
+    }
+
+    public function test_teacher_with_generate_permission_cannot_set_own_bonus_or_penalty(): void
+    {
+        [, $teacherId] = $this->actingAsTeacherWithGenerate(100000);
+        $classId = $this->makeClassId();
+        $s1 = $this->makeSessionId($classId, $teacherId, '2026-07-05', '19:00:00', '20:00:00'); // 1h
+        $this->makeAttendance($s1);
+
+        $this->postJson('/v1/hr/payroll/generate', [
+            'teacher_id' => $teacherId, 'month' => 7, 'year' => 2026,
+            'bonus' => 999999, 'penalty' => 0,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.bonus', 0)
+            ->assertJsonPath('data.total_salary', 100000);
     }
 
     public function test_generate_computes_salary_from_worked_hours(): void

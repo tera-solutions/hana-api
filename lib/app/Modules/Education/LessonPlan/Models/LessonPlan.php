@@ -10,15 +10,18 @@ use App\Modules\Education\LessonPlanLesson\Models\LessonPlanLesson;
 use App\Modules\Education\LessonPlanVersion\Models\LessonPlanVersion;
 use App\Modules\Education\Level\Models\Level;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
+use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Package\Database\Concerns\BelongsToBusiness;
 use Package\Database\Concerns\HasAuditFields;
 use Package\Database\Concerns\HasAvatarUrl;
 
 class LessonPlan extends Model
 {
+    use BelongsToBusiness;
     use HasAuditFields;
     use HasAvatarUrl;
     use LogsActivity;
@@ -53,6 +56,11 @@ class LessonPlan extends Model
     public const LINKED_TABLES = [
         'edu_classes' => 'lesson_plan_id',
     ];
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class, 'business_id');
+    }
 
     public function course(): BelongsTo
     {

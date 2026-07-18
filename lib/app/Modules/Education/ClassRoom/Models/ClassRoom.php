@@ -4,12 +4,12 @@ namespace App\Modules\Education\ClassRoom\Models;
 
 use App\Models\User;
 use App\Modules\Education\ClassRoom\Enums\ClassStatus;
-use App\Modules\Education\ClassSchedule\Models\ClassSchedule;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Lesson\Models\Lesson;
 use App\Modules\Education\LessonPlan\Models\LessonPlan;
 use App\Modules\Education\Room\Models\Room;
+use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Business\Models\Business;
@@ -85,9 +85,10 @@ class ClassRoom extends Model
         return $this->belongsTo(User::class, 'assignee_id');
     }
 
-    public function schedules(): HasMany
+    /** A class's timetables over its lifetime (usually one at a time; spec 030). */
+    public function timetables(): HasMany
     {
-        return $this->hasMany(ClassSchedule::class, 'class_id')->orderBy('weekday')->orderBy('start_time');
+        return $this->hasMany(Timetable::class, 'class_room_id')->latest('id');
     }
 
     public function enrollments(): HasMany

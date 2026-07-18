@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Modules\Education\ClassSession\Models\ClassSession;
-use Carbon\Carbon;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -269,45 +268,6 @@ class ClassSessionTest extends TestCase
             ->assertJsonPath('success', true);
 
         $this->assertSoftDeleted('edu_sessions', ['id' => $id]);
-    }
-
-    // ── Generate ──────────────────────────────────────────────────────────────
-
-    public function test_generate_creates_sessions_from_schedules(): void
-    {
-        $this->actingAsAdmin();
-
-        $date = Carbon::parse('2026-07-15');
-        $weekday = $date->dayOfWeekIso;
-
-        $classId = $this->makeClassId([
-            'schedules' => [
-                ['weekday' => $weekday, 'start_time' => '19:00', 'end_time' => '20:30'],
-            ],
-        ]);
-
-        $this->postJson("/v1/edu/class-room/{$classId}/session/generate", [
-            'from_date' => $date->toDateString(),
-            'to_date' => $date->toDateString(),
-        ])
-            ->assertStatus(200)
-            ->assertJsonPath('data.created', 1)
-            ->assertJsonPath('data.skipped', 0);
-
-        $this->assertEquals(1, DB::table('edu_sessions')
-            ->where('class_id', $classId)
-            ->whereDate('session_date', $date->toDateString())
-            ->where('start_time', '19:00')
-            ->count());
-
-        // Re-running skips the already-generated session.
-        $this->postJson("/v1/edu/class-room/{$classId}/session/generate", [
-            'from_date' => $date->toDateString(),
-            'to_date' => $date->toDateString(),
-        ])
-            ->assertStatus(200)
-            ->assertJsonPath('data.created', 0)
-            ->assertJsonPath('data.skipped', 1);
     }
 
     // ── Relations (edu_attendances / edu_session_feedbacks) ─────────────────────

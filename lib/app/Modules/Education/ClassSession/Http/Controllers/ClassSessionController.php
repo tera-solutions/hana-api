@@ -7,7 +7,6 @@ use App\Modules\Education\ClassSession\Actions\CancelSessionAction;
 use App\Modules\Education\ClassSession\Actions\CreateSessionAction;
 use App\Modules\Education\ClassSession\Actions\DeleteSessionAction;
 use App\Modules\Education\ClassSession\Actions\EndSessionAction;
-use App\Modules\Education\ClassSession\Actions\GenerateSessionAction;
 use App\Modules\Education\ClassSession\Actions\GetSessionAction;
 use App\Modules\Education\ClassSession\Actions\ListSessionAction;
 use App\Modules\Education\ClassSession\Actions\StartSessionAction;
@@ -15,7 +14,6 @@ use App\Modules\Education\ClassSession\Actions\UpdateSessionAction;
 use App\Modules\Education\ClassSession\Http\Requests\CancelSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\CreateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\EndSessionRequest;
-use App\Modules\Education\ClassSession\Http\Requests\GenerateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\StartSessionRequest;
 use App\Modules\Education\ClassSession\Http\Requests\UpdateSessionRequest;
 use App\Modules\Education\ClassSession\Http\Resources\ClassSessionResource;
@@ -130,29 +128,6 @@ class ClassSessionController extends Controller
         }
 
         return $this->respondSuccess(new ClassSessionResource($session), 'Tạo buổi học thành công.');
-    }
-
-    /**
-     * Generate sessions
-     *
-     * Bulk-generates sessions from the class schedules over a date range (spec §6).
-     * Existing sessions (same class, date and start time) are skipped.
-     *
-     * @urlParam classId integer required The class ID. Example: 1
-     *
-     * @response 200 {
-     *   "success": true,
-     *   "msg": "Sinh buổi học thành công.",
-     *   "data": {"created": 24, "skipped": 0},
-     *   "code": 200,
-     *   "errors": null
-     * }
-     */
-    public function generate(GenerateSessionRequest $request, $classId, GenerateSessionAction $action)
-    {
-        $result = $action->handle($classId, $request->validated());
-
-        return $this->respondSuccess($result, 'Sinh buổi học thành công.');
     }
 
     /**

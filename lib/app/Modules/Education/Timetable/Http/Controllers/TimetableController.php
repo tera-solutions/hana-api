@@ -3,7 +3,11 @@
 namespace App\Modules\Education\Timetable\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Education\Timetable\Http\Requests\CancelSessionRequest;
+use App\Modules\Education\Timetable\Http\Requests\ChangeRoomRequest;
+use App\Modules\Education\Timetable\Http\Requests\ChangeTeacherRequest;
 use App\Modules\Education\Timetable\Http\Requests\CreateTimetableRequest;
+use App\Modules\Education\Timetable\Http\Requests\RescheduleSessionRequest;
 use App\Modules\Education\Timetable\Http\Requests\UpdateTimetableRequest;
 use App\Modules\Education\Timetable\Http\Resources\TimetableResource;
 use App\Modules\Education\Timetable\Http\Resources\TimetableSessionResource;
@@ -103,6 +107,78 @@ class TimetableController extends Controller
             fn () => $this->service->delete($id),
             'Xóa thời khóa biểu thành công.',
             fn () => null,
+        );
+    }
+
+    /**
+     * Change session teacher
+     *
+     * Reassigns the teacher for a session that belongs to a timetable (BR-02/04/05).
+     *
+     * @urlParam sessionId integer required The class session ID. Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Đổi giáo viên thành công.", "data": {"id": 1, "teacher_id": 2}, "code": 200, "errors": null}
+     */
+    public function changeTeacher(ChangeTeacherRequest $request, $sessionId)
+    {
+        return $this->tryRespond(
+            fn () => $this->service->changeTeacher((int) $sessionId, $request->validated()),
+            'Đổi giáo viên thành công.',
+            fn ($session) => new TimetableSessionResource($session),
+        );
+    }
+
+    /**
+     * Change session room
+     *
+     * Reassigns the room for a session that belongs to a timetable (BR-01/03/04/05).
+     *
+     * @urlParam sessionId integer required The class session ID. Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Đổi phòng học thành công.", "data": {"id": 1, "room_id": 3}, "code": 200, "errors": null}
+     */
+    public function changeRoom(ChangeRoomRequest $request, $sessionId)
+    {
+        return $this->tryRespond(
+            fn () => $this->service->changeRoom((int) $sessionId, $request->validated()),
+            'Đổi phòng học thành công.',
+            fn ($session) => new TimetableSessionResource($session),
+        );
+    }
+
+    /**
+     * Reschedule session
+     *
+     * Moves a session to a different date/time (BR-01/02/04/06).
+     *
+     * @urlParam sessionId integer required The class session ID. Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Dời lịch học thành công.", "data": {"id": 1, "session_date": "2026-07-21"}, "code": 200, "errors": null}
+     */
+    public function reschedule(RescheduleSessionRequest $request, $sessionId)
+    {
+        return $this->tryRespond(
+            fn () => $this->service->reschedule((int) $sessionId, $request->validated()),
+            'Dời lịch học thành công.',
+            fn ($session) => new TimetableSessionResource($session),
+        );
+    }
+
+    /**
+     * Cancel session
+     *
+     * Cancels a single session that belongs to a timetable (BR-04/05).
+     *
+     * @urlParam sessionId integer required The class session ID. Example: 1
+     *
+     * @response 200 {"success": true, "msg": "Hủy buổi học thành công.", "data": {"id": 1, "status": "cancelled"}, "code": 200, "errors": null}
+     */
+    public function cancelSession(CancelSessionRequest $request, $sessionId)
+    {
+        return $this->tryRespond(
+            fn () => $this->service->cancelSession((int) $sessionId, $request->validated()),
+            'Hủy buổi học thành công.',
+            fn ($session) => new TimetableSessionResource($session),
         );
     }
 
