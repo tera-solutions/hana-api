@@ -41,7 +41,7 @@ class RolePermissionSeeder extends Seeder
         'TEACHER_ROLE' => [
             'full' => [
                 'assignment', 'material', 'evaluation', 'task', 'attendance',
-                'lesson', 'session', 'leave', 'session_feedback',
+                'lesson', 'session', 'leave', 'session_feedback', 'score', 'certificate',
                 'student', 'student_level', 'class', 'course', 'level',
                 'timetable', 'room', 'parent', 'dashboard',
                 'achievement', 'teacher', 'branch', 'timesheet',

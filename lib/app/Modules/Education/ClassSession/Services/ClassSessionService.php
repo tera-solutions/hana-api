@@ -3,6 +3,7 @@
 namespace App\Modules\Education\ClassSession\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassRoom\Services\ClassService;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,10 @@ class ClassSessionService
     use HandlesEntityQueries;
 
     private const WITH = ['classRoom', 'room', 'timetable', 'teacher', 'substituteTeacher', 'tags'];
+
+    public function __construct(private ClassService $classes)
+    {
+    }
 
     /**
      * Paginated, searchable, filterable list (spec §3–§4).
@@ -187,6 +192,14 @@ class ClassSessionService
             'note' => $data['note'] ?? $session->note,
         ]);
 
+        // The class only ever flips draft/upcoming -> active in response to an
+        // explicit recompute (see ClassService::computeStatus) — otherwise a
+        // class whose start date has already passed just sits in "upcoming"
+        // until something happens to trigger it. Starting its first session is
+        // as clear a signal as any that teaching has actually begun, so nudge
+        // it here too (same call TimetableService makes after creating one).
+        $this->classes->recomputeStatus($session->class_id);
+
         return $this->find($id);
     }
 
@@ -204,9 +217,19 @@ class ClassSessionService
             throw new \RuntimeException('Chỉ có thể kết thúc sớm buổi học đang diễn ra.');
         }
 
+        $wallClockEndTime = now()->format('H:i:s');
+        // `end_time` stores time-of-day only (no date), so it can't represent a
+        // session that runs past midnight. If the real clock reads earlier than
+        // this session's own `start_time` — an overnight session, or the action
+        // firing out of sync with the session's actual schedule — writing it
+        // verbatim would produce a bogus/negative duration everywhere hours are
+        // computed (timesheet, payroll, reports). Keep the session's existing
+        // (originally scheduled) `end_time` instead of writing an inconsistent one.
+        $endTime = $wallClockEndTime > $session->start_time ? $wallClockEndTime : $session->end_time;
+
         $session->update([
             'status' => ClassSession::STATUS_COMPLETED,
-            'end_time' => now()->format('H:i:s'),
+            'end_time' => $endTime,
             'note' => $data['note'] ?? $session->note,
         ]);
 

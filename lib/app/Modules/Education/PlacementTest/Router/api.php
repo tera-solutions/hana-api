@@ -16,4 +16,6 @@ Route::prefix('placement-test')->middleware('auth.tera')->group(function () {
     Route::get('/results/{id}', [PlacementTestController::class, 'results'])->middleware('permission:placement_test.view');
     Route::post('/results/{id}', [PlacementTestController::class, 'recordResult'])->middleware('permission:placement_test.update');
 
+    Route::post('/generate-questions/{id}', [PlacementTestController::class, 'generateQuestions'])->middleware('permission:placement_test.update');
+
 });

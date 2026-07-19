@@ -335,6 +335,19 @@ class PermissionSeeder extends Seeder
             'teacher_report.view' => 'Xem báo cáo giảng dạy',
         ]);
 
+        $this->seedPermissions('Education', 'Score', [
+            'score.view' => 'Xem bảng điểm',
+            'score.configure' => 'Cấu hình trọng số điểm',
+            'score.update' => 'Nhập điểm thành phần',
+            'score.finalize' => 'Chốt / mở khóa điểm',
+        ]);
+
+        $this->seedPermissions('Education', 'Certificate', [
+            'certificate.view' => 'Xem chứng chỉ',
+            'certificate.issue' => 'Phát hành chứng chỉ',
+            'certificate.revoke' => 'Thu hồi chứng chỉ',
+        ]);
+
         $this->seedPermissions('Education', 'Evaluation', [
             'evaluation.list' => 'Xem danh sách đánh giá',
             'evaluation.view' => 'Xem chi tiết đánh giá',

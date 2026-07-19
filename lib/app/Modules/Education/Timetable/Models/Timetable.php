@@ -5,6 +5,7 @@ namespace App\Modules\Education\Timetable\Models;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Course\Models\Course;
+use App\Modules\Education\Room\Models\Room;
 use App\Modules\Education\Timetable\Enums\TimetableStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -46,6 +47,11 @@ class Timetable extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_room_id');
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'room_id');
     }
 
     public function rules(): HasMany

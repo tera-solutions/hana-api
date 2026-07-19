@@ -144,7 +144,7 @@ class ClassService
 
     public function find($id): ClassRoom
     {
-        return ClassRoom::with(['course', 'teacher', 'assignee', 'timetables.rules', 'lessonPlan', 'room', 'business'])->findOrFail($id);
+        return ClassRoom::with(['course', 'teacher', 'assignee', 'timetables.rules', 'timetables.room', 'lessonPlan', 'room', 'business'])->findOrFail($id);
     }
 
     /**
@@ -399,7 +399,12 @@ class ClassService
 
         $today = now()->toDateString();
 
-        return $class->start_date > $today
+        // `start_date` is cast to Carbon (midnight of that day), never a plain
+        // string — comparing it against `$today` directly (Carbon > string)
+        // does not compare as same-day-or-earlier the way it looks like it
+        // should, so a class starting exactly today was wrongly kept
+        // "upcoming" instead of flipping to "active". Compare date strings.
+        return $class->start_date->toDateString() > $today
             ? ClassRoom::STATUS_UPCOMING
             : ClassRoom::STATUS_ACTIVE;
     }

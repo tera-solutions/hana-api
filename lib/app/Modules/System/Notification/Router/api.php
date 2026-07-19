@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('notification')->middleware('auth.tera')->group(function () {
     Route::get('/list', [NotificationController::class, 'list']);
     Route::get('/detail/{id}', [NotificationController::class, 'detail']);
+    Route::post('/read/{id}', [NotificationController::class, 'read']);
 
     // Broadcasting notifications is the premium "messaging" feature; receiving
     // (list/detail) stays available to every plan.

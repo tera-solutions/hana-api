@@ -156,7 +156,11 @@ class AchievementService
     {
         $user = Auth::guard('api')->user();
 
-        $teacherId = ($user && ! $user->is_admin)
+        // Deliberately not excluding admins here: an owner/admin account that
+        // also has a linked `hr_teachers` row (teaches classes themselves)
+        // must still be able to view their own achievements. The Teacher
+        // lookup below already rejects anyone without a teacher record.
+        $teacherId = $user
             ? Teacher::query()->where('user_id', $user->id)->value('id')
             : null;
 

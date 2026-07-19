@@ -116,6 +116,6 @@ class TimesheetService
             return 0.0;
         }
 
-        return Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time)) / 60;
+        return abs(Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time))) / 60;
     }
 }
