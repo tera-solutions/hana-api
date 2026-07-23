@@ -19,6 +19,8 @@ class UpdateClassRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'avatar' => ['nullable', 'string', 'max:1000'],
             'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
+            'lesson_plan_ids' => ['nullable', 'array'],
+            'lesson_plan_ids.*' => ['integer', 'exists:edu_lesson_plans,id'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'room_id' => ['nullable', 'integer'],

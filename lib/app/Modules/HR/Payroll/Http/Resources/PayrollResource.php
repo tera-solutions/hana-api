@@ -18,6 +18,8 @@ class PayrollResource extends JsonResource
             'bonus' => $this->bonus,
             'penalty' => $this->penalty,
             'total_salary' => $this->total_salary,
+            'status' => $this->status,
+            'paid_at' => $this->paid_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

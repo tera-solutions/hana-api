@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Exam\Models;
 
+use App\Models\Media;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,5 +27,10 @@ class ExamQuestion extends Model
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class, 'exam_id');
+    }
+
+    public function file(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'file_id');
     }
 }

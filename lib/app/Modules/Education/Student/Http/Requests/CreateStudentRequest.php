@@ -17,7 +17,7 @@ class CreateStudentRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'dob' => ['required', 'date', 'before_or_equal:today'],
+            'dob' => ['nullable', 'date', 'before_or_equal:today'],
             'gender' => ['required', 'string', Rule::in(Gender::values())],
             'avatar' => ['nullable', 'string', 'max:1000'],
             'nationality' => ['nullable', 'string', 'max:255'],

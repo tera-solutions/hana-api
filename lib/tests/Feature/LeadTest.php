@@ -304,6 +304,83 @@ class LeadTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
+    public function test_update_status_moves_lead_through_pipeline(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $this->patchJson("/v1/crm/lead/status/{$id}", ['status' => 'consulting', 'note' => 'Đã hẹn tư vấn 22/07'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'consulting');
+
+        $this->assertDatabaseHas('crm_lead_histories', [
+            'lead_id' => $id,
+            'action' => 'status_changed',
+            'from_status' => 'pending',
+            'to_status' => 'consulting',
+            'note' => 'Đã hẹn tư vấn 22/07',
+        ]);
+    }
+
+    public function test_update_status_rejects_inactive_as_target(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $this->patchJson("/v1/crm/lead/status/{$id}", ['status' => 'inactive'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
+    }
+
+    public function test_update_status_rejected_when_lead_is_inactive(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+        $this->postJson("/v1/crm/lead/suspend/{$id}", ['reason' => 'x'])->assertStatus(200);
+
+        $this->patchJson("/v1/crm/lead/status/{$id}", ['status' => 'verified'])
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_convert_creates_student_and_links_lead(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $response = $this->postJson("/v1/crm/lead/convert/{$id}", ['dob' => '2016-05-12'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.lead_id', $id);
+
+        $studentId = $response->json('data.student_id');
+
+        $this->assertDatabaseHas('edu_students', [
+            'id' => $studentId,
+            'business_id' => $this->businessId,
+            'branch_id' => $this->branchId,
+            'name' => 'Mary Smith',
+        ]);
+        $this->assertDatabaseHas('crm_lead_students', ['lead_id' => $id, 'student_id' => $studentId, 'relationship' => 'self']);
+        $this->assertDatabaseHas('crm_leads', ['id' => $id, 'status' => 'studying']);
+        $this->assertDatabaseHas('crm_lead_histories', ['lead_id' => $id, 'action' => 'converted', 'to_status' => 'studying']);
+    }
+
+    public function test_convert_rejects_when_dob_missing(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $this->postJson("/v1/crm/lead/convert/{$id}", [])
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('crm_leads', ['id' => $id, 'status' => 'pending']);
+    }
+
     public function test_stamps_audit_columns(): void
     {
         $admin = $this->actingAsAdmin();

@@ -12,4 +12,12 @@ class Payroll extends Model
     protected $table = 'hr_payrolls';
 
     protected $guarded = [];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
+    ];
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PAID = 'paid';
 }

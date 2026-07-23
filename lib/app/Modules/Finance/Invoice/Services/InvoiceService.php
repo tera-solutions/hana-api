@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\Invoice\Services;
 
 use App\Helpers\Task;
+use App\Modules\Education\Student\Models\Student;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Models\InvoiceHistory;
 use App\Modules\Finance\Payment\Services\PaymentService;
@@ -270,8 +271,42 @@ class InvoiceService
             $invoice = $this->find($id);
             $this->log($invoice, 'payment', $from, $invoice->status, null, 'Thanh toán '.$amount);
 
+            if ($invoice->student_id) {
+                $this->syncStudentDebtStatus($invoice->student_id);
+            }
+
             return $invoice;
         });
+    }
+
+    /**
+     * A student with an overdue, unpaid receivable invoice can't stay "active"
+     * (đang học) — flips them to "debt" (nợ học phí), and back once cleared.
+     * Only touches students currently active or in debt: an explicitly
+     * suspended/graduated/dropped student's status means something else and
+     * is left alone. Called after a payment; `SyncStudentDebtStatus` (daily
+     * command) catches invoices that only just became overdue by elapsed time.
+     */
+    public function syncStudentDebtStatus(int $studentId): void
+    {
+        $student = Student::find($studentId);
+
+        if (! $student || ! in_array($student->status, [Student::STATUS_ACTIVE, Student::STATUS_DEBT], true)) {
+            return;
+        }
+
+        $hasOverdueDebt = Invoice::where('student_id', $studentId)
+            ->where('invoice_type', Invoice::TYPE_RECEIVABLE)
+            ->whereNotIn('status', [Invoice::STATUS_DRAFT, Invoice::STATUS_CANCELLED, Invoice::STATUS_REFUNDED])
+            ->where('balance_amount', '>', 0)
+            ->whereDate('due_date', '<', now())
+            ->exists();
+
+        $target = $hasOverdueDebt ? Student::STATUS_DEBT : Student::STATUS_ACTIVE;
+
+        if ($student->status !== $target) {
+            $student->update(['status' => $target]);
+        }
     }
 
     /**

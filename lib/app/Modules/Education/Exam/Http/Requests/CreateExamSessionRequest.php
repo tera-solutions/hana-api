@@ -19,6 +19,7 @@ class CreateExamSessionRequest extends FormRequest
         return [
             'exam_id' => ['required', 'integer', 'exists:edu_exams,id'],
             'class_room_id' => ['nullable', 'integer', 'exists:edu_classes,id'],
+            'class_session_id' => ['nullable', 'integer', 'exists:edu_sessions,id'],
             'room_id' => ['nullable', 'integer', 'exists:edu_rooms,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'exam_date' => ['required', 'date'],
@@ -42,7 +43,8 @@ class CreateExamSessionRequest extends FormRequest
     {
         return [
             'exam_id' => ['description' => 'Exam this sitting runs.', 'example' => 1],
-            'class_room_id' => ['description' => 'Class to seat (optional).', 'example' => 1],
+            'class_room_id' => ['description' => 'Class to seat (optional). Ignored when class_session_id is given — derived from it instead.', 'example' => 1],
+            'class_session_id' => ['description' => 'Specific class session ("buổi học") this sitting is tied to (optional). When given, class_room_id is derived from it server-side.', 'example' => 1],
             'room_id' => ['description' => 'Physical room (optional).', 'example' => 1],
             'teacher_id' => ['description' => 'Invigilator (optional).', 'example' => 1],
             'exam_date' => ['description' => 'Exam date (Y-m-d).', 'example' => '2026-07-15'],

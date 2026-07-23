@@ -66,6 +66,7 @@ class ExamTest extends TestCase
     private function makeLevel(string $code, int $order): int
     {
         return DB::table('edu_levels')->insertGetId([
+            'business_id' => $this->businessId,
             'level_code' => $code.'_'.strtoupper(uniqid()),
             'level_name' => $code,
             'course_id' => $this->courseId,
@@ -442,6 +443,42 @@ class ExamTest extends TestCase
         $this->postJson("/v1/edu/exam-session/register/class/{$sessionId}", ['class_room_id' => $classId])
             ->assertStatus(200)
             ->assertJsonPath('data.registered', 0);
+    }
+
+    public function test_list_filters_by_student_id_and_carries_their_result(): void
+    {
+        $this->actingAsAdmin();
+
+        $examId = $this->createExam();
+        $sessionId = $this->createSession($examId)->json('data.id');
+
+        $studentA = $this->makeStudentId();
+        $studentB = $this->makeStudentId();
+        $this->postJson("/v1/edu/exam-session/register/student/{$sessionId}", ['student_ids' => [$studentA, $studentB]])
+            ->assertStatus(200);
+
+        $registrationId = DB::table('edu_exam_registrations')
+            ->where('exam_session_id', $sessionId)->where('student_id', $studentA)->value('id');
+        $this->postJson("/v1/edu/exam-result/grade/{$registrationId}", ['listening_score' => 8])
+            ->assertStatus(200);
+
+        $response = $this->getJson("/v1/edu/exam-session/list?student_id={$studentA}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.items.0.id', $sessionId);
+
+        $registrations = $response->json('data.items.0.registrations');
+        $this->assertCount(1, $registrations);
+        $this->assertSame($studentA, $registrations[0]['student_id']);
+
+        $results = $response->json('data.items.0.results');
+        $this->assertCount(1, $results);
+        $this->assertSame($studentA, $results[0]['student_id']);
+
+        // A student with no registration at all sees no sessions.
+        $unregistered = $this->makeStudentId();
+        $this->getJson("/v1/edu/exam-session/list?student_id={$unregistered}")
+            ->assertJsonPath('data.pagination.total', 0);
     }
 
     public function test_register_blocked_when_session_closed(): void

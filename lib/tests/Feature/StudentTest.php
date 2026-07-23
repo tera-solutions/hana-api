@@ -125,7 +125,17 @@ class StudentTest extends TestCase
 
         $this->postJson('/v1/edu/student/create', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'dob', 'gender', 'business_id', 'branch_id', 'enrollment_date']);
+            ->assertJsonValidationErrors(['name', 'gender', 'business_id', 'branch_id', 'enrollment_date']);
+    }
+
+    public function test_create_allows_missing_dob(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/edu/student/create', $this->payload(['dob' => null]))
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.dob', null);
     }
 
     public function test_create_rejects_future_dob(): void

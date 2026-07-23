@@ -16,6 +16,7 @@ use App\Modules\Education\ClassRoom\Enums\ClassLearningType;
 use App\Modules\Education\ClassRoom\Enums\ClassStatus;
 use App\Modules\Education\ClassRoom\Enums\ClassStudentStatus;
 use App\Modules\Education\ClassSession\Enums\ClassSessionStatus;
+use App\Modules\Education\Course\Enums\CourseTuitionType;
 use App\Modules\Education\Enrollment\Enums\EnrollmentStatus;
 use App\Modules\Education\Evaluation\Enums\EvaluationClassification;
 use App\Modules\Education\Evaluation\Enums\EvaluationPeriod;
@@ -123,6 +124,7 @@ class MetadataRegistry
                 'class_learning_type' => ClassLearningType::options(),
                 'class_student_status' => ClassStudentStatus::options(),
                 'class_session_status' => ClassSessionStatus::options(),
+                'course_tuition_type' => CourseTuitionType::options(),
                 'attendance_status' => AttendanceStatus::options(),
                 'enrollment_status' => EnrollmentStatus::options(),
                 'room_status' => RoomStatus::options(),

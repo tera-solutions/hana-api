@@ -14,6 +14,7 @@ enum StudentStatus: string implements HasBadge, HasLabel
     use ResolvesBadge;
 
     case Active = 'active';
+    case Debt = 'debt';
     case Suspended = 'suspended';
     case Graduated = 'graduated';
     case Dropped = 'dropped';
@@ -22,6 +23,7 @@ enum StudentStatus: string implements HasBadge, HasLabel
     {
         return match ($this) {
             self::Active => 'Đang học',
+            self::Debt => 'Nợ học phí',
             self::Suspended => 'Bảo lưu',
             self::Graduated => 'Đã tốt nghiệp',
             self::Dropped => 'Đã nghỉ',
@@ -32,6 +34,7 @@ enum StudentStatus: string implements HasBadge, HasLabel
     {
         return match ($this) {
             self::Active => BadgeColor::Info,
+            self::Debt => BadgeColor::Danger,
             self::Suspended => BadgeColor::Warning,
             self::Graduated => BadgeColor::Success,
             self::Dropped => BadgeColor::Neutral,

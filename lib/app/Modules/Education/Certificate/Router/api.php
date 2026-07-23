@@ -11,6 +11,8 @@ Route::prefix('certificate')->middleware('auth.tera')->group(function () {
         ->middleware('permission:certificate.view')->whereNumber('classId');
     Route::get('/{classId}/list', [CertificateController::class, 'list'])
         ->middleware('permission:certificate.view')->whereNumber('classId');
+    Route::get('/student/{studentId}/list', [CertificateController::class, 'listByStudent'])
+        ->middleware('permission:certificate.view')->whereNumber('studentId');
     Route::post('/{classId}/issue', [CertificateController::class, 'issue'])
         ->middleware('permission:certificate.issue')->whereNumber('classId');
     Route::post('/revoke/{id}', [CertificateController::class, 'revoke'])

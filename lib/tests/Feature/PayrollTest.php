@@ -366,4 +366,93 @@ class PayrollTest extends TestCase
 
         $response->assertJsonPath('data.teacher.hourly_rate', 150000);
     }
+
+    public function test_admin_can_list_another_teachers_payroll_via_teacher_id_param(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher();
+
+        DB::table('hr_payrolls')->insert([
+            'teacher_id' => $teacherId, 'business_id' => $this->businessId, 'month' => 7, 'year' => 2026,
+            'total_hours' => 1, 'base_salary' => 100000, 'bonus' => 0, 'penalty' => 0, 'total_salary' => 100000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAsAdmin($this->businessId);
+
+        $this->getJson("/v1/hr/payroll/list?teacher_id={$teacherId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.items.0.teacher_id', $teacherId);
+    }
+
+    public function test_admin_can_pay_payroll_and_credits_teacher_wallet(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher();
+        $payrollId = DB::table('hr_payrolls')->insertGetId([
+            'teacher_id' => $teacherId, 'business_id' => $this->businessId, 'month' => 7, 'year' => 2026,
+            'total_hours' => 10, 'base_salary' => 1000000, 'bonus' => 0, 'penalty' => 0, 'total_salary' => 1000000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAsAdmin($this->businessId);
+
+        $this->postJson("/v1/hr/payroll/pay/{$payrollId}")
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'paid');
+
+        $this->assertDatabaseHas('hr_payrolls', ['id' => $payrollId, 'status' => 'paid']);
+        $this->assertNotNull(DB::table('hr_payrolls')->where('id', $payrollId)->value('paid_at'));
+
+        $wallet = DB::table('fin_wallets')->where('owner_type', 'teacher')->where('owner_id', $teacherId)->first();
+        $this->assertNotNull($wallet);
+        $this->assertSame(1000000.0, (float) $wallet->available_balance);
+
+        $this->assertDatabaseHas('fin_wallet_transactions', [
+            'wallet_id' => $wallet->id,
+            'transaction_type' => 'salary',
+            'reference_type' => 'payroll',
+            'reference_id' => $payrollId,
+            'amount' => 1000000,
+        ]);
+    }
+
+    public function test_cannot_pay_already_paid_payroll(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher();
+        $payrollId = DB::table('hr_payrolls')->insertGetId([
+            'teacher_id' => $teacherId, 'business_id' => $this->businessId, 'month' => 7, 'year' => 2026,
+            'total_hours' => 1, 'base_salary' => 100000, 'bonus' => 0, 'penalty' => 0, 'total_salary' => 100000,
+            'status' => 'paid', 'paid_at' => now(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAsAdmin($this->businessId);
+
+        $this->postJson("/v1/hr/payroll/pay/{$payrollId}")
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Bảng lương này đã được trả.');
+    }
+
+    public function test_non_admin_cannot_pay_own_payroll_even_if_granted_permission(): void
+    {
+        $roleId = $this->makeRoleId($this->businessId);
+        $this->grantPermissions($roleId, ['payroll.view', 'payroll.pay']);
+        $user = $this->makeUser(false, $roleId, $this->businessId);
+        $teacherId = DB::table('hr_teachers')->insertGetId([
+            'user_id' => $user->id, 'business_id' => $this->businessId,
+            'code' => 'T_'.strtoupper(uniqid()), 'full_name' => 'Self Payer', 'hourly_rate' => 100000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $payrollId = DB::table('hr_payrolls')->insertGetId([
+            'teacher_id' => $teacherId, 'business_id' => $this->businessId, 'month' => 7, 'year' => 2026,
+            'total_hours' => 1, 'base_salary' => 100000, 'bonus' => 0, 'penalty' => 0, 'total_salary' => 100000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->actingAsApi($user);
+
+        $this->postJson("/v1/hr/payroll/pay/{$payrollId}")->assertJsonPath('code', 403);
+
+        $this->assertDatabaseHas('hr_payrolls', ['id' => $payrollId, 'status' => 'draft']);
+    }
 }

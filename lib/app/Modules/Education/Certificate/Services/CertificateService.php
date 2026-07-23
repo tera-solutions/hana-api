@@ -120,6 +120,11 @@ class CertificateService
         return Certificate::where('class_id', $classId)->with('student')->orderByDesc('issued_at')->get();
     }
 
+    public function listByStudent($studentId)
+    {
+        return Certificate::where('student_id', $studentId)->with('classRoom')->orderByDesc('issued_at')->get();
+    }
+
     /**
      * Public lookup by QR token — deliberately unscoped (no auth, no tenant
      * context) so a parent/employer scanning the QR code doesn't need an

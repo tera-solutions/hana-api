@@ -32,6 +32,15 @@ class ClassResource extends JsonResource
                 'status' => $this->lessonPlan->status,
             ] : null),
 
+            // Plans available to pick from when starting a session (see
+            // StartSessionRequest) — may hold more than one.
+            'lesson_plans' => $this->whenLoaded('lessonPlans', fn () => $this->lessonPlans->map(fn ($plan) => [
+                'id' => $plan->id,
+                'plan_code' => $plan->plan_code,
+                'plan_name' => $plan->plan_name,
+                'status' => $plan->status,
+            ])),
+
             'teacher_id' => $this->teacher_id,
             'teacher' => $this->whenLoaded('teacher', fn () => $this->teacher ? [
                 'id' => $this->teacher->id,

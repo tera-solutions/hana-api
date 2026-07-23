@@ -32,6 +32,8 @@ class WalletTransaction extends Model
 
     public const TYPE_BONUS = WalletTransactionType::Bonus->value;
 
+    public const TYPE_SALARY = WalletTransactionType::Salary->value;
+
     public const TYPE_ADJUSTMENT = WalletTransactionType::Adjustment->value;
 
     public const TYPE_EXPIRE = WalletTransactionType::Expire->value;
@@ -41,6 +43,8 @@ class WalletTransaction extends Model
     public const REF_INVOICE = 'invoice';
 
     public const REF_PAYMENT = 'payment';
+
+    public const REF_PAYROLL = 'payroll';
 
     public function wallet(): BelongsTo
     {

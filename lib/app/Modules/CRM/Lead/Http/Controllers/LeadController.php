@@ -3,15 +3,19 @@
 namespace App\Modules\CRM\Lead\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\CRM\Lead\Actions\ConvertLeadAction;
 use App\Modules\CRM\Lead\Actions\CreateLeadAction;
 use App\Modules\CRM\Lead\Actions\GetLeadAction;
 use App\Modules\CRM\Lead\Actions\ListLeadAction;
 use App\Modules\CRM\Lead\Actions\RestoreLeadAction;
 use App\Modules\CRM\Lead\Actions\SuspendLeadAction;
 use App\Modules\CRM\Lead\Actions\UpdateLeadAction;
+use App\Modules\CRM\Lead\Actions\UpdateLeadStatusAction;
+use App\Modules\CRM\Lead\Http\Requests\ConvertLeadRequest;
 use App\Modules\CRM\Lead\Http\Requests\CreateLeadRequest;
 use App\Modules\CRM\Lead\Http\Requests\SuspendLeadRequest;
 use App\Modules\CRM\Lead\Http\Requests\UpdateLeadRequest;
+use App\Modules\CRM\Lead\Http\Requests\UpdateLeadStatusRequest;
 use App\Modules\CRM\Lead\Http\Resources\LeadResource;
 use Illuminate\Http\Request;
 
@@ -254,5 +258,70 @@ class LeadController extends Controller
         }
 
         return $this->respondSuccess(new LeadResource($lead), 'Khôi phục khách hàng thành công.');
+    }
+
+    /**
+     * Update lead status
+     *
+     * Moves a lead through the care pipeline (pending/verified/consulting/studying)
+     * and records the transition in the lead's history. Use suspend/restore for
+     * "inactive".
+     *
+     * @urlParam id integer required The lead ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Cập nhật trạng thái thành công.",
+     *   "data": {"id": 1, "code": "LEAD000001", "name": "Nguyễn Văn A", "status": "consulting"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function updateStatus($id, UpdateLeadStatusRequest $request, UpdateLeadStatusAction $action)
+    {
+        try {
+            $lead = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new LeadResource($lead), 'Cập nhật trạng thái thành công.');
+    }
+
+    /**
+     * Convert lead to student
+     *
+     * Creates a student from this lead's data (dob/gender/branch overridable in the
+     * request), links the two records, and moves the lead to "studying".
+     *
+     * @urlParam id integer required The lead ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Chuyển đổi thành học viên thành công.",
+     *   "data": {"lead_id": 1, "student_id": 205},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     * @response 200 scenario="Missing required fields" {
+     *   "success": false,
+     *   "msg": "Thiếu thông tin bắt buộc (ngày sinh, giới tính, chi nhánh) để chuyển đổi thành học viên.",
+     *   "data": null,
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function convert($id, ConvertLeadRequest $request, ConvertLeadAction $action)
+    {
+        try {
+            $result = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess([
+            'lead_id' => $result['lead']->id,
+            'student_id' => $result['student_id'],
+        ], 'Chuyển đổi thành học viên thành công.');
     }
 }

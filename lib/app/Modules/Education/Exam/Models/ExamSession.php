@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Exam\Models;
 
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Exam\Enums\ExamSessionStatus;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\HR\Teacher\Models\Teacher;
@@ -41,6 +42,11 @@ class ExamSession extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_room_id');
+    }
+
+    public function classSession(): BelongsTo
+    {
+        return $this->belongsTo(ClassSession::class, 'class_session_id');
     }
 
     public function room(): BelongsTo

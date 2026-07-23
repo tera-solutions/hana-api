@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Course\Services;
 
+use App\Helpers\Task;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\Course\Events\CourseCreated;
 use App\Modules\Education\Course\Models\Course;
@@ -22,11 +23,12 @@ class CourseService
     {
         $query = Course::query();
 
-        // Search: name, code.
+        // Search: name, title, code.
         if (! empty($params['search'])) {
             $search = $params['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
             });
         }
@@ -138,6 +140,10 @@ class CourseService
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
+            if (empty($data['code'])) {
+                $data['code'] = $this->generateCode($data['business_id'] ?? 0);
+            }
+
             $course = new Course($data);
             $course->is_active = $data['is_active'] ?? true;
             $course->save();
@@ -213,6 +219,17 @@ class CourseService
     private function hasClasses($id): bool
     {
         return $this->countLinked('edu_classes', $id, 'course_id') > 0;
+    }
+
+    /**
+     * Auto-generated course code (e.g. CRS000001) — used when the caller
+     * doesn't supply their own (CreateCourseRequest allows either).
+     */
+    private function generateCode($businessId): string
+    {
+        $count = Task::setAndGetReferenceCount('course', $businessId);
+
+        return Task::generateReferenceNumber('course', $count, 'CRS');
     }
 
     /**

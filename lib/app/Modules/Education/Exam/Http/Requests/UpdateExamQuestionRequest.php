@@ -20,8 +20,10 @@ class UpdateExamQuestionRequest extends FormRequest
         return [
             'skill' => ['sometimes', Rule::in(ExamSkill::values())],
             'question_type' => ['sometimes', Rule::in(QuestionType::values())],
-            'content' => ['sometimes', 'string'],
+            'content' => ['nullable', 'string'],
             'answer_key' => ['nullable', 'array'],
+            'file_id' => ['nullable', 'integer'],
+            'file_name' => ['nullable', 'string', 'max:255'],
             'score' => ['sometimes', 'numeric', 'gte:0'],
             'difficulty' => ['sometimes', Rule::in(QuestionDifficulty::values())],
         ];
@@ -40,9 +42,11 @@ class UpdateExamQuestionRequest extends FormRequest
     {
         return [
             'skill' => ['description' => 'Skill: listening, speaking, reading, writing, grammar, vocabulary.', 'example' => 'reading'],
-            'question_type' => ['description' => 'Type: single_choice, multiple_choice, fill_blank, matching, essay, speaking, listening.', 'example' => 'single_choice'],
+            'question_type' => ['description' => 'Type: single_choice, multiple_choice, fill_blank, matching, essay, speaking, listening, paper_upload.', 'example' => 'single_choice'],
             'content' => ['description' => 'Question content.', 'example' => 'What is the capital of France?'],
             'answer_key' => ['description' => 'Answer key (array; shape depends on type).', 'example' => ['A']],
+            'file_id' => ['description' => 'Media id from the file-upload endpoint (paper_upload type).', 'example' => 123],
+            'file_name' => ['description' => 'Original uploaded file name, for display.', 'example' => 'de-thi-ielts.pdf'],
             'score' => ['description' => 'Score awarded for this question.', 'example' => 2],
             'difficulty' => ['description' => 'Difficulty: easy, medium, hard.', 'example' => 'medium'],
         ];

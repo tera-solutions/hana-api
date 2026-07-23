@@ -229,6 +229,19 @@ class WalletService
     }
 
     /**
+     * Credit a teacher's wallet with a payroll period's `total_salary` — the
+     * actual disbursement (PayrollService::pay() is the caller; payroll itself
+     * only ever computes amounts, never moves money).
+     */
+    public function recordFromPayroll(array $data): WalletTransaction
+    {
+        return $this->credit($data, WalletTransaction::TYPE_SALARY, $data['note'] ?? 'Trả lương', [
+            'reference_type' => WalletTransaction::REF_PAYROLL,
+            'reference_id' => $data['payroll_id'],
+        ]);
+    }
+
+    /**
      * @throws \RuntimeException
      */
     public function refund(array $data): WalletTransaction

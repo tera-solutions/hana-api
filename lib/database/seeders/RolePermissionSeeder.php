@@ -25,7 +25,7 @@ class RolePermissionSeeder extends Seeder
      *                  (e.g. lesson_plan.* for TEACHER_ROLE, below).
      *
      * Module prefix = the part before the first dot (course, student_level,
-     * fin_invoice, …). New permissions are picked up automatically.
+     * invoice, …). New permissions are picked up automatically.
      */
     private const READ_ACTIONS = ['list', 'view'];
 
@@ -40,11 +40,11 @@ class RolePermissionSeeder extends Seeder
         // running payroll) stay deliberately withheld — see the per-line notes.
         'TEACHER_ROLE' => [
             'full' => [
-                'assignment', 'material', 'evaluation', 'task', 'attendance',
+                'assignment', 'material', 'evaluation', 'evaluation_criteria_template', 'task', 'attendance',
                 'lesson', 'session', 'leave', 'session_feedback', 'score', 'certificate',
                 'student', 'student_level', 'class', 'course', 'level',
-                'timetable', 'room', 'parent', 'dashboard',
-                'achievement', 'teacher', 'branch', 'timesheet',
+                'timetable', 'room', 'parent', 'dashboard', 'lead', 'notification',
+                'achievement', 'teacher', 'branch', 'timesheet', 'business_bank_account', 'invoice_config',
             ],
             'actions' => [
                 // Self-service payroll: teacher can view and (re)generate
@@ -56,7 +56,10 @@ class RolePermissionSeeder extends Seeder
                 'lesson_plan' => ['list', 'view', 'create', 'update', 'publish'],
                 'enrollment' => ['list', 'view', 'create', 'transfer'],
                 'exam' => ['list', 'view', 'create', 'update'],
-                'wallet' => ['view', 'transaction.view'],
+                // `adjust` lets the center admin correct a teacher's wallet balance
+                // directly (deposit/payment/refund/lock stay withheld — those move
+                // through the request/invoice flows below, not a raw balance edit).
+                'wallet' => ['view', 'transaction.view', 'adjust'],
                 // Request-based nạp/rút (no gateway): teacher creates/cancels/reads
                 // their own request; `approve` (which also covers reject/complete)
                 // is deliberately withheld — self-approving your own payout is a
@@ -68,7 +71,7 @@ class RolePermissionSeeder extends Seeder
                 // Tuition invoices for the teacher's own students: full lifecycle
                 // incl. approve/cancel/refund/pay (small centers have the teacher
                 // double as billing staff, not a separate finance role).
-                'fin_invoice' => ['list', 'view', 'create', 'update', 'approve', 'cancel', 'refund', 'pay'],
+                'invoice' => ['list', 'view', 'create', 'update', 'approve', 'cancel', 'refund', 'pay'],
                 // Author + submit-for-review, same as lesson_plan; `approve`/`activate`
                 // stay out — publishing a shared question into the live bank is a
                 // reviewer/admin step, not the authoring teacher's own call.
@@ -84,6 +87,11 @@ class RolePermissionSeeder extends Seeder
                 'class', 'course', 'level', 'lesson', 'session', 'assignment', 'material',
                 'exam', 'timetable', 'evaluation', 'attendance', 'student_level', 'dashboard',
             ],
+            'actions' => [
+                // Own inbox only (service-scoped); no create/update/delete —
+                // sending notifications is a teacher/admin action.
+                'notification' => ['list', 'view', 'read'],
+            ],
         ],
 
         // Children's progress + billing view; may file leave requests for a child.
@@ -91,10 +99,13 @@ class RolePermissionSeeder extends Seeder
             'full' => ['leave'],
             'view' => [
                 'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
-                'assignment', 'timetable', 'fin_invoice', 'fin_payment', 'fin_debt', 'dashboard',
+                'assignment', 'timetable', 'invoice', 'payment', 'debt', 'dashboard',
             ],
             'actions' => [
                 'teacher_review' => ['create'],
+                // Own inbox only (service-scoped); no create/update/delete —
+                // sending notifications is a teacher/admin action.
+                'notification' => ['list', 'view', 'read'],
             ],
         ],
     ];

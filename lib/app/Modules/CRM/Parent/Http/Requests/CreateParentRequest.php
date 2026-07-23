@@ -29,7 +29,7 @@ class CreateParentRequest extends FormRequest
             'district' => ['nullable', 'string', 'max:255'],
 
             'business_id' => ['required', 'integer', 'exists:sys_business,id'],
-            'branch_id' => ['required', 'integer', 'exists:sys_branches,id'],
+            'branch_id' => ['nullable', 'integer', 'exists:sys_branches,id'],
             'occupation' => ['nullable', 'string', 'max:255'],
             'company' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:2000'],

@@ -15,6 +15,10 @@ class StartSessionRequest extends FormRequest
     {
         return [
             'note' => ['nullable', 'string', 'max:1000'],
+            // Which of the class's linked plans this session follows — optional,
+            // since a session may have none (e.g. an exam day). Only used when
+            // the session doesn't already have a Lesson.
+            'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
         ];
     }
 
@@ -22,6 +26,10 @@ class StartSessionRequest extends FormRequest
     {
         return [
             'note' => ['description' => 'Ghi chú khi bắt đầu buổi học (tùy chọn).', 'example' => 'Bắt đầu đúng giờ.'],
+            'lesson_plan_id' => [
+                'description' => 'Giáo án buổi học này sẽ theo (tùy chọn, phải thuộc danh sách giáo án của lớp).',
+                'example' => 1,
+            ],
         ];
     }
 }

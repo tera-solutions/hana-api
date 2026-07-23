@@ -13,6 +13,7 @@ enum WalletTransactionType: string implements HasLabel
     case Payment = 'payment';
     case Refund = 'refund';
     case Bonus = 'bonus';
+    case Salary = 'salary';
     case Adjustment = 'adjustment';
     case Expire = 'expire';
 
@@ -23,6 +24,7 @@ enum WalletTransactionType: string implements HasLabel
             self::Payment => 'Thanh toán',
             self::Refund => 'Hoàn tiền',
             self::Bonus => 'Thưởng',
+            self::Salary => 'Trả lương',
             self::Adjustment => 'Điều chỉnh',
             self::Expire => 'Hết hạn',
         };

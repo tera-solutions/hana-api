@@ -21,6 +21,10 @@ class CreateClassRequest extends FormRequest
             'code' => ['required', 'string', 'max:255', 'unique:edu_classes,code'],
             'course_id' => ['required', 'integer', 'exists:edu_courses,id'],
             'lesson_plan_id' => ['nullable', 'integer', 'exists:edu_lesson_plans,id'],
+            // Plans available to pick from at session-start (§ "Choose lesson plan when
+            // starting a session"). Omit to just use lesson_plan_id as the sole option.
+            'lesson_plan_ids' => ['nullable', 'array'],
+            'lesson_plan_ids.*' => ['integer', 'exists:edu_lesson_plans,id'],
             'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:hr_teachers,id'],
             'room_id' => ['nullable', 'integer'],

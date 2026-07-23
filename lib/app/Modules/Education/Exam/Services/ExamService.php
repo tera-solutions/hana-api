@@ -41,7 +41,7 @@ class ExamService
 
     public function find($id): Exam
     {
-        return Exam::with(['course', 'level', 'questions'])->findOrFail($id);
+        return Exam::with(['course', 'level', 'questions.file'])->findOrFail($id);
     }
 
     public function detail($id): Exam
@@ -205,7 +205,9 @@ class ExamService
 
         $data['exam_id'] = $exam->id;
 
-        return ExamQuestion::create($data);
+        $question = ExamQuestion::create($data);
+
+        return $question->load('file');
     }
 
     public function updateQuestion($questionId, array $data): ExamQuestion
@@ -216,7 +218,7 @@ class ExamService
 
         $question->update($data);
 
-        return $question->fresh();
+        return $question->fresh()->load('file');
     }
 
     public function deleteQuestion($questionId): void

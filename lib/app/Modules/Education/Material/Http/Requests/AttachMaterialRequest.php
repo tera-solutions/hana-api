@@ -33,7 +33,7 @@ class AttachMaterialRequest extends FormRequest
     public function bodyParameters(): array
     {
         return [
-            'entity_type' => ['description' => 'Linked entity: course, lesson_plan, lesson, assignment, evaluation.', 'example' => 'lesson'],
+            'entity_type' => ['description' => 'Linked entity: course, lesson_plan, lesson, assignment, evaluation, exam.', 'example' => 'lesson'],
             'entity_id' => ['description' => 'Id of the linked entity.', 'example' => 1],
         ];
     }

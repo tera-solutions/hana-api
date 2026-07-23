@@ -17,9 +17,7 @@ use App\Modules\Education\Certificate\Services\CertificateService;
  */
 class CertificateController extends Controller
 {
-    public function __construct(private CertificateService $certificates)
-    {
-    }
+    public function __construct(private CertificateService $certificates) {}
 
     /**
      * Roster with score/attendance/debt + current certificate, for the issue screen
@@ -52,6 +50,16 @@ class CertificateController extends Controller
     public function list($classId)
     {
         return $this->respondSuccess($this->certificates->listByClass($classId));
+    }
+
+    /**
+     * All certificates issued to a student, across classes
+     *
+     * @urlParam studentId integer required
+     */
+    public function listByStudent($studentId)
+    {
+        return $this->respondSuccess($this->certificates->listByStudent($studentId));
     }
 
     /**

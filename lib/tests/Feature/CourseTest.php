@@ -81,11 +81,39 @@ class CourseTest extends TestCase
 
         $this->postJson('/v1/edu/course/create', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'code', 'duration_minutes', 'price_per_lesson']);
+            ->assertJsonValidationErrors(['name', 'duration_minutes', 'price_per_lesson']);
 
         $this->postJson('/v1/edu/course/create', $this->payload(['code' => 'bad code!']))
             ->assertStatus(422)
             ->assertJsonValidationErrors('code');
+    }
+
+    public function test_tuition_type_defaults_and_is_settable(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/edu/course/create', $this->payload())->json('data.id');
+        $this->assertDatabaseHas('edu_courses', ['id' => $id, 'tuition_type' => 'per_lesson']);
+
+        $this->postJson('/v1/edu/course/create', $this->payload(['code' => 'PKG_1', 'tuition_type' => 'per_course']))
+            ->assertJsonPath('data.tuition_type', 'per_course');
+
+        $this->postJson('/v1/edu/course/create', $this->payload(['code' => 'BAD_1', 'tuition_type' => 'weekly']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('tuition_type');
+    }
+
+    public function test_create_auto_generates_code_when_omitted(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/edu/course/create', $this->payload(['code' => null]))
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.code', 'CRS000001');
+
+        $this->postJson('/v1/edu/course/create', $this->payload(['code' => null, 'name' => 'Other']))
+            ->assertJsonPath('data.code', 'CRS000002');
     }
 
     public function test_create_rejects_duplicate_code(): void

@@ -35,6 +35,8 @@ class Student extends Model
 
     public const STATUS_ACTIVE = StudentStatus::Active->value;
 
+    public const STATUS_DEBT = StudentStatus::Debt->value;
+
     public const STATUS_SUSPENDED = StudentStatus::Suspended->value;
 
     public const STATUS_GRADUATED = StudentStatus::Graduated->value;

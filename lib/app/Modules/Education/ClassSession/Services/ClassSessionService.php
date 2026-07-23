@@ -5,6 +5,8 @@ namespace App\Modules\Education\ClassSession\Services;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassRoom\Services\ClassService;
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Education\Lesson\Models\Lesson;
+use App\Modules\Education\Lesson\Services\LessonService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -15,9 +17,10 @@ class ClassSessionService
 
     private const WITH = ['classRoom', 'room', 'timetable', 'teacher', 'substituteTeacher', 'tags'];
 
-    public function __construct(private ClassService $classes)
-    {
-    }
+    public function __construct(
+        private ClassService $classes,
+        private LessonService $lessons,
+    ) {}
 
     /**
      * Paginated, searchable, filterable list (spec §3–§4).
@@ -181,26 +184,36 @@ class ClassSessionService
      */
     public function start($id, array $data = []): ClassSession
     {
-        $session = ClassSession::findOrFail($id);
+        return DB::transaction(function () use ($id, $data) {
+            $session = ClassSession::findOrFail($id);
 
-        if ($session->status !== ClassSession::STATUS_UPCOMING) {
-            throw new \RuntimeException('Chỉ có thể bắt đầu buổi học ở trạng thái sắp diễn ra.');
-        }
+            if ($session->status !== ClassSession::STATUS_UPCOMING) {
+                throw new \RuntimeException('Chỉ có thể bắt đầu buổi học ở trạng thái sắp diễn ra.');
+            }
 
-        $session->update([
-            'status' => ClassSession::STATUS_ONGOING,
-            'note' => $data['note'] ?? $session->note,
-        ]);
+            // The session may already have a Lesson (e.g. started once, ended
+            // early, restarted) — only materialize one when a plan was chosen
+            // and it doesn't. Sessions with no plan (exam day, etc.) just start
+            // bare.
+            if (! empty($data['lesson_plan_id']) && ! Lesson::where('session_id', $session->id)->exists()) {
+                $this->lessons->createFromSessionWithPlan($session, (int) $data['lesson_plan_id']);
+            }
 
-        // The class only ever flips draft/upcoming -> active in response to an
-        // explicit recompute (see ClassService::computeStatus) — otherwise a
-        // class whose start date has already passed just sits in "upcoming"
-        // until something happens to trigger it. Starting its first session is
-        // as clear a signal as any that teaching has actually begun, so nudge
-        // it here too (same call TimetableService makes after creating one).
-        $this->classes->recomputeStatus($session->class_id);
+            $session->update([
+                'status' => ClassSession::STATUS_ONGOING,
+                'note' => $data['note'] ?? $session->note,
+            ]);
 
-        return $this->find($id);
+            // The class only ever flips draft/upcoming -> active in response to an
+            // explicit recompute (see ClassService::computeStatus) — otherwise a
+            // class whose start date has already passed just sits in "upcoming"
+            // until something happens to trigger it. Starting its first session is
+            // as clear a signal as any that teaching has actually begun, so nudge
+            // it here too (same call TimetableService makes after creating one).
+            $this->classes->recomputeStatus($session->class_id);
+
+            return $this->find($session->id);
+        });
     }
 
     /**

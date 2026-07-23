@@ -5,8 +5,11 @@ namespace App\Modules\HR\Timesheet\Services;
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\ClassSessionFeedback\Models\ClassSessionFeedback;
+use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 /**
@@ -24,8 +27,14 @@ class TimesheetService
      * cards: computed hours, the owning class's `learning_type`, and this
      * session's attendance/rating stats.
      */
-    public function sessions(int $teacherId, array $params = [])
+    public function sessions(?int $teacherId, array $params = [])
     {
+        // Null means the caller has no teacher profile to scope to (e.g. the
+        // tenant owner) — not an error, just nothing to list.
+        if (! $teacherId) {
+            return new LengthAwarePaginator([], 0, $this->resolvePerPage($params));
+        }
+
         $query = $this->workedSessionQuery($teacherId, $params)
             ->with(['classRoom', 'room'])
             ->withCount([
@@ -47,8 +56,18 @@ class TimesheetService
      * Aggregate stat cards: total hours, hours by class `learning_type`,
      * attendance rate across worked sessions, average session rating.
      */
-    public function summary(int $teacherId, array $params = []): array
+    public function summary(?int $teacherId, array $params = []): array
     {
+        if (! $teacherId) {
+            return [
+                'total_sessions' => 0,
+                'total_hours' => 0,
+                'hours_by_type' => [],
+                'attendance_rate' => null,
+                'average_rating' => null,
+            ];
+        }
+
         $sessions = $this->workedSessionQuery($teacherId, $params)->with('classRoom')->get();
 
         $totalHours = 0.0;
@@ -117,5 +136,17 @@ class TimesheetService
         }
 
         return abs(Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time))) / 60;
+    }
+
+    /**
+     * The acting user's own `hr_teachers` row — there is no "my teacher profile"
+     * endpoint, so it's resolved by `user_id` (mirrors the FE's `useCurrentTeacher`).
+     * Null for a non-teaching account (e.g. the tenant owner), not an error.
+     */
+    public function actingTeacherId(): ?int
+    {
+        $userId = Auth::guard('api')->id();
+
+        return $userId ? Teacher::where('user_id', $userId)->value('id') : null;
     }
 }
