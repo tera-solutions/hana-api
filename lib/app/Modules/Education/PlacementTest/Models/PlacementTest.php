@@ -2,8 +2,10 @@
 
 namespace App\Modules\Education\PlacementTest\Models;
 
+use App\Modules\Education\Question\Models\Question;
 use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\BelongsToBusiness;
@@ -31,5 +33,18 @@ class PlacementTest extends Model
     public function results(): HasMany
     {
         return $this->hasMany(PlacementTestResult::class, 'placement_test_id');
+    }
+
+    /**
+     * Bank questions attached to this placement test — unlike Exam's
+     * `edu_exam_questions`, this does NOT snapshot content: a placement test
+     * is a reusable leveling instrument administered many times, so it should
+     * always reflect the bank question's current (approved/active) content.
+     */
+    public function questions(): BelongsToMany
+    {
+        return $this->belongsToMany(Question::class, 'edu_placement_test_question', 'placement_test_id', 'question_id')
+            ->withPivot('order')
+            ->orderBy('edu_placement_test_question.order');
     }
 }

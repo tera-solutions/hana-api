@@ -32,6 +32,15 @@ class ClassResource extends JsonResource
                 'status' => $this->lessonPlan->status,
             ] : null),
 
+            // Plans available to pick from when starting a session (see
+            // StartSessionRequest) — may hold more than one.
+            'lesson_plans' => $this->whenLoaded('lessonPlans', fn () => $this->lessonPlans->map(fn ($plan) => [
+                'id' => $plan->id,
+                'plan_code' => $plan->plan_code,
+                'plan_name' => $plan->plan_name,
+                'status' => $plan->status,
+            ])),
+
             'teacher_id' => $this->teacher_id,
             'teacher' => $this->whenLoaded('teacher', fn () => $this->teacher ? [
                 'id' => $this->teacher->id,
@@ -45,16 +54,21 @@ class ClassResource extends JsonResource
                 'name' => $this->assignee->name,
             ] : null),
 
-            'room_id' => $this->room_id,
-            'room' => $this->whenLoaded('room', fn () => $this->room ? [
-                'id' => $this->room->id,
-                'room_code' => $this->room->room_code,
-                'room_name' => $this->room->room_name,
-            ] : null),
+            // A class's own `room_id`/`end_date` are set when known upfront, but in
+            // the normal flow (spec: class created first, schedule added afterwards
+            // as a Timetable) they're left blank on the class and only really exist
+            // on its current Timetable — fall back to that so the detail page isn't
+            // permanently empty just because the class record itself was never
+            // updated (same reasoning as `schedules` below).
+            'room_id' => $this->room_id ?? $this->currentTimetable()?->room_id,
+            // Not `whenLoaded('room', ...)`: that helper returns null without even
+            // calling the closure whenever the class's OWN `room` relation value is
+            // null — which is exactly the case this fallback needs to handle.
+            'room' => $this->relationLoaded('room') ? $this->roomPayload() : null,
 
             'learning_type' => $this->learning_type,
             'start_date' => $this->start_date?->toDateString(),
-            'end_date' => $this->end_date?->toDateString(),
+            'end_date' => ($this->end_date ?? $this->currentTimetable()?->end_date)?->toDateString(),
             'status' => $this->status,
 
             'min_warning_capacity' => $this->min_warning_capacity,
@@ -91,15 +105,41 @@ class ClassResource extends JsonResource
     }
 
     /**
-     * The rules of the class's current timetable (its most recent non-cancelled
-     * one), shaped like the old ClassSchedule rows so existing FE consumers of
-     * `schedules` keep working unchanged.
+     * The class's current timetable — its most recent non-cancelled one, if any.
+     */
+    private function currentTimetable(): ?Timetable
+    {
+        if (! $this->relationLoaded('timetables')) {
+            return null;
+        }
+
+        return $this->timetables
+            ->where('status', '!=', Timetable::STATUS_CANCELLED)
+            ->first();
+    }
+
+    /**
+     * The class's own room, falling back to its current timetable's room.
+     */
+    private function roomPayload(): ?array
+    {
+        $room = $this->room ?? $this->currentTimetable()?->room;
+
+        return $room ? [
+            'id' => $room->id,
+            'room_code' => $room->room_code,
+            'room_name' => $room->room_name,
+        ] : null;
+    }
+
+    /**
+     * The rules of the class's current timetable, shaped like the old
+     * ClassSchedule rows so existing FE consumers of `schedules` keep working
+     * unchanged.
      */
     private function currentScheduleRules(): array
     {
-        $timetable = $this->timetables
-            ->where('status', '!=', Timetable::STATUS_CANCELLED)
-            ->first();
+        $timetable = $this->currentTimetable();
 
         if (! $timetable) {
             return [];

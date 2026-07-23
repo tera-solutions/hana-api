@@ -6,7 +6,6 @@ use App\Modules\Education\ClassRoom\Models\ClassStudent;
 use App\Modules\Education\ClassRoom\Services\ClassService;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\ClassSession\Services\ClassSessionService;
-use App\Modules\Education\Lesson\Services\LessonService;
 use App\Modules\Education\Room\Models\Room;
 use App\Modules\Education\Timetable\Models\Timetable;
 use App\Modules\Education\Timetable\Models\TimetableChange;
@@ -30,7 +29,6 @@ class TimetableService
 
     public function __construct(
         private ClassSessionService $sessions,
-        private LessonService $lessons,
         private ClassService $classes,
     ) {}
 
@@ -373,7 +371,11 @@ class TimetableService
         $no = 0;
         foreach ($plan as $s) {
             $no++;
-            $session = ClassSession::create([
+            // No Lesson is paired here — the teacher picks which of the class's
+            // (possibly several) lesson plans this session follows when they
+            // start it (see ClassSessionService::start()), and a session may
+            // legitimately have none at all (e.g. an exam day).
+            ClassSession::create([
                 'class_id' => $data['class_room_id'],
                 'timetable_id' => $timetable->id,
                 'session_no' => $no,
@@ -385,10 +387,6 @@ class TimetableService
                 'room_id' => $data['room_id'] ?? null,
                 'status' => ClassSession::STATUS_UPCOMING,
             ]);
-
-            // Pairs a Lesson (curriculum snapshot) with the session when the class
-            // has a published lesson plan; no-op otherwise (lesson.md §7).
-            $this->lessons->createFromSession($session);
         }
     }
 

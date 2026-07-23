@@ -113,7 +113,17 @@ class ParentTest extends TestCase
 
         $this->postJson('/v1/crm/parent/create', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name', 'phone', 'business_id', 'branch_id']);
+            ->assertJsonValidationErrors(['name', 'phone', 'business_id']);
+    }
+
+    public function test_create_allows_missing_branch(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/crm/parent/create', $this->payload(['branch_id' => null]))
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.branch_id', null);
     }
 
     public function test_create_links_student(): void

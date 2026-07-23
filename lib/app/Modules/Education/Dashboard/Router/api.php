@@ -5,6 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('dashboard')->middleware('auth.tera')->group(function () {
 
-    Route::get('/summary', [DashboardController::class, 'summary']);
+    Route::get('/summary', [DashboardController::class, 'summary'])->middleware('permission:dashboard.view');
 
 });

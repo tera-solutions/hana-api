@@ -10,6 +10,11 @@ class LevelResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'business_id' => $this->business_id,
+            'business' => $this->whenLoaded('business', fn () => $this->business ? [
+                'id' => $this->business->id,
+                'name' => $this->business->name,
+            ] : null),
             'level_code' => $this->level_code,
             'level_name' => $this->level_name,
             'course_id' => $this->course_id,

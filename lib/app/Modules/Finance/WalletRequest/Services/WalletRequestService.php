@@ -77,9 +77,12 @@ class WalletRequestService
             throw new \RuntimeException('Số tiền phải lớn hơn 0.');
         }
 
-        // BR: a teacher must have their HR profile bank account set up before using the
-        // wallet at all (deposit or withdraw) — not just as a withdraw payout target.
-        $bankAccountId = $this->resolveBankAccountId((int) $data['business_id'], (int) $data['user_id']);
+        // Only withdraw needs a bank account — it's the payout target for money
+        // leaving the system. Deposit just tops up the teacher's own wallet, so
+        // there's nothing to gate on a bank account being on file.
+        $bankAccountId = $data['request_type'] === WalletRequest::TYPE_WITHDRAW
+            ? $this->resolveBankAccountId((int) $data['business_id'], (int) $data['user_id'])
+            : null;
 
         $wallet = $this->walletForUser((int) $data['business_id'], (int) $data['user_id']);
 
@@ -189,9 +192,8 @@ class WalletRequestService
     }
 
     /**
-     * A wallet request (deposit or withdraw) requires the teacher to already have a
-     * saved HR profile bank account — for withdraw it's the payout target, for deposit
-     * it's a KYC-style gate before touching the wallet at all.
+     * A withdraw request requires the teacher to already have a saved HR profile
+     * bank account — it's the payout target for the money leaving the system.
      *
      * @throws \RuntimeException
      */

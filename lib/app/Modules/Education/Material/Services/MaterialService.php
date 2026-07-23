@@ -56,7 +56,11 @@ class MaterialService
 
         $this->applySort($query, $params, ['material_code', 'material_name', 'material_type', 'current_version', 'status', 'created_at']);
 
-        return $query->with(['category', 'versions'])->paginate($this->resolvePerPage($params));
+        // `mappings` is needed so a caller scoping by entity_type+entity_id (e.g.
+        // the teacher app's per-lesson material list) can read the mapping id for
+        // that specific link — that's what `material/mapping/delete/{id}` needs to
+        // detach one entity's link without touching the bank material itself.
+        return $query->with(['category', 'versions', 'mappings'])->paginate($this->resolvePerPage($params));
     }
 
     public function find($id): Material

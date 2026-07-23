@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\Course\Http\Requests;
 
+use App\Modules\Education\Course\Enums\CourseTuitionType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateCourseRequest extends FormRequest
 {
@@ -15,10 +17,13 @@ class CreateCourseRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:255', 'regex:/^[A-Z0-9_]+$/', 'unique:edu_courses,code'],
+            'title' => ['nullable', 'string', 'max:255'],
+            // Omit to let the backend auto-generate a code (CourseService::create()).
+            'code' => ['nullable', 'string', 'max:255', 'regex:/^[A-Z0-9_]+$/', 'unique:edu_courses,code'],
             'thumbnail' => ['nullable', 'string', 'max:1000'],
             'duration_minutes' => ['required', 'integer', 'min:1'],
             'price_per_lesson' => ['required', 'numeric', 'min:0'],
+            'tuition_type' => ['nullable', 'string', Rule::in(CourseTuitionType::values())],
             'description' => ['nullable', 'string', 'max:5000'],
             'is_active' => ['nullable', 'boolean'],
             'business_id' => ['nullable', 'integer', 'exists:sys_business,id'],
@@ -41,8 +46,12 @@ class CreateCourseRequest extends FormRequest
                 'description' => 'Course name.',
                 'example' => 'IELTS Foundation',
             ],
+            'title' => [
+                'description' => 'Optional display title, separate from the internal course name.',
+                'example' => 'IELTS Foundation — Lộ trình 6.5',
+            ],
             'code' => [
-                'description' => 'Unique code (A-Z, 0-9, _).',
+                'description' => 'Unique code (A-Z, 0-9, _). Omit to auto-generate (e.g. CRS000001).',
                 'example' => 'IELTS_6_5',
             ],
             'thumbnail' => [
@@ -56,6 +65,10 @@ class CreateCourseRequest extends FormRequest
             'price_per_lesson' => [
                 'description' => 'Price per lesson (>= 0).',
                 'example' => 250000,
+            ],
+            'tuition_type' => [
+                'description' => 'How tuition is framed: per_lesson|per_course|per_month (defaults to per_lesson). Display-only, does not change how amounts are computed.',
+                'example' => 'per_lesson',
             ],
             'description' => [
                 'description' => 'Description.',

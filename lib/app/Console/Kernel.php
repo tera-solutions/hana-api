@@ -24,6 +24,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('subscriptions:expire')->dailyAt('00:05');
+        $schedule->command('students:sync-debt-status')->dailyAt('00:15');
+        $schedule->command('invoices:generate-recurring')->dailyAt('01:00');
     }
 
     /**

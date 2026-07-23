@@ -31,6 +31,9 @@ class LessonService
         if (! empty($params['class_room_id'])) {
             $query->where('class_room_id', $params['class_room_id']);
         }
+        if (! empty($params['session_id'])) {
+            $query->where('session_id', $params['session_id']);
+        }
         if (! empty($params['lesson_plan_id'])) {
             $query->where('lesson_plan_id', $params['lesson_plan_id']);
         }
@@ -81,30 +84,52 @@ class LessonService
      *
      * No-op when the class has no (published) lesson plan, or the plan is exhausted.
      */
-    public function createFromSession(ClassSession $session): ?Lesson
+    /**
+     * Materialize a Lesson (curriculum snapshot) for $session from the given
+     * lesson plan, at the moment the teacher starts the session and picks
+     * which plan it follows — not at session-creation time, since a class may
+     * have several plans to choose from (or the session may need none at all,
+     * e.g. an exam day).
+     *
+     * @throws \RuntimeException when the plan isn't linked to the class, isn't
+     *                           published, or has no template left to consume.
+     */
+    public function createFromSessionWithPlan(ClassSession $session, int $lessonPlanId): Lesson
     {
-        $class = ClassRoom::find($session->class_id);
-        if (! $class || ! $class->lesson_plan_id) {
-            return null;
+        $class = ClassRoom::findOrFail($session->class_id);
+
+        if (! $class->lessonPlans()->where('edu_lesson_plans.id', $lessonPlanId)->exists()) {
+            throw new \RuntimeException('Giáo án này chưa được gắn với lớp học.');
         }
 
-        $plan = LessonPlan::with('lessons.activities')->find($class->lesson_plan_id);
-        if (! $plan || $plan->status !== LessonPlan::STATUS_PUBLISHED || $plan->lessons->isEmpty()) {
-            return null;
+        $plan = LessonPlan::with('lessons.activities')->find($lessonPlanId);
+        if (! $plan || $plan->status !== LessonPlan::STATUS_PUBLISHED) {
+            throw new \RuntimeException('Giáo án chưa được xuất bản.');
+        }
+
+        // Whichever templates from THIS plan already became a Lesson (in any
+        // session) are spent — pick the next unused one, in plan order.
+        $usedTemplateIds = Lesson::where('lesson_plan_id', $plan->id)
+            ->whereNotNull('lesson_plan_lesson_id')
+            ->pluck('lesson_plan_lesson_id');
+
+        $template = $plan->lessons
+            ->whereNotIn('id', $usedTemplateIds)
+            ->sortBy('lesson_no')
+            ->first();
+
+        if (! $template) {
+            throw new \RuntimeException('Giáo án đã hết buổi học để sử dụng.');
         }
 
         $nextLessonNo = ((int) Lesson::where('class_room_id', $session->class_id)->max('lesson_no')) + 1;
-        $template = $plan->lessons->firstWhere('lesson_no', $nextLessonNo);
-        if (! $template) {
-            return null; // plan exhausted — no template left for this slot.
-        }
 
         $lesson = Lesson::create([
             'class_room_id' => $session->class_id,
             'session_id' => $session->id,
             'lesson_plan_id' => $plan->id,
             'lesson_plan_lesson_id' => $template->id,
-            'lesson_no' => $template->lesson_no,
+            'lesson_no' => $nextLessonNo,
             'lesson_title' => $template->lesson_title,
             'lesson_date' => $session->session_date,
             'start_time' => $session->start_time,

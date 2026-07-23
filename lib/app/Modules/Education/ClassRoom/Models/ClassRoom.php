@@ -15,6 +15,7 @@ use App\Modules\System\ActivityLog\Concerns\LogsActivity;
 use App\Modules\System\Business\Models\Business;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Package\Database\Concerns\BelongsToBusiness;
@@ -68,6 +69,17 @@ class ClassRoom extends Model
     public function lessonPlan(): BelongsTo
     {
         return $this->belongsTo(LessonPlan::class, 'lesson_plan_id');
+    }
+
+    /**
+     * Plans available to pick from when starting one of this class's sessions
+     * (table `edu_class_lesson_plans`) — distinct from `lesson_plan_id` above,
+     * which nothing here changes the meaning of.
+     */
+    public function lessonPlans(): BelongsToMany
+    {
+        return $this->belongsToMany(LessonPlan::class, 'edu_class_lesson_plans', 'class_room_id', 'lesson_plan_id')
+            ->withTimestamps();
     }
 
     public function room(): BelongsTo

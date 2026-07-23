@@ -32,6 +32,7 @@ class LessonController extends Controller
      *
      * @queryParam search string Search by lesson title. Example: Family
      * @queryParam class_room_id integer Filter by class. Example: 1
+     * @queryParam session_id integer Filter by class session. Example: 1
      * @queryParam lesson_plan_id integer Filter by lesson plan. Example: 1
      * @queryParam teacher_id integer Filter by teacher. Example: 1
      * @queryParam room_id integer Filter by room. Example: 1

@@ -44,7 +44,7 @@ class TeacherTest extends TestCase
     private function linkClassToTeacher(int $teacherId): void
     {
         $programId = DB::table('edu_programs')->insertGetId(['name' => 'IELTS', 'created_at' => now(), 'updated_at' => now()]);
-        $levelId = DB::table('edu_levels')->insertGetId(['level_code' => 'A1_'.strtoupper(uniqid()), 'level_name' => 'A1', 'level_order' => 1, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        $levelId = DB::table('edu_levels')->insertGetId(['business_id' => $this->businessId, 'level_code' => 'A1_'.strtoupper(uniqid()), 'level_name' => 'A1', 'level_order' => 1, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
         $courseId = DB::table('edu_courses')->insertGetId([
             'program_id' => $programId, 'level_id' => $levelId, 'business_id' => $this->businessId,
             'name' => 'IELTS Foundation', 'code' => 'C_'.strtoupper(uniqid()), 'duration_minutes' => 60, 'price_per_lesson' => 1000000,

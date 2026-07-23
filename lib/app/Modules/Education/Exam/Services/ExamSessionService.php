@@ -3,6 +3,7 @@
 namespace App\Modules\Education\Exam\Services;
 
 use App\Modules\Education\ClassRoom\Models\ClassStudent;
+use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Exam\Models\ExamRegistration;
 use App\Modules\Education\Exam\Models\ExamSession;
 use App\Modules\Education\Student\Models\Student;
@@ -27,7 +28,7 @@ class ExamSessionService
             $query->whereHas('exam', fn ($q) => $q->where('exam_name', 'like', "%{$search}%"));
         }
 
-        foreach (['exam_id', 'class_room_id', 'room_id', 'teacher_id', 'status'] as $filter) {
+        foreach (['exam_id', 'class_room_id', 'class_session_id', 'room_id', 'teacher_id', 'status'] as $filter) {
             if (! empty($params[$filter])) {
                 $query->where($filter, $params[$filter]);
             }
@@ -37,9 +38,21 @@ class ExamSessionService
             $query->whereDate('exam_date', $params['exam_date']);
         }
 
+        $with = ['exam', 'classRoom', 'classSession', 'room', 'teacher'];
+
+        // A specific student's exam history (StudentDetail "Bài kiểm tra" tab):
+        // only sittings they're registered for, with their own result/registration
+        // eager-loaded so the list carries their score without a second call.
+        if (! empty($params['student_id'])) {
+            $studentId = $params['student_id'];
+            $query->whereHas('registrations', fn ($q) => $q->where('student_id', $studentId));
+            $with['results'] = fn ($q) => $q->where('student_id', $studentId);
+            $with['registrations'] = fn ($q) => $q->where('student_id', $studentId);
+        }
+
         $this->applySort($query, $params, ['exam_date', 'start_time', 'status', 'created_at']);
 
-        return $query->with(['exam', 'classRoom', 'room', 'teacher'])
+        return $query->with($with)
             ->withCount('registrations')
             ->paginate($this->resolvePerPage($params));
     }
@@ -52,7 +65,7 @@ class ExamSessionService
         $query = ExamSession::query();
 
         return $query->with([
-            'exam', 'classRoom', 'room', 'teacher',
+            'exam', 'classRoom', 'classSession', 'room', 'teacher',
             'registrations.student', 'results.student',
         ])->findOrFail($id);
     }
@@ -65,6 +78,8 @@ class ExamSessionService
     public function create(array $data): ExamSession
     {
         return DB::transaction(function () use ($data) {
+            $data = $this->resolveClassRoomFromSession($data);
+
             $this->guardScheduleConflicts($data);
 
             $session = ExamSession::create([
@@ -88,12 +103,28 @@ class ExamSessionService
 
             unset($data['id'], $data['exam_id']);
 
+            $data = $this->resolveClassRoomFromSession($data);
+
             $this->guardScheduleConflicts([...$session->only(['room_id', 'teacher_id', 'exam_date', 'start_time', 'end_time']), ...$data], $session->id);
 
             $session->update($data);
 
             return $this->detail($session->id);
         });
+    }
+
+    /**
+     * When a specific class session ("buổi học") is given, its class is
+     * authoritative — never trust a client-supplied class_room_id alongside it.
+     */
+    private function resolveClassRoomFromSession(array $data): array
+    {
+        if (! empty($data['class_session_id'])) {
+            $classSession = ClassSession::find($data['class_session_id']);
+            $data['class_room_id'] = $classSession?->class_id;
+        }
+
+        return $data;
     }
 
     public function delete($id): void

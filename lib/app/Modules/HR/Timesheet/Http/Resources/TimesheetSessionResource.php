@@ -10,7 +10,7 @@ class TimesheetSessionResource extends JsonResource
     public function toArray($request)
     {
         $hours = ($this->start_time && $this->end_time)
-            ? Carbon::parse($this->start_time)->diffInMinutes(Carbon::parse($this->end_time)) / 60
+            ? abs(Carbon::parse($this->start_time)->diffInMinutes(Carbon::parse($this->end_time))) / 60
             : 0;
 
         return [

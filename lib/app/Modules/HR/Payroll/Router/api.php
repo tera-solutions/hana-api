@@ -11,5 +11,6 @@ Route::prefix('payroll')->middleware('auth.tera')->group(function () {
     Route::get('/detail/{id}', [PayrollController::class, 'detail'])->middleware('permission:payroll.view');
 
     Route::post('/generate', [PayrollController::class, 'generate'])->middleware('permission:payroll.generate');
+    Route::post('/pay/{id}', [PayrollController::class, 'pay'])->middleware('permission:payroll.pay');
 
 });

@@ -40,6 +40,8 @@ class Lead extends Model
 
     public const STATUS_VERIFIED = LeadStatus::Verified->value;
 
+    public const STATUS_CONSULTING = LeadStatus::Consulting->value;
+
     public const STATUS_STUDYING = LeadStatus::Studying->value;
 
     public const STATUS_INACTIVE = LeadStatus::Inactive->value;

@@ -99,6 +99,15 @@ class PermissionSeeder extends Seeder
             'subscription.update' => 'Nâng cấp / đổi gói',
         ]);
 
+        $this->seedPermissions('System', 'Notification', [
+            'notification.list' => 'Xem danh sách thông báo',
+            'notification.view' => 'Xem chi tiết thông báo',
+            'notification.read' => 'Đánh dấu đã đọc',
+            'notification.create' => 'Gửi thông báo',
+            'notification.update' => 'Cập nhật thông báo',
+            'notification.delete' => 'Xóa thông báo',
+        ]);
+
         $this->seedPermissions('System', 'Task', [
             'task.list' => 'Xem danh sách công việc',
             'task.view' => 'Xem chi tiết công việc',
@@ -113,12 +122,12 @@ class PermissionSeeder extends Seeder
     private function crm(): void
     {
         $this->seedPermissions('CRM', 'Lead', [
-            'crm_lead.list' => 'Xem danh sách',
-            'crm_lead.view' => 'Xem chi tiết',
-            'crm_lead.create' => 'Tạo mới',
-            'crm_lead.update' => 'Cập nhật',
-            'crm_lead.suspend' => 'Ngừng khách hàng',
-            'crm_lead.restore' => 'Khôi phục khách hàng',
+            'lead.list' => 'Xem danh sách',
+            'lead.view' => 'Xem chi tiết',
+            'lead.create' => 'Tạo mới',
+            'lead.update' => 'Cập nhật',
+            'lead.suspend' => 'Ngừng khách hàng',
+            'lead.restore' => 'Khôi phục khách hàng',
         ]);
 
         $this->seedPermissions('CRM', 'Parent', [
@@ -335,6 +344,23 @@ class PermissionSeeder extends Seeder
             'teacher_report.view' => 'Xem báo cáo giảng dạy',
         ]);
 
+        $this->seedPermissions('Education', 'Dashboard', [
+            'dashboard.view' => 'Xem tổng quan',
+        ]);
+
+        $this->seedPermissions('Education', 'Score', [
+            'score.view' => 'Xem bảng điểm',
+            'score.configure' => 'Cấu hình trọng số điểm',
+            'score.update' => 'Nhập điểm thành phần',
+            'score.finalize' => 'Chốt / mở khóa điểm',
+        ]);
+
+        $this->seedPermissions('Education', 'Certificate', [
+            'certificate.view' => 'Xem chứng chỉ',
+            'certificate.issue' => 'Phát hành chứng chỉ',
+            'certificate.revoke' => 'Thu hồi chứng chỉ',
+        ]);
+
         $this->seedPermissions('Education', 'Evaluation', [
             'evaluation.list' => 'Xem danh sách đánh giá',
             'evaluation.view' => 'Xem chi tiết đánh giá',
@@ -342,6 +368,15 @@ class PermissionSeeder extends Seeder
             'evaluation.update' => 'Cập nhật đánh giá',
             'evaluation.delete' => 'Xóa đánh giá',
             'evaluation.approve' => 'Duyệt / khóa đánh giá',
+        ]);
+
+        $this->seedPermissions('Education', 'EvaluationCriteriaTemplate', [
+            'evaluation_criteria_template.list' => 'Xem danh sách',
+            'evaluation_criteria_template.view' => 'Xem chi tiết',
+            'evaluation_criteria_template.create' => 'Tạo mới',
+            'evaluation_criteria_template.update' => 'Cập nhật',
+            'evaluation_criteria_template.suspend' => 'Ngừng sử dụng',
+            'evaluation_criteria_template.restore' => 'Khôi phục',
         ]);
     }
 
@@ -371,6 +406,7 @@ class PermissionSeeder extends Seeder
         $this->seedPermissions('HR', 'Payroll', [
             'payroll.view' => 'Xem bảng lương',
             'payroll.generate' => 'Tính lương',
+            'payroll.pay' => 'Trả lương',
         ]);
     }
 
@@ -379,43 +415,57 @@ class PermissionSeeder extends Seeder
     private function finance(): void
     {
         $this->seedPermissions('Finance', 'Account', [
-            'fin_account.list' => 'Xem danh sách',
-            'fin_account.view' => 'Xem chi tiết',
-            'fin_account.create' => 'Tạo mới',
-            'fin_account.update' => 'Cập nhật',
-            'fin_account.suspend' => 'Ngừng quỹ',
-            'fin_account.restore' => 'Khôi phục quỹ',
+            'account.list' => 'Xem danh sách',
+            'account.view' => 'Xem chi tiết',
+            'account.create' => 'Tạo mới',
+            'account.update' => 'Cập nhật',
+            'account.suspend' => 'Ngừng quỹ',
+            'account.restore' => 'Khôi phục quỹ',
         ]);
 
         $this->seedPermissions('Finance', 'Invoice', [
-            'fin_invoice.list' => 'Xem danh sách',
-            'fin_invoice.view' => 'Xem chi tiết',
-            'fin_invoice.create' => 'Tạo mới',
-            'fin_invoice.update' => 'Cập nhật',
-            'fin_invoice.approve' => 'Duyệt / Từ chối',
-            'fin_invoice.cancel' => 'Hủy hóa đơn',
-            'fin_invoice.refund' => 'Hoàn tiền',
-            'fin_invoice.pay' => 'Ghi nhận thanh toán',
+            'invoice.list' => 'Xem danh sách',
+            'invoice.view' => 'Xem chi tiết',
+            'invoice.create' => 'Tạo mới',
+            'invoice.update' => 'Cập nhật',
+            'invoice.approve' => 'Duyệt / Từ chối',
+            'invoice.cancel' => 'Hủy hóa đơn',
+            'invoice.refund' => 'Hoàn tiền',
+            'invoice.pay' => 'Ghi nhận thanh toán',
         ]);
 
         $this->seedPermissions('Finance', 'Payment', [
-            'fin_payment.list' => 'Xem danh sách',
-            'fin_payment.view' => 'Xem chi tiết',
-            'fin_payment.create' => 'Tạo mới',
-            'fin_payment.update' => 'Cập nhật',
-            'fin_payment.confirm' => 'Xác nhận',
-            'fin_payment.cancel' => 'Hủy giao dịch',
-            'fin_payment.reverse' => 'Đảo giao dịch',
-            'fin_payment.refund' => 'Hoàn tiền',
+            'payment.list' => 'Xem danh sách',
+            'payment.view' => 'Xem chi tiết',
+            'payment.create' => 'Tạo mới',
+            'payment.update' => 'Cập nhật',
+            'payment.confirm' => 'Xác nhận',
+            'payment.cancel' => 'Hủy giao dịch',
+            'payment.reverse' => 'Đảo giao dịch',
+            'payment.refund' => 'Hoàn tiền',
+        ]);
+
+        $this->seedPermissions('Finance', 'InvoiceConfig', [
+            'invoice_config.view' => 'Xem cấu hình',
+            'invoice_config.update' => 'Cập nhật cấu hình',
+        ]);
+
+        $this->seedPermissions('Finance', 'BusinessBankAccount', [
+            'business_bank_account.list' => 'Xem danh sách',
+            'business_bank_account.view' => 'Xem chi tiết',
+            'business_bank_account.create' => 'Tạo mới',
+            'business_bank_account.update' => 'Cập nhật',
+            'business_bank_account.suspend' => 'Ngừng sử dụng',
+            'business_bank_account.restore' => 'Khôi phục',
         ]);
 
         $this->seedPermissions('Finance', 'Debt', [
-            'fin_debt.list' => 'Xem danh sách',
-            'fin_debt.view' => 'Xem chi tiết',
-            'fin_debt.adjust' => 'Điều chỉnh công nợ',
-            'fin_debt.writeoff' => 'Xóa nợ',
-            'fin_debt.collect' => 'Thu hồi công nợ',
-            'fin_debt.reconcile' => 'Đối chiếu công nợ',
+            'debt.list' => 'Xem danh sách',
+            'debt.view' => 'Xem chi tiết',
+            'debt.adjust' => 'Điều chỉnh công nợ',
+            'debt.writeoff' => 'Xóa nợ',
+            'debt.collect' => 'Thu hồi công nợ',
+            'debt.reconcile' => 'Đối chiếu công nợ',
         ]);
 
         $this->seedPermissions('Finance', 'Promotion', [

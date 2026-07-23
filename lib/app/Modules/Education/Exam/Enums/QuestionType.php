@@ -16,6 +16,7 @@ enum QuestionType: string implements HasLabel
     case Essay = 'essay';
     case Speaking = 'speaking';
     case Listening = 'listening';
+    case PaperUpload = 'paper_upload';
 
     public function label(): string
     {
@@ -27,6 +28,7 @@ enum QuestionType: string implements HasLabel
             self::Essay => 'Tự luận',
             self::Speaking => 'Nói',
             self::Listening => 'Nghe',
+            self::PaperUpload => 'Đề giấy / PDF',
         };
     }
 

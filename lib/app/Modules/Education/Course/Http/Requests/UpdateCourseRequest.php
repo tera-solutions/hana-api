@@ -2,6 +2,7 @@
 
 namespace App\Modules\Education\Course\Http\Requests;
 
+use App\Modules\Education\Course\Enums\CourseTuitionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,10 +23,12 @@ class UpdateCourseRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'title' => ['nullable', 'string', 'max:255'],
             'code' => ['sometimes', 'required', 'string', 'max:255', 'regex:/^[A-Z0-9_]+$/', Rule::unique('edu_courses', 'code')->ignore($id)],
             'thumbnail' => ['nullable', 'string', 'max:1000'],
             'duration_minutes' => ['sometimes', 'required', 'integer', 'min:1'],
             'price_per_lesson' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'tuition_type' => ['nullable', 'string', Rule::in(CourseTuitionType::values())],
             'description' => ['nullable', 'string', 'max:5000'],
         ];
     }
@@ -46,6 +49,10 @@ class UpdateCourseRequest extends FormRequest
                 'description' => 'Course name.',
                 'example' => 'IELTS Foundation',
             ],
+            'title' => [
+                'description' => 'Optional display title, separate from the internal course name.',
+                'example' => 'IELTS Foundation — Lộ trình 6.5',
+            ],
             'code' => [
                 'description' => 'Unique code (A-Z, 0-9, _).',
                 'example' => 'IELTS_6_5',
@@ -60,6 +67,10 @@ class UpdateCourseRequest extends FormRequest
             'price_per_lesson' => [
                 'description' => 'Price per lesson (>= 0).',
                 'example' => 250000,
+            ],
+            'tuition_type' => [
+                'description' => 'How tuition is framed: per_lesson|per_course|per_month. Display-only.',
+                'example' => 'per_lesson',
             ],
             'description' => [
                 'description' => 'Description.',

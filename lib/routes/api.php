@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\System\Onboarding\Http\Controllers\OnboardingController;
+use App\Modules\System\SocialAuth\Http\Controllers\SocialAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,10 @@ Route::group(['middleware' => ['cors', 'json.response'], 'prefix' => 'auth'], fu
     // handler — kept separate from the legacy 'register' above, which is wired
     // to external portal/CRM microservices.
     Route::post('/register-school', [OnboardingController::class, 'register']);
+
+    // "Login with Google/Microsoft" — verifies an id_token the FE got from the
+    // provider's own JS SDK, no client secret / redirect callback involved.
+    Route::post('/social-login', [SocialAuthController::class, 'login']);
 
     Route::group(['namespace' => 'User'], function () {
         Route::get('/profile', 'UserController@getProfile');

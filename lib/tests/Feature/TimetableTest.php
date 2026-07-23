@@ -76,7 +76,7 @@ class TimetableTest extends TestCase
 
     private function makeClassIdWithPlan(int $planId): int
     {
-        return DB::table('edu_classes')->insertGetId([
+        $classId = DB::table('edu_classes')->insertGetId([
             'code' => 'CLS_'.strtoupper(uniqid()),
             'name' => 'TKB Class',
             'course_id' => $this->courseId,
@@ -88,6 +88,17 @@ class TimetableTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // Mirrors what ClassService::create() does for a real request: the
+        // class's single plan is also its one available start-time option.
+        DB::table('edu_class_lesson_plans')->insert([
+            'class_room_id' => $classId,
+            'lesson_plan_id' => $planId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $classId;
     }
 
     private function makeRoomId(int $capacity = 30): int
@@ -511,34 +522,25 @@ class TimetableTest extends TestCase
             ->assertJsonPath('msg', 'Buổi học này không thuộc thời khóa biểu nào.');
     }
 
-    // ── Lesson generation (lesson.md §7, superseding ClassSchedule) ────────────
+    // ── Lesson generation (lesson.md §7, now deferred to session-start) ────────
 
-    public function test_create_generates_lessons_paired_with_sessions_when_class_has_plan(): void
+    public function test_create_never_generates_lessons_up_front_even_with_a_plan(): void
     {
         $this->actingAsAdmin();
         $planId = $this->makePublishedPlan(2);
         $classId = $this->makeClassIdWithPlan($planId);
 
-        $timetableId = $this->postJson('/v1/edu/timetable/create', $this->payload([
+        $this->postJson('/v1/edu/timetable/create', $this->payload([
             'class_room_id' => $classId,
             'dates' => [
                 ['date' => '2026-07-06', 'start_time' => '18:00', 'end_time' => '19:30'],
                 ['date' => '2026-07-08', 'start_time' => '18:00', 'end_time' => '19:30'],
             ],
-        ]))->assertJsonPath('success', true)->json('data.id');
+        ]))->assertJsonPath('success', true);
 
-        $this->assertSame(2, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
-
-        $firstSessionId = DB::table('edu_sessions')
-            ->where('timetable_id', $timetableId)
-            ->orderBy('session_no')
-            ->value('id');
-
-        $firstLesson = DB::table('edu_lessons')->where('class_room_id', $classId)->where('lesson_no', 1)->first();
-        $this->assertSame($firstSessionId, $firstLesson->session_id);
-        $this->assertSame('Lesson 1', $firstLesson->lesson_title);
-        $this->assertSame('Objective 1', $firstLesson->objective);
-        $this->assertSame('scheduled', $firstLesson->status);
+        // No Lesson is paired at creation time anymore — only when a session starts
+        // and a plan is explicitly chosen (ClassSessionTest covers that flow).
+        $this->assertSame(0, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
     }
 
     public function test_create_does_not_generate_lessons_without_a_plan(): void
@@ -550,23 +552,66 @@ class TimetableTest extends TestCase
         $this->assertSame(0, DB::table('edu_lessons')->where('class_room_id', $this->classId)->count());
     }
 
-    public function test_create_stops_generating_lessons_once_the_plan_is_exhausted(): void
+    public function test_starting_session_with_plan_generates_lesson_and_repeats_for_next_session(): void
     {
         $this->actingAsAdmin();
-        $planId = $this->makePublishedPlan(1); // Only 1 template lesson.
+        $planId = $this->makePublishedPlan(2);
         $classId = $this->makeClassIdWithPlan($planId);
 
-        $this->postJson('/v1/edu/timetable/create', $this->payload([
+        $timetableId = $this->postJson('/v1/edu/timetable/create', $this->payload([
             'class_room_id' => $classId,
             'dates' => [
                 ['date' => '2026-07-06', 'start_time' => '18:00', 'end_time' => '19:30'],
                 ['date' => '2026-07-08', 'start_time' => '18:00', 'end_time' => '19:30'],
             ],
-        ]))
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.total_sessions', 2);
+        ]))->json('data.id');
 
-        // Both sessions are generated, but only 1 lesson — the plan ran out.
-        $this->assertSame(1, DB::table('edu_lessons')->where('class_room_id', $classId)->count());
+        $sessionIds = DB::table('edu_sessions')
+            ->where('timetable_id', $timetableId)
+            ->orderBy('session_no')
+            ->pluck('id');
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionIds[0]}", ['lesson_plan_id' => $planId])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $firstLesson = DB::table('edu_lessons')->where('session_id', $sessionIds[0])->first();
+        $this->assertNotNull($firstLesson);
+        $this->assertSame('Lesson 1', $firstLesson->lesson_title);
+        $this->assertSame(1, $firstLesson->lesson_no);
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionIds[1]}", ['lesson_plan_id' => $planId])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $secondLesson = DB::table('edu_lessons')->where('session_id', $sessionIds[1])->first();
+        $this->assertSame('Lesson 2', $secondLesson->lesson_title);
+        $this->assertSame(2, $secondLesson->lesson_no);
+    }
+
+    public function test_starting_session_without_plan_leaves_it_bare(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(2);
+        $classId = $this->makeClassIdWithPlan($planId);
+        $sessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionId}")
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertSame(0, DB::table('edu_lessons')->where('session_id', $sessionId)->count());
+    }
+
+    public function test_starting_session_rejects_plan_not_linked_to_class(): void
+    {
+        $this->actingAsAdmin();
+        $classId = $this->makeClassId();
+        $sessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+        $unlinkedPlanId = $this->makePublishedPlan(1);
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionId}", ['lesson_plan_id' => $unlinkedPlanId])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Giáo án này chưa được gắn với lớp học.');
     }
 }

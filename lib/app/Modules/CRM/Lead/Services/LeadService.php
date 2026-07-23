@@ -6,6 +6,8 @@ use App\Helpers\Task;
 use App\Modules\CRM\Lead\Events\LeadCreated;
 use App\Modules\CRM\Lead\Models\Lead;
 use App\Modules\CRM\Lead\Models\LeadHistory;
+use App\Modules\CRM\Lead\Models\LeadStudent;
+use App\Modules\Education\Student\Services\StudentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
@@ -194,6 +196,91 @@ class LeadService
         $this->log($lead, 'restored', Lead::STATUS_INACTIVE, $to, $data['reason'] ?? null);
 
         return $this->find($lead->id);
+    }
+
+    /**
+     * Move a lead through the care pipeline: pending → verified → consulting →
+     * studying. "inactive" is out of scope — that's suspend/restore's job, since
+     * those also carry a reason and a pre-suspend status to return to.
+     *
+     * @throws \RuntimeException when the lead is currently inactive.
+     */
+    public function updateStatus($id, array $data)
+    {
+        $lead = $this->find($id);
+
+        if ($lead->status === Lead::STATUS_INACTIVE) {
+            throw new \RuntimeException('Khách hàng đang ở trạng thái ngừng, hãy khôi phục trước.');
+        }
+
+        $from = $lead->status;
+        $lead->update(['status' => $data['status']]);
+
+        $this->log($lead, 'status_changed', $from, $lead->status, null, $data['note'] ?? null);
+
+        return $this->find($lead->id);
+    }
+
+    /**
+     * Convert a lead into a student: creates the student record (reusing
+     * StudentService so code generation / status / events stay consistent),
+     * links it back to the lead, and moves the lead to "studying".
+     *
+     * Every payload field is an override on top of the lead's own data —
+     * only dob/gender/branch_id are actually required by student creation,
+     * so those three raise a clear error when neither the lead nor the
+     * payload has them.
+     *
+     * @throws \RuntimeException when the lead is inactive or required student
+     *                           fields (dob/gender/branch) are missing from
+     *                           both the lead and the override payload.
+     */
+    public function convert($id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $lead = $this->find($id);
+
+            if ($lead->status === Lead::STATUS_INACTIVE) {
+                throw new \RuntimeException('Không thể chuyển đổi khách hàng đang ở trạng thái ngừng.');
+            }
+
+            $dob = $data['dob'] ?? optional($lead->dob)->format('Y-m-d');
+            $gender = $data['gender'] ?? $lead->gender;
+            $branchId = $data['branch_id'] ?? $lead->branch_id;
+
+            if (! $dob || ! $gender || ! $branchId) {
+                throw new \RuntimeException('Thiếu thông tin bắt buộc (ngày sinh, giới tính, chi nhánh) để chuyển đổi thành học viên.');
+            }
+
+            $student = app(StudentService::class)->create([
+                'name' => $lead->name,
+                'dob' => $dob,
+                'gender' => $gender,
+                'email' => $lead->email,
+                'phone' => $lead->phone,
+                'business_id' => $lead->business_id,
+                'branch_id' => $branchId,
+                'level_id' => $data['level_id'] ?? null,
+                'enrollment_date' => $data['enrollment_date'] ?? now()->toDateString(),
+                'admission_source' => $lead->source,
+            ]);
+
+            LeadStudent::create([
+                'lead_id' => $lead->id,
+                'student_id' => $student->id,
+                'relationship' => 'self',
+            ]);
+
+            $from = $lead->status;
+            $lead->update(['status' => Lead::STATUS_STUDYING]);
+
+            $this->log($lead, 'converted', $from, Lead::STATUS_STUDYING, null, $data['note'] ?? null);
+
+            return [
+                'lead' => $this->find($lead->id),
+                'student_id' => $student->id,
+            ];
+        });
     }
 
     /**

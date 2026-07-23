@@ -86,6 +86,7 @@ class QuestionTest extends TestCase
     private function makeLevelId(): int
     {
         return DB::table('edu_levels')->insertGetId([
+            'business_id' => $this->businessId,
             'level_code' => 'L_'.strtoupper(uniqid()),
             'level_name' => 'Starter',
             'course_id' => $this->courseId,

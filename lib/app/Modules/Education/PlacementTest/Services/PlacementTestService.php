@@ -4,6 +4,7 @@ namespace App\Modules\Education\PlacementTest\Services;
 
 use App\Modules\Education\PlacementTest\Models\PlacementTest;
 use App\Modules\Education\PlacementTest\Models\PlacementTestResult;
+use App\Modules\Education\Question\Models\Question;
 use App\Modules\HR\Teacher\Models\Teacher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class PlacementTestService
 
         $this->applySort($query, $params, ['title', 'cefr_level', 'status', 'created_at']);
 
-        $paginated = $query->withCount('results')->paginate($this->resolvePerPage($params));
+        $paginated = $query->withCount(['results', 'questions'])->paginate($this->resolvePerPage($params));
         $paginated->getCollection()->transform(fn (PlacementTest $test) => $this->withStats($test));
 
         return $paginated;
@@ -41,7 +42,11 @@ class PlacementTestService
 
     public function find($id): PlacementTest
     {
-        return $this->withStats(PlacementTest::withCount('results')->findOrFail($id));
+        return $this->withStats(
+            PlacementTest::withCount('results')
+                ->with(['questions.answers'])
+                ->findOrFail($id)
+        );
     }
 
     private function withStats(PlacementTest $test): PlacementTest
@@ -106,6 +111,56 @@ class PlacementTestService
             ->with('student')
             ->orderByDesc('created_at')
             ->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Draw ACTIVE bank questions into this test's question set, appending to
+     * (not replacing) whatever is already attached — mirrors
+     * `GenerateExamService::selectQuestions`, but links live bank rows
+     * instead of snapshotting content (see `PlacementTest::questions()`).
+     *
+     * @param  array<int, array{skill: string, difficulty: string, count: int}>  $buckets
+     *
+     * @throws \RuntimeException
+     */
+    public function generateQuestions($testId, array $buckets): PlacementTest
+    {
+        return DB::transaction(function () use ($testId, $buckets) {
+            $test = PlacementTest::findOrFail($testId);
+
+            $selected = collect();
+            foreach ($buckets as $bucket) {
+                $rows = Question::query()
+                    ->where('status', Question::STATUS_ACTIVE)
+                    ->where('skill', $bucket['skill'])
+                    ->where('difficulty', $bucket['difficulty'])
+                    ->when($test->cefr_level, fn ($q) => $q->where('cefr_level', $test->cefr_level))
+                    ->whereNotIn('id', $test->questions()->pluck('edu_questions.id'))
+                    ->leftJoin('edu_question_statistics', 'edu_question_statistics.question_id', '=', 'edu_questions.id')
+                    ->orderByRaw('COALESCE(edu_question_statistics.usage_count, 0) asc')
+                    ->orderBy('edu_questions.id')
+                    ->limit((int) $bucket['count'])
+                    ->select('edu_questions.*')
+                    ->get();
+
+                $selected = $selected->concat($rows);
+            }
+
+            if ($selected->isEmpty()) {
+                throw new \RuntimeException('Không tìm thấy câu hỏi phù hợp để thêm vào bài kiểm tra.');
+            }
+
+            $nextOrder = (int) $test->questions()->max('edu_placement_test_question.order');
+            $attach = [];
+            foreach ($selected as $i => $question) {
+                $attach[$question->id] = ['order' => $nextOrder + $i + 1];
+            }
+            $test->questions()->syncWithoutDetaching($attach);
+
+            $test->update(['question_count' => $test->questions()->count()]);
+
+            return $this->find($testId);
+        });
     }
 
     public function recordResult($testId, array $data): PlacementTestResult

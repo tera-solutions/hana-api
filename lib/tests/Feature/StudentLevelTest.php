@@ -68,6 +68,7 @@ class StudentLevelTest extends TestCase
     private function makeLevel(int $courseId, string $code, int $order): int
     {
         return DB::table('edu_levels')->insertGetId([
+            'business_id' => $this->businessId,
             'level_code' => $code.'_'.strtoupper(uniqid()),
             'level_name' => $code,
             'course_id' => $courseId,

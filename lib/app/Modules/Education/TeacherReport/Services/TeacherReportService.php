@@ -75,11 +75,14 @@ class TeacherReportService
         $overdueCount = $submissions->where('status', AssignmentSubmission::STATUS_ASSIGNED)->count();
         $homeworkCompletionRate = $totalTargets > 0 ? round($submittedCount / $totalTargets * 100, 1) : 0.0;
 
+        // abs(): a session ended via "Dừng lại" (endEarly()) stamps `end_time` from
+        // the real wall clock, which can land before the nominal `start_time` slot —
+        // duration must never render negative regardless of that skew.
         $teachingMinutes = ClassSession::whereIn('id', $sessionIds)
             ->where('status', ClassSession::STATUS_COMPLETED)
             ->get(['start_time', 'end_time'])
             ->sum(fn ($session) => $session->start_time && $session->end_time
-                ? Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time))
+                ? abs(Carbon::parse($session->start_time)->diffInMinutes(Carbon::parse($session->end_time)))
                 : 0);
 
         return [

@@ -177,6 +177,35 @@ class TenantIsolationTest extends TestCase
             ->assertStatus(404);
     }
 
+    public function test_a_business_cannot_see_another_businesses_levels(): void
+    {
+        $bizA = $this->makeBusinessId();
+        $bizB = $this->makeBusinessId();
+
+        $this->actingAsAdmin($bizA);
+        $courseA = $this->postJson('/v1/edu/course/create', [
+            'name' => 'IELTS Foundation',
+            'code' => 'CRS'.strtoupper(bin2hex(random_bytes(4))),
+            'duration_minutes' => 90,
+            'price_per_lesson' => 250000,
+            'business_id' => $bizA,
+        ])->assertStatus(200)->json('data.id');
+        $levelA = $this->postJson('/v1/edu/level/create', [
+            'level_code' => 'A1_'.strtoupper(uniqid()),
+            'level_name' => 'A1',
+            'course_id' => $courseA,
+            'level_order' => 1,
+        ])->assertStatus(200)->json('data.id');
+
+        // Business B sees none of A's levels and cannot fetch one by id.
+        $this->actingAsAdmin($bizB);
+        $this->getJson('/v1/edu/level/list')
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 0);
+        $this->getJson("/v1/edu/level/detail/{$levelA}")
+            ->assertStatus(404);
+    }
+
     public function test_created_student_is_stamped_with_acting_business_ignoring_payload(): void
     {
         $bizA = $this->makeBusinessId();

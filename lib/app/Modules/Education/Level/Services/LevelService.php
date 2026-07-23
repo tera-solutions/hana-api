@@ -33,12 +33,12 @@ class LevelService
 
         $this->applySort($query, $params, ['level_code', 'level_name', 'level_order', 'status', 'created_at'], 'level_order');
 
-        return $query->with('course')->paginate($this->resolvePerPage($params));
+        return $query->with(['course', 'business'])->paginate($this->resolvePerPage($params));
     }
 
     public function find($id): Level
     {
-        return Level::with('course')->findOrFail($id);
+        return Level::with(['course', 'business'])->findOrFail($id);
     }
 
     /**

@@ -39,4 +39,14 @@ return [
         'password_client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
         'password_client_secret' => env('PASSPORT_PASSWORD_CLIENT_SECRET'),
     ],
+
+    // Social login (id_token verification only — no client secret needed).
+    'google' => [
+        'client_id' => env('GOOGLE_OAUTH_CLIENT_ID'),
+    ],
+
+    'microsoft' => [
+        'client_id' => env('MICROSOFT_OAUTH_CLIENT_ID'),
+        'tenant' => env('MICROSOFT_OAUTH_TENANT', 'common'),
+    ],
 ];

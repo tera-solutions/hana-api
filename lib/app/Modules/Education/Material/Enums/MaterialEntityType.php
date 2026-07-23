@@ -17,6 +17,7 @@ enum MaterialEntityType: string implements HasLabel
     case Lesson = 'lesson';
     case Assignment = 'assignment';
     case Evaluation = 'evaluation';
+    case Exam = 'exam';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum MaterialEntityType: string implements HasLabel
             self::Lesson => 'Buổi học',
             self::Assignment => 'Bài tập',
             self::Evaluation => 'Đánh giá',
+            self::Exam => 'Bài kiểm tra',
         };
     }
 
@@ -40,6 +42,7 @@ enum MaterialEntityType: string implements HasLabel
             self::Lesson => 'edu_lessons',
             self::Assignment => 'edu_assignments',
             self::Evaluation => 'edu_evaluations',
+            self::Exam => 'edu_exams',
         };
     }
 }

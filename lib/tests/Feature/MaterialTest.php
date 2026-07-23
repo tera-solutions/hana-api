@@ -68,6 +68,22 @@ class MaterialTest extends TestCase
         return $this->postJson("/v1/edu/material/attach/{$id}", ['entity_type' => $entityType, 'entity_id' => $entityId]);
     }
 
+    private function makeExamId(): int
+    {
+        return DB::table('edu_exams')->insertGetId([
+            'exam_name' => 'Exam '.uniqid(),
+            'exam_code' => 'EX_'.strtoupper(uniqid()),
+            'exam_type' => 'final',
+            'status' => 'draft',
+            'duration' => 60,
+            'total_score' => 100,
+            'passing_score' => 70,
+            'version' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     public function test_requires_authentication(): void
     {
         $this->getJson('/v1/edu/material/list')->assertJsonPath('code', 401);
@@ -179,6 +195,24 @@ class MaterialTest extends TestCase
             ->assertJsonPath('success', true);
 
         $this->assertDatabaseMissing('edu_material_mappings', ['id' => $mappingId]);
+    }
+
+    public function test_attach_to_exam_paper(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createMaterial(['material_name' => 'Đề thi giấy Final']);
+        $examId = $this->makeExamId();
+
+        $this->attach($id, $examId, 'exam')
+            ->assertStatus(200)
+            ->assertJsonPath('data.entity_type', 'exam');
+
+        $res = $this->getJson("/v1/edu/material/list?entity_type=exam&entity_id={$examId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.pagination.total', 1);
+
+        $this->assertSame($id, $res->json('data.items.0.id'));
     }
 
     public function test_list_filters_by_linked_entity(): void

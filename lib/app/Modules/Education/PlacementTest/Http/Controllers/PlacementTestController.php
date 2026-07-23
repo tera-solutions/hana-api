@@ -5,6 +5,7 @@ namespace App\Modules\Education\PlacementTest\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Education\PlacementTest\Actions\CreatePlacementTestAction;
 use App\Modules\Education\PlacementTest\Actions\DeletePlacementTestAction;
+use App\Modules\Education\PlacementTest\Actions\GeneratePlacementTestQuestionsAction;
 use App\Modules\Education\PlacementTest\Actions\GetPlacementTestAction;
 use App\Modules\Education\PlacementTest\Actions\ListPlacementTestAction;
 use App\Modules\Education\PlacementTest\Actions\ListPlacementTestResultAction;
@@ -12,6 +13,7 @@ use App\Modules\Education\PlacementTest\Actions\PublishPlacementTestAction;
 use App\Modules\Education\PlacementTest\Actions\RecordPlacementTestResultAction;
 use App\Modules\Education\PlacementTest\Actions\UpdatePlacementTestAction;
 use App\Modules\Education\PlacementTest\Http\Requests\CreatePlacementTestRequest;
+use App\Modules\Education\PlacementTest\Http\Requests\GeneratePlacementTestQuestionsRequest;
 use App\Modules\Education\PlacementTest\Http\Requests\RecordPlacementTestResultRequest;
 use App\Modules\Education\PlacementTest\Http\Requests\UpdatePlacementTestRequest;
 use App\Modules\Education\PlacementTest\Http\Resources\PlacementTestResource;
@@ -78,5 +80,15 @@ class PlacementTestController extends Controller
         $result = $action->handle($id, $request->validated());
 
         return $this->respondSuccess(new PlacementTestResultResource($result), 'Ghi nhận kết quả thành công.');
+    }
+
+    public function generateQuestions(
+        $id,
+        GeneratePlacementTestQuestionsRequest $request,
+        GeneratePlacementTestQuestionsAction $action,
+    ) {
+        $test = $action->handle($id, $request->validated('buckets'));
+
+        return $this->respondSuccess(new PlacementTestResource($test), 'Đã thêm câu hỏi vào bài kiểm tra.');
     }
 }

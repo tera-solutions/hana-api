@@ -3,11 +3,17 @@
 namespace App\Modules\HR\Payroll\Services;
 
 use App\Modules\Education\ClassSession\Models\ClassSession;
+use App\Modules\Finance\Wallet\Models\Wallet;
+use App\Modules\Finance\Wallet\Services\WalletService;
 use App\Modules\HR\Teacher\Models\Payroll;
 use App\Modules\HR\Teacher\Models\Teacher;
 use App\Modules\HR\Timesheet\Services\TimesheetService;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
+use Package\Exception\AuthorizationException;
 
 /**
  * Lương giáo viên = giờ dạy thực tế (nguồn `TimesheetService`, buổi đã điểm
@@ -24,10 +30,19 @@ class PayrollService
 {
     use HandlesEntityQueries;
 
-    public function __construct(private readonly TimesheetService $timesheet) {}
+    public function __construct(
+        private readonly TimesheetService $timesheet,
+        private readonly WalletService $wallets,
+    ) {}
 
-    public function paginate(int $teacherId, array $params = [])
+    public function paginate(?int $teacherId, array $params = [])
     {
+        // Null means the caller has no teacher profile to scope to (e.g. the
+        // tenant owner) — not an error, just nothing to list.
+        if (! $teacherId) {
+            return new LengthAwarePaginator([], 0, $this->resolvePerPage($params));
+        }
+
         $this->ensureGenerated($teacherId);
 
         $query = Payroll::query()->where('teacher_id', $teacherId);
@@ -38,6 +53,90 @@ class PayrollService
         }
 
         return $query->paginate($this->resolvePerPage($params));
+    }
+
+    /**
+     * Which teacher `list()` should scope to: an `is_admin` caller may view
+     * another teacher via `$requestedTeacherId`, everyone else is locked to
+     * their own acting teacher (null when they have no teacher profile).
+     */
+    public function resolveListTeacherId(?int $requestedTeacherId): ?int
+    {
+        if ($requestedTeacherId && $this->isAdmin()) {
+            return $requestedTeacherId;
+        }
+
+        return $this->actingTeacherId();
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function assertOwnPayroll(int $payrollTeacherId): void
+    {
+        if ($this->isAdmin()) {
+            return;
+        }
+
+        if ($this->actingTeacherId() !== $payrollTeacherId) {
+            throw new AuthorizationException('Bạn chỉ có thể xem bảng lương của chính mình.');
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function assertNotOwnPayroll(int $payrollTeacherId): void
+    {
+        if ($this->isAdmin()) {
+            return;
+        }
+
+        if ($this->actingTeacherId() === $payrollTeacherId) {
+            throw new AuthorizationException('Bạn không thể tự trả lương cho chính mình.');
+        }
+    }
+
+    /**
+     * Non-admin callers may only generate for their OWN `teacher_id`, and any
+     * `bonus`/`penalty` they submit is silently ignored — those fields are
+     * admin-only, same principle as Wallet Request's approval step.
+     *
+     * @throws AuthorizationException
+     */
+    public function authorizeGenerate(array $data): array
+    {
+        if ($this->isAdmin()) {
+            return $data;
+        }
+
+        $teacherId = $this->actingTeacherId();
+
+        if (! $teacherId) {
+            throw new AuthorizationException('Bạn chưa được gán hồ sơ giáo viên.');
+        }
+
+        if ((int) $data['teacher_id'] !== $teacherId) {
+            throw new AuthorizationException('Bạn chỉ có thể tính lương cho chính mình.');
+        }
+
+        unset($data['bonus'], $data['penalty']);
+
+        return $data;
+    }
+
+    private function isAdmin(): bool
+    {
+        $user = Auth::guard('api')->user();
+
+        return (bool) ($user && $user->is_admin);
+    }
+
+    private function actingTeacherId(): ?int
+    {
+        $userId = Auth::guard('api')->id();
+
+        return $userId ? Teacher::where('user_id', $userId)->value('id') : null;
     }
 
     /**
@@ -174,5 +273,41 @@ class PayrollService
         );
 
         return $payroll;
+    }
+
+    /**
+     * Actually disburse a payroll period: credits the teacher's wallet with
+     * `total_salary` and marks the period paid. The only place money moves —
+     * `generate()` only ever computes amounts.
+     *
+     * @throws \RuntimeException when already paid or nothing to pay
+     */
+    public function pay(int $id): Payroll
+    {
+        return DB::transaction(function () use ($id) {
+            $payroll = Payroll::lockForUpdate()->findOrFail($id);
+
+            if ($payroll->status === Payroll::STATUS_PAID) {
+                throw new \RuntimeException('Bảng lương này đã được trả.');
+            }
+
+            if ((float) $payroll->total_salary <= 0) {
+                throw new \RuntimeException('Không có lương để trả cho kỳ này.');
+            }
+
+            $teacher = Teacher::findOrFail($payroll->teacher_id);
+            $wallet = $this->wallets->createForOwner($teacher->business_id, Wallet::OWNER_TEACHER, $teacher->id);
+
+            $this->wallets->recordFromPayroll([
+                'wallet_id' => $wallet->id,
+                'amount' => (float) $payroll->total_salary,
+                'payroll_id' => $payroll->id,
+                'note' => sprintf('Trả lương tháng %02d/%d', $payroll->month, $payroll->year),
+            ]);
+
+            $payroll->update(['status' => Payroll::STATUS_PAID, 'paid_at' => now()]);
+
+            return $payroll->fresh();
+        });
     }
 }

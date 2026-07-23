@@ -144,7 +144,7 @@ class ClassService
 
     public function find($id): ClassRoom
     {
-        return ClassRoom::with(['course', 'teacher', 'assignee', 'timetables.rules', 'lessonPlan', 'room', 'business'])->findOrFail($id);
+        return ClassRoom::with(['course', 'teacher', 'assignee', 'timetables.rules', 'timetables.room', 'lessonPlan', 'lessonPlans', 'room', 'business'])->findOrFail($id);
     }
 
     /**
@@ -186,11 +186,16 @@ class ClassService
     public function create(array $data): ClassRoom
     {
         return DB::transaction(function () use ($data) {
+            $lessonPlanIds = $data['lesson_plan_ids'] ?? null;
+            unset($data['lesson_plan_ids']);
+
             $class = new ClassRoom($data);
             // A brand-new class can't have a Timetable yet, so `scheduled` classes
             // always start in draft (spec 009 §4) until one is created for them.
             $class->status = $this->computeStatus($class, false);
             $class->save();
+
+            $this->syncLessonPlans($class, $lessonPlanIds);
 
             if (! empty($data['use_course_curriculum'])) {
                 $this->copyCourseCurriculum($class);
@@ -198,6 +203,25 @@ class ClassService
 
             return $this->findWithStats($class->id);
         });
+    }
+
+    /**
+     * Keep the "plans available at session-start" pivot in sync. When the
+     * caller doesn't send an explicit list, fall back to `lesson_plan_id`
+     * alone — so a class created/updated the old way (single plan) still ends
+     * up with exactly that one plan to pick from, no start-time behavior change.
+     */
+    private function syncLessonPlans(ClassRoom $class, ?array $lessonPlanIds): void
+    {
+        if ($lessonPlanIds !== null) {
+            $class->lessonPlans()->sync($lessonPlanIds);
+
+            return;
+        }
+
+        if ($class->lesson_plan_id) {
+            $class->lessonPlans()->syncWithoutDetaching([$class->lesson_plan_id]);
+        }
     }
 
     /**
@@ -213,7 +237,8 @@ class ClassService
                 unset($data['course_id'], $data['use_course_curriculum']);
             }
 
-            unset($data['id'], $data['code'], $data['status']);
+            $lessonPlanIds = $data['lesson_plan_ids'] ?? null;
+            unset($data['id'], $data['code'], $data['status'], $data['lesson_plan_ids']);
 
             $class->fill($data);
 
@@ -223,6 +248,8 @@ class ClassService
             }
 
             $class->save();
+
+            $this->syncLessonPlans($class, $lessonPlanIds);
 
             return $this->findWithStats($class->id);
         });
@@ -399,7 +426,12 @@ class ClassService
 
         $today = now()->toDateString();
 
-        return $class->start_date > $today
+        // `start_date` is cast to Carbon (midnight of that day), never a plain
+        // string — comparing it against `$today` directly (Carbon > string)
+        // does not compare as same-day-or-earlier the way it looks like it
+        // should, so a class starting exactly today was wrongly kept
+        // "upcoming" instead of flipping to "active". Compare date strings.
+        return $class->start_date->toDateString() > $today
             ? ClassRoom::STATUS_UPCOMING
             : ClassRoom::STATUS_ACTIVE;
     }

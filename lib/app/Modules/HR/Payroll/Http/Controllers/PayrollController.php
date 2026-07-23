@@ -6,12 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Modules\HR\Payroll\Actions\GeneratePayrollAction;
 use App\Modules\HR\Payroll\Actions\GetPayrollAction;
 use App\Modules\HR\Payroll\Actions\ListPayrollAction;
+use App\Modules\HR\Payroll\Actions\PayPayrollAction;
 use App\Modules\HR\Payroll\Http\Requests\GeneratePayrollRequest;
 use App\Modules\HR\Payroll\Http\Resources\PayrollResource;
-use App\Modules\HR\Teacher\Models\Teacher;
+use App\Modules\HR\Payroll\Services\PayrollService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Package\Exception\AuthorizationException;
 
 /**
  * @group HR - Payroll
@@ -31,21 +30,19 @@ use Package\Exception\AuthorizationException;
 class PayrollController extends Controller
 {
     /**
-     * List my payroll periods
+     * List payroll periods
      *
+     * Defaults to the acting teacher's own periods. An `is_admin` account (the
+     * center admin, running payroll for others) may pass `teacher_id` to view
+     * — and, via `pay`, disburse — any teacher's payroll.
+     *
+     * @queryParam teacher_id integer Admin only: view another teacher's payroll. Example: 3
      * @queryParam per_page integer Page size: 20, 50 or 100. Example: 20
      * @queryParam page integer Page number. Example: 1
      */
-    public function list(Request $request, ListPayrollAction $action)
+    public function list(Request $request, PayrollService $service, ListPayrollAction $action)
     {
-        $teacherId = $this->actingTeacherId();
-
-        if (! $teacherId) {
-            return $this->respondSuccess([
-                'items' => [],
-                'pagination' => ['total' => 0, 'per_page' => 20, 'current_page' => 1, 'last_page' => 1],
-            ]);
-        }
+        $teacherId = $service->resolveListTeacherId($request->filled('teacher_id') ? $request->integer('teacher_id') : null);
 
         return $this->respondPaginated($action->handle($teacherId, $request->all()), PayrollResource::class);
     }
@@ -55,10 +52,10 @@ class PayrollController extends Controller
      *
      * @urlParam id integer required The payroll ID. Example: 1
      */
-    public function detail($id, GetPayrollAction $action)
+    public function detail($id, PayrollService $service, GetPayrollAction $action)
     {
         $result = $action->handle($id);
-        $this->assertOwnPayroll($result['payroll']->teacher_id);
+        $service->assertOwnPayroll($result['payroll']->teacher_id);
 
         return $this->respondSuccess([
             'payroll' => new PayrollResource($result['payroll']),
@@ -78,50 +75,35 @@ class PayrollController extends Controller
      *
      * @response 200 {"success": true, "msg": "Tính lương thành công.", "data": {"id": 1, "month": 7, "year": 2026, "total_hours": 18, "base_salary": 2700000, "bonus": 500000, "penalty": 0, "total_salary": 3200000}, "code": 200, "errors": null}
      */
-    public function generate(GeneratePayrollRequest $request, GeneratePayrollAction $action)
+    public function generate(GeneratePayrollRequest $request, PayrollService $service, GeneratePayrollAction $action)
     {
-        $data = $request->validated();
-        $user = Auth::guard('api')->user();
-
-        if (! $user || ! $user->is_admin) {
-            $teacherId = $this->actingTeacherId();
-
-            if (! $teacherId) {
-                throw new AuthorizationException('Bạn chưa được gán hồ sơ giáo viên.');
-            }
-
-            if ((int) $data['teacher_id'] !== $teacherId) {
-                throw new AuthorizationException('Bạn chỉ có thể tính lương cho chính mình.');
-            }
-
-            unset($data['bonus'], $data['penalty']);
-        }
+        $data = $service->authorizeGenerate($request->validated());
 
         $payroll = $action->handle($data['teacher_id'], $data['month'], $data['year'], $data);
 
         return $this->respondSuccess(new PayrollResource($payroll), 'Tính lương thành công.');
     }
 
-    private function actingTeacherId(): ?int
-    {
-        $userId = Auth::guard('api')->id();
-
-        return $userId ? Teacher::where('user_id', $userId)->value('id') : null;
-    }
-
     /**
-     * @throws AuthorizationException
+     * Pay (disburse) a payroll period
+     *
+     * Credits the teacher's wallet with `total_salary` and marks the period
+     * paid. A non-admin caller can never pay their own payroll — that's the
+     * same self-dealing rule as Wallet Request's approval step.
+     *
+     * @urlParam id integer required The payroll ID. Example: 1
      */
-    private function assertOwnPayroll(int $payrollTeacherId): void
+    public function pay($id, PayrollService $service, GetPayrollAction $get, PayPayrollAction $action)
     {
-        $user = Auth::guard('api')->user();
+        $result = $get->handle($id);
+        $service->assertNotOwnPayroll($result['payroll']->teacher_id);
 
-        if (! $user || $user->is_admin) {
-            return;
+        try {
+            $payroll = $action->handle($id);
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
         }
 
-        if ($this->actingTeacherId() !== $payrollTeacherId) {
-            throw new AuthorizationException('Bạn chỉ có thể xem bảng lương của chính mình.');
-        }
+        return $this->respondSuccess(new PayrollResource($payroll), 'Trả lương thành công.');
     }
 }

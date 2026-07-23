@@ -64,4 +64,15 @@ class NotificationController extends Controller
 
         return $this->respondSuccess(null, 'Xóa thông báo thành công');
     }
+
+    /**
+     * Mark as read for the current user (per-recipient, via `sys_notification_users`)
+     * — distinct from `update`, which mutates the shared notification row and is
+     * gated behind the messaging feature. Reading your own notifications is not a
+     * premium action.
+     */
+    public function read($id)
+    {
+        return $this->respondSuccess(new NotificationResource($this->notifications->read($id)));
+    }
 }

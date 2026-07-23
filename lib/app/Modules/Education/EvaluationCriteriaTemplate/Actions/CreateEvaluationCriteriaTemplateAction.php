@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Modules\Education\EvaluationCriteriaTemplate\Actions;
+
+use App\Modules\Education\EvaluationCriteriaTemplate\Services\EvaluationCriteriaTemplateService;
+
+class CreateEvaluationCriteriaTemplateAction
+{
+    public function __construct(private EvaluationCriteriaTemplateService $service) {}
+
+    public function handle(array $data)
+    {
+        return $this->service->create($data);
+    }
+}
