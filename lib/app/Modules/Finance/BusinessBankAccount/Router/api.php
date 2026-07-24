@@ -14,4 +14,7 @@ Route::prefix('business-bank-account')->middleware('auth.tera')->group(function 
 
     Route::post('/suspend/{id}', [BusinessBankAccountController::class, 'suspend'])->middleware('permission:business_bank_account.suspend');
     Route::post('/restore/{id}', [BusinessBankAccountController::class, 'restore'])->middleware('permission:business_bank_account.restore');
+
+    Route::patch('/set-default/{id}', [BusinessBankAccountController::class, 'setDefault'])->middleware('permission:business_bank_account.update')->whereNumber('id');
+    Route::get('/qr/{id}', [BusinessBankAccountController::class, 'qr'])->middleware('permission:business_bank_account.view')->whereNumber('id');
 });

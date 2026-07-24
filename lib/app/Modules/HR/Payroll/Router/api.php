@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('payroll')->middleware('auth.tera')->group(function () {
 
     Route::get('/list', [PayrollController::class, 'list'])->middleware('permission:payroll.view');
+    Route::get('/summary', [PayrollController::class, 'summary'])->middleware('permission:payroll.view');
     Route::get('/detail/{id}', [PayrollController::class, 'detail'])->middleware('permission:payroll.view');
 
     Route::post('/generate', [PayrollController::class, 'generate'])->middleware('permission:payroll.generate');

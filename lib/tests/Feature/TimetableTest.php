@@ -589,6 +589,77 @@ class TimetableTest extends TestCase
         $this->assertSame(2, $secondLesson->lesson_no);
     }
 
+    public function test_starting_session_with_explicit_lesson_uses_that_template_out_of_order(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(3);
+        $classId = $this->makeClassIdWithPlan($planId);
+        $sessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+
+        $thirdTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $planId)
+            ->where('lesson_no', 3)
+            ->value('id');
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionId}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $thirdTemplateId,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $lesson = DB::table('edu_lessons')->where('session_id', $sessionId)->first();
+        $this->assertNotNull($lesson);
+        $this->assertSame('Lesson 3', $lesson->lesson_title);
+        $this->assertSame($thirdTemplateId, $lesson->lesson_plan_lesson_id);
+    }
+
+    public function test_starting_session_rejects_lesson_already_used(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(2);
+        $classId = $this->makeClassIdWithPlan($planId);
+
+        $firstTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $planId)
+            ->where('lesson_no', 1)
+            ->value('id');
+
+        $firstSessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+        $this->postJson("/v1/edu/class-session/start/{$firstSessionId}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ])->assertJsonPath('success', true);
+
+        $secondSessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+        $this->postJson("/v1/edu/class-session/start/{$secondSessionId}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Bài học này đã được sử dụng cho một buổi học khác.');
+    }
+
+    public function test_starting_session_rejects_lesson_from_another_plan(): void
+    {
+        $this->actingAsAdmin();
+        $planId = $this->makePublishedPlan(2);
+        $otherPlanId = $this->makePublishedPlan(1);
+        $classId = $this->makeClassIdWithPlan($planId);
+        $sessionId = $this->createTimetableSessionId(['class_room_id' => $classId]);
+
+        $otherTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $otherPlanId)
+            ->value('id');
+
+        $this->postJson("/v1/edu/class-session/start/{$sessionId}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $otherTemplateId,
+        ])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Bài học này không thuộc giáo án đã chọn.');
+    }
+
     public function test_starting_session_without_plan_leaves_it_bare(): void
     {
         $this->actingAsAdmin();

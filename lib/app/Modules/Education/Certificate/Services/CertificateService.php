@@ -4,12 +4,16 @@ namespace App\Modules\Education\Certificate\Services;
 
 use App\Modules\Education\Attendance\Models\Attendance;
 use App\Modules\Education\Certificate\Models\Certificate;
+use App\Modules\Education\CertificateTemplate\Models\CertificateTemplate;
+use App\Modules\Education\ClassRoom\Models\ClassRoom;
 use App\Modules\Education\ClassSession\Models\ClassSession;
 use App\Modules\Education\Enrollment\Models\Enrollment;
 use App\Modules\Education\Grade\Models\Grade;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Package\Database\Concerns\HandlesEntityQueries;
 
 /**
  * EDU-18 Certificate. Eligibility is informational (final score, attendance
@@ -18,6 +22,8 @@ use Illuminate\Support\Str;
  */
 class CertificateService
 {
+    use HandlesEntityQueries;
+
     /**
      * Roster of a class with everything needed to decide who to issue to.
      */
@@ -46,8 +52,8 @@ class CertificateService
                 'student_id' => $studentId,
                 'student' => $enrollment->student ? [
                     'id' => $enrollment->student->id,
-                    'student_code' => $enrollment->student->student_code,
-                    'full_name' => $enrollment->student->full_name,
+                    'student_code' => $enrollment->student->code,
+                    'full_name' => $enrollment->student->name,
                 ] : null,
                 'final_score' => $finalScores->get($studentId)?->score,
                 'attendance_rate' => $this->attendanceRate($classId, $studentId),
@@ -126,6 +132,113 @@ class CertificateService
     }
 
     /**
+     * Summary counters + paginated, filterable list for the "Chứng nhận học
+     * viên" screen (teacher-app-076).
+     */
+    public function summary(array $params = []): array
+    {
+        $query = Certificate::query();
+
+        foreach (['template_id', 'course_id', 'status'] as $filter) {
+            if (! empty($params[$filter])) {
+                $query->where($filter, $params[$filter]);
+            }
+        }
+
+        if (! empty($params['search'])) {
+            $search = $params['search'];
+            $query->whereHas('student', fn ($q) => $q->where('full_name', 'like', "%{$search}%"));
+        }
+
+        $this->applySort($query, $params, ['issued_at', 'status', 'created_at'], 'issued_at');
+
+        return [
+            'summary' => [
+                'issued' => Certificate::where('status', Certificate::STATUS_ISSUED)->count(),
+                'templates' => CertificateTemplate::where('status', CertificateTemplate::STATUS_ACTIVE)->count(),
+            ],
+            'paginator' => $query->with(['student', 'course', 'classRoom', 'template'])->paginate($this->resolvePerPage($params)),
+        ];
+    }
+
+    /**
+     * Students of a course (across all its classes) whose completion rate
+     * meets the threshold — the "Bước 1" roster for bulk issuance.
+     *
+     * @return array<int, array{id: int, name: ?string, completion_rate: ?float}>
+     */
+    public function eligibleStudentsByCourse(int $courseId, float $threshold = 100.0): array
+    {
+        $classIds = ClassRoom::where('course_id', $courseId)->pluck('id');
+
+        return Enrollment::whereIn('class_id', $classIds)
+            ->whereIn('status', Enrollment::ACTIVE_STATUSES)
+            ->with('student')
+            ->get()
+            ->unique('student_id')
+            ->map(function (Enrollment $enrollment) use ($classIds) {
+                return [
+                    'id' => $enrollment->student_id,
+                    'name' => $enrollment->student?->name,
+                    'completion_rate' => $this->courseCompletionRate($classIds, $enrollment->student_id),
+                ];
+            })
+            ->filter(fn ($row) => $row['completion_rate'] !== null && $row['completion_rate'] >= $threshold)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Issue one certificate per student for a course, skipping students who
+     * already hold a currently-issued certificate for it. No approval gate —
+     * same "teacher issues directly" decision as the single-class flow.
+     *
+     * @param  int[]  $studentIds
+     * @return array{issued_count: int, certificate_ids: int[]}
+     */
+    public function bulkIssue(int $courseId, array $studentIds, ?int $templateId): array
+    {
+        return DB::transaction(function () use ($courseId, $studentIds, $templateId) {
+            $alreadyIssued = Certificate::where('course_id', $courseId)
+                ->where('status', Certificate::STATUS_ISSUED)
+                ->whereIn('student_id', $studentIds)
+                ->pluck('student_id')
+                ->all();
+
+            $certificateIds = [];
+            $seq = Certificate::lockForUpdate()->count();
+
+            foreach (array_diff($studentIds, $alreadyIssued) as $studentId) {
+                $seq++;
+
+                $certificate = Certificate::create([
+                    'student_id' => $studentId,
+                    'course_id' => $courseId,
+                    'template_id' => $templateId,
+                    'certificate_no' => 'CC'.now()->format('y').str_pad((string) $seq, 5, '0', STR_PAD_LEFT),
+                    'verify_token' => (string) Str::uuid(),
+                    'status' => Certificate::STATUS_ISSUED,
+                    'issued_at' => now(),
+                ]);
+
+                $certificateIds[] = $certificate->id;
+            }
+
+            return ['issued_count' => count($certificateIds), 'certificate_ids' => $certificateIds];
+        });
+    }
+
+    /**
+     * Render a certificate as a downloadable PDF.
+     */
+    public function downloadPdf($id): \Barryvdh\DomPDF\PDF
+    {
+        $certificate = Certificate::with(['student', 'course', 'classRoom'])->findOrFail($id);
+
+        return Pdf::loadView('certificates.pdf', ['certificate' => $certificate])->setPaper('a4', 'landscape');
+    }
+
+    /**
      * Public lookup by QR token — deliberately unscoped (no auth, no tenant
      * context) so a parent/employer scanning the QR code doesn't need an
      * account. Returns null if the token doesn't exist.
@@ -144,9 +257,27 @@ class CertificateService
             'issued_at' => $certificate->issued_at,
             'revoked_at' => $certificate->revoked_at,
             'final_score' => $certificate->final_score,
-            'student_name' => $certificate->student->full_name ?? null,
+            'student_name' => $certificate->student->name ?? null,
             'class_name' => $certificate->classRoom->name ?? null,
         ];
+    }
+
+    /**
+     * A student's completion rate for a course = the average of their
+     * attendance rate across every class of the course they attended.
+     */
+    private function courseCompletionRate($classIds, $studentId): ?float
+    {
+        $rates = [];
+
+        foreach ($classIds as $classId) {
+            $rate = $this->attendanceRate($classId, $studentId);
+            if ($rate !== null) {
+                $rates[] = $rate;
+            }
+        }
+
+        return $rates === [] ? null : round(array_sum($rates) / count($rates), 1);
     }
 
     private function attendanceRate($classId, $studentId): ?float

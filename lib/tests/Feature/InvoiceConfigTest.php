@@ -137,6 +137,81 @@ class InvoiceConfigTest extends TestCase
             ->assertJsonValidationErrors('billing_day');
     }
 
+    public function test_can_update_late_fee_and_reminder_settings(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+
+        $this->putJson('/v1/fin/invoice-config', [
+            'auto_generate' => true,
+            'billing_day' => 1,
+            'due_days' => 7,
+            'late_fee_enabled' => true,
+            'late_fee_percent' => 2,
+            'unpaid_student_status' => 'suspended',
+            'reminder' => [
+                'before_due_days' => 3,
+                'on_overdue' => true,
+                'channels' => ['app', 'sms'],
+            ],
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.late_fee_enabled', true)
+            ->assertJsonPath('data.late_fee_percent', '2.00')
+            ->assertJsonPath('data.unpaid_student_status', 'suspended')
+            ->assertJsonPath('data.reminder.before_due_days', 3)
+            ->assertJsonPath('data.reminder.on_overdue', true)
+            ->assertJsonPath('data.reminder.channels.0', 'app');
+
+        $this->assertDatabaseHas('fin_invoice_configs', [
+            'business_id' => $this->businessId,
+            'late_fee_enabled' => true,
+            'unpaid_student_status' => 'suspended',
+            'reminder_before_due_days' => 3,
+        ]);
+    }
+
+    public function test_late_fee_percent_required_when_enabled(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+
+        $this->putJson('/v1/fin/invoice-config', [
+            'auto_generate' => true, 'billing_day' => 1, 'due_days' => 7,
+            'late_fee_enabled' => true,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('late_fee_percent');
+    }
+
+    public function test_generate_now_creates_invoices_for_current_period(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+
+        DB::table('fin_invoice_configs')->insert([
+            'business_id' => $this->businessId,
+            'auto_generate' => true,
+            'billing_day' => 15, // deliberately not today, to prove generate-now bypasses it
+            'due_days' => 7,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        // Enrollment::business_id is required here (unlike the artisan-command
+        // tests above): generate-now runs inside an authenticated request, so
+        // Enrollment's BelongsToBusiness global scope is active and would
+        // otherwise filter out a business_id-less row.
+        $enrollmentId = $this->makeEnrollment(250000);
+        DB::table('edu_enrollments')->where('id', $enrollmentId)->update(['business_id' => $this->businessId]);
+        $this->makeSession(now()->toDateString());
+
+        $this->postJson('/v1/fin/invoice-config/generate-now')
+            ->assertStatus(200)
+            ->assertJsonPath('data.invoices_created', 1);
+
+        $this->assertDatabaseHas('fin_invoices', [
+            'student_id' => $this->studentId,
+            'invoice_type' => 'receivable',
+        ]);
+    }
+
     // ── Recurring generation ─────────────────────────────────────────────────
 
     public function test_command_bills_studying_enrollment_with_sessions_this_month(): void

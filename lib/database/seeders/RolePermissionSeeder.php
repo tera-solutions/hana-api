@@ -41,10 +41,11 @@ class RolePermissionSeeder extends Seeder
         'TEACHER_ROLE' => [
             'full' => [
                 'assignment', 'material', 'evaluation', 'evaluation_criteria_template', 'task', 'attendance',
-                'lesson', 'session', 'leave', 'session_feedback', 'score', 'certificate',
+                'lesson', 'session', 'leave', 'session_feedback', 'score', 'certificate', 'certificate_template',
                 'student', 'student_level', 'class', 'course', 'level',
                 'timetable', 'room', 'parent', 'dashboard', 'lead', 'notification',
                 'achievement', 'teacher', 'branch', 'timesheet', 'business_bank_account', 'invoice_config',
+                'subscription_package',
             ],
             'actions' => [
                 // Self-service payroll: teacher can view and (re)generate
@@ -91,6 +92,12 @@ class RolePermissionSeeder extends Seeder
                 // Own inbox only (service-scoped); no create/update/delete —
                 // sending notifications is a teacher/admin action.
                 'notification' => ['list', 'view', 'read'],
+                // Tuition payment screen (teacher-app-078): own invoices only
+                // (InvoiceService::viewerStudentIds() scopes this server-side).
+                // `confirm_payment` is the harmless self-report claim, distinct
+                // from `pay` (admin "mark paid", moves real money) which stays
+                // withheld — a student can't mark their own invoice settled.
+                'invoice' => ['list', 'view', 'confirm_payment'],
             ],
         ],
 
@@ -99,13 +106,16 @@ class RolePermissionSeeder extends Seeder
             'full' => ['leave'],
             'view' => [
                 'student', 'class', 'course', 'level', 'session', 'attendance', 'evaluation',
-                'assignment', 'timetable', 'invoice', 'payment', 'debt', 'dashboard',
+                'assignment', 'timetable', 'payment', 'debt', 'dashboard',
             ],
             'actions' => [
                 'teacher_review' => ['create'],
                 // Own inbox only (service-scoped); no create/update/delete —
                 // sending notifications is a teacher/admin action.
                 'notification' => ['list', 'view', 'read'],
+                // Same self-scoping/rationale as STUDENT_ROLE above, but for
+                // the parent's own children's invoices.
+                'invoice' => ['list', 'view', 'confirm_payment'],
             ],
         ],
     ];

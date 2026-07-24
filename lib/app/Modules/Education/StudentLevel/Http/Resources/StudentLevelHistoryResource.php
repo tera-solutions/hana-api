@@ -23,6 +23,8 @@ class StudentLevelHistoryResource extends JsonResource
                 'level_name' => $this->toLevel->level_name,
             ] : null),
             'reason' => $this->reason,
+            'reason_type' => $this->reason_type,
+            'exam_result_id' => $this->exam_result_id,
             'score' => $this->score,
             'created_by' => $this->created_by,
             'effective_at' => $this->effective_at,

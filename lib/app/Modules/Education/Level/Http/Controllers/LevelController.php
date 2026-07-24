@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Modules\Education\Level\Actions\CreateLevelAction;
 use App\Modules\Education\Level\Actions\GetLevelAction;
 use App\Modules\Education\Level\Actions\ListLevelAction;
+use App\Modules\Education\Level\Actions\ReorderLevelAction;
 use App\Modules\Education\Level\Actions\RestoreLevelAction;
 use App\Modules\Education\Level\Actions\SuspendLevelAction;
 use App\Modules\Education\Level\Actions\UpdateLevelAction;
 use App\Modules\Education\Level\Http\Requests\CreateLevelRequest;
+use App\Modules\Education\Level\Http\Requests\ReorderLevelRequest;
 use App\Modules\Education\Level\Http\Requests\UpdateLevelRequest;
 use App\Modules\Education\Level\Http\Resources\LevelResource;
 use Illuminate\Http\Request;
@@ -99,6 +101,17 @@ class LevelController extends Controller
             fn () => $action->handle($id),
             'Khôi phục cấp độ thành công.',
             fn ($level) => new LevelResource($level),
+        );
+    }
+
+    /**
+     * Reorder levels (drag & drop) — all ids must belong to the same course.
+     */
+    public function reorder(ReorderLevelRequest $request, ReorderLevelAction $action)
+    {
+        return $this->tryRespond(
+            fn () => $action->handle($request->validated('order')),
+            'Cập nhật thứ tự cấp độ thành công.',
         );
     }
 }

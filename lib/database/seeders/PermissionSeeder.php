@@ -356,9 +356,19 @@ class PermissionSeeder extends Seeder
         ]);
 
         $this->seedPermissions('Education', 'Certificate', [
+            'certificate.list' => 'Xem danh sách chứng nhận',
             'certificate.view' => 'Xem chứng chỉ',
             'certificate.issue' => 'Phát hành chứng chỉ',
             'certificate.revoke' => 'Thu hồi chứng chỉ',
+        ]);
+
+        $this->seedPermissions('Education', 'CertificateTemplate', [
+            'certificate_template.list' => 'Xem danh sách mẫu chứng nhận',
+            'certificate_template.view' => 'Xem chi tiết mẫu chứng nhận',
+            'certificate_template.create' => 'Tạo mẫu chứng nhận',
+            'certificate_template.update' => 'Cập nhật mẫu chứng nhận',
+            'certificate_template.suspend' => 'Ngừng sử dụng mẫu chứng nhận',
+            'certificate_template.restore' => 'Khôi phục mẫu chứng nhận',
         ]);
 
         $this->seedPermissions('Education', 'Evaluation', [
@@ -432,6 +442,7 @@ class PermissionSeeder extends Seeder
             'invoice.cancel' => 'Hủy hóa đơn',
             'invoice.refund' => 'Hoàn tiền',
             'invoice.pay' => 'Ghi nhận thanh toán',
+            'invoice.confirm_payment' => 'Xác nhận đã chuyển khoản (học viên/phụ huynh tự báo)',
         ]);
 
         $this->seedPermissions('Finance', 'Payment', [
@@ -448,6 +459,15 @@ class PermissionSeeder extends Seeder
         $this->seedPermissions('Finance', 'InvoiceConfig', [
             'invoice_config.view' => 'Xem cấu hình',
             'invoice_config.update' => 'Cập nhật cấu hình',
+        ]);
+
+        $this->seedPermissions('Finance', 'SubscriptionPackage', [
+            'subscription_package.list' => 'Xem danh sách gói đăng ký',
+            'subscription_package.view' => 'Xem chi tiết gói đăng ký',
+            'subscription_package.create' => 'Tạo gói đăng ký',
+            'subscription_package.update' => 'Cập nhật gói đăng ký',
+            'subscription_package.toggle' => 'Bật/tắt trạng thái gói đăng ký',
+            'subscription_package.delete' => 'Xóa gói đăng ký',
         ]);
 
         $this->seedPermissions('Finance', 'BusinessBankAccount', [

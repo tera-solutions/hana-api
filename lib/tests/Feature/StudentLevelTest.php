@@ -237,4 +237,88 @@ class StudentLevelTest extends TestCase
         $this->getJson("/v1/edu/student-level/detail/{$this->studentId}")
             ->assertJsonPath('success', false);
     }
+
+    public function test_adjust_with_reason_type_exam_requires_exam_result(): void
+    {
+        $this->actingAsAdmin();
+
+        $studentLevelId = $this->placement(['level_id' => $this->level2])->json('data.id');
+
+        $this->postJson("/v1/edu/student-level/adjust/{$studentLevelId}", [
+            'target_level_id' => $this->level1,
+            'reason' => 'Điểm bài kiểm tra',
+            'reason_type' => 'exam',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('exam_result_id');
+    }
+
+    public function test_adjust_with_reason_type_exam_persists_exam_result_link(): void
+    {
+        $this->actingAsAdmin();
+
+        $examResultId = $this->makeExamResultId();
+        $studentLevelId = $this->placement(['level_id' => $this->level2])->json('data.id');
+
+        $this->postJson("/v1/edu/student-level/adjust/{$studentLevelId}", [
+            'target_level_id' => $this->level1,
+            'reason' => 'Điểm bài kiểm tra',
+            'reason_type' => 'exam',
+            'exam_result_id' => $examResultId,
+        ])->assertStatus(200);
+
+        $this->assertDatabaseHas('edu_student_level_histories', [
+            'student_level_id' => $studentLevelId,
+            'reason_type' => 'exam',
+            'exam_result_id' => $examResultId,
+        ]);
+    }
+
+    public function test_adjust_with_reason_type_evaluation_does_not_require_exam_result(): void
+    {
+        $this->actingAsAdmin();
+
+        $studentLevelId = $this->placement(['level_id' => $this->level2])->json('data.id');
+
+        $this->postJson("/v1/edu/student-level/adjust/{$studentLevelId}", [
+            'target_level_id' => $this->level1,
+            'reason' => 'Đánh giá giáo viên',
+            'reason_type' => 'evaluation',
+        ])->assertStatus(200);
+
+        $this->assertDatabaseHas('edu_student_level_histories', [
+            'student_level_id' => $studentLevelId,
+            'reason_type' => 'evaluation',
+            'exam_result_id' => null,
+        ]);
+    }
+
+    private function makeExamResultId(): int
+    {
+        $examId = DB::table('edu_exams')->insertGetId([
+            'exam_name' => 'Final Exam '.uniqid(),
+            'course_id' => $this->courseId,
+            'duration' => 60,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $examSessionId = DB::table('edu_exam_sessions')->insertGetId([
+            'exam_id' => $examId,
+            'exam_date' => now()->toDateString(),
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => 'closed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return DB::table('edu_exam_results')->insertGetId([
+            'exam_session_id' => $examSessionId,
+            'student_id' => $this->studentId,
+            'total_score' => 9.2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 }

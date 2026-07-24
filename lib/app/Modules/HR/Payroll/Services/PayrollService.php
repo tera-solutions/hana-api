@@ -180,6 +180,43 @@ class PayrollService
     }
 
     /**
+     * Dashboard stats for the payroll list screen — tenant-scoped like every
+     * other query here (Teacher/Wallet/Payroll all `use BelongsToBusiness`).
+     *
+     * @return array{teachers: int, total_balance: float, pending: int}
+     */
+    public function summary(): array
+    {
+        $teachers = Teacher::where('status', Teacher::STATUS_ACTIVE)->count();
+
+        $totalBalance = (float) Wallet::where('owner_type', Wallet::OWNER_TEACHER)
+            ->selectRaw('COALESCE(SUM(available_balance + bonus_balance), 0) as total')
+            ->value('total');
+
+        $pending = Payroll::where('status', Payroll::STATUS_DRAFT)
+            ->where('year', now()->year)
+            ->where('month', now()->month)
+            ->count();
+
+        return ['teachers' => $teachers, 'total_balance' => $totalBalance, 'pending' => $pending];
+    }
+
+    /**
+     * The teacher's wallet (id + spendable balance) — lets the FE call
+     * `/wallet/adjustment` and `/wallet/transactions` directly for the
+     * "Cập nhật số dư" flow without a separate payroll-specific endpoint.
+     */
+    public function walletFor(int $teacherId): ?Wallet
+    {
+        $teacher = Teacher::find($teacherId);
+        if (! $teacher) {
+            return null;
+        }
+
+        return $this->wallets->createForOwner($teacher->business_id, Wallet::OWNER_TEACHER, $teacher->id);
+    }
+
+    /**
      * A payroll period's detail plus a live "class income" breakdown — the
      * per-class hours × rate that make up `base_salary`. Not stored as line
      * items; recomputed from `TimesheetService` each time, same source `generate()` used.

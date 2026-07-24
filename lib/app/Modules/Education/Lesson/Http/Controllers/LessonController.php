@@ -4,6 +4,7 @@ namespace App\Modules\Education\Lesson\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Education\Lesson\Actions\CancelLessonAction;
+use App\Modules\Education\Lesson\Actions\ChangeLessonPlanAction;
 use App\Modules\Education\Lesson\Actions\CompleteLessonAction;
 use App\Modules\Education\Lesson\Actions\GetLessonAction;
 use App\Modules\Education\Lesson\Actions\ListLessonAction;
@@ -12,6 +13,7 @@ use App\Modules\Education\Lesson\Actions\RescheduleLessonAction;
 use App\Modules\Education\Lesson\Actions\UnlockLessonAction;
 use App\Modules\Education\Lesson\Actions\UpdateLessonAction;
 use App\Modules\Education\Lesson\Http\Requests\CancelLessonRequest;
+use App\Modules\Education\Lesson\Http\Requests\ChangeLessonPlanRequest;
 use App\Modules\Education\Lesson\Http\Requests\RescheduleLessonRequest;
 use App\Modules\Education\Lesson\Http\Requests\UnlockLessonRequest;
 use App\Modules\Education\Lesson\Http\Requests\UpdateLessonRequest;
@@ -125,6 +127,34 @@ class LessonController extends Controller
         }
 
         return $this->respondSuccess(new LessonResource($lesson), 'Đổi lịch buổi học thành công.');
+    }
+
+    /**
+     * Change the lesson plan / lesson (bài học) this lesson follows
+     *
+     * Re-snapshots the curriculum content and activities from the newly chosen
+     * template — any in-progress/completed activity progress from the old
+     * plan does not carry over. Blocked once the lesson is completed or locked.
+     *
+     * @urlParam id integer required The lesson ID. Example: 1
+     *
+     * @response 200 {
+     *   "success": true,
+     *   "msg": "Đổi giáo án / bài học thành công.",
+     *   "data": {"id": 1, "lesson_plan_id": 2, "lesson_plan_lesson_id": 5, "lesson_title": "Family & Friends"},
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function changePlan(ChangeLessonPlanRequest $request, $id, ChangeLessonPlanAction $action)
+    {
+        try {
+            $lesson = $action->handle($id, $request->validated());
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new LessonResource($lesson), 'Đổi giáo án / bài học thành công.');
     }
 
     /**

@@ -3,14 +3,18 @@
 namespace App\Modules\Finance\Invoice\Services;
 
 use App\Helpers\Task;
+use App\Modules\CRM\Parent\Models\ParentModel;
 use App\Modules\Education\Student\Models\Student;
+use App\Modules\Finance\BusinessBankAccount\Services\BusinessBankAccountService;
 use App\Modules\Finance\Invoice\Models\Invoice;
 use App\Modules\Finance\Invoice\Models\InvoiceHistory;
+use App\Modules\Finance\InvoiceConfig\Models\InvoiceConfig;
 use App\Modules\Finance\Payment\Services\PaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
+use Package\Exception\AuthorizationException;
 
 class InvoiceService
 {
@@ -27,6 +31,14 @@ class InvoiceService
     public function paginate(array $params = [])
     {
         $query = Invoice::query();
+
+        // Student/parent callers (task-078 "đóng học phí" screen) only ever
+        // see their own/their children's invoices — teachers/admins are
+        // unrestricted here (viewerStudentIds() returns null for them).
+        $viewerStudentIds = $this->viewerStudentIds();
+        if ($viewerStudentIds !== null) {
+            $query->whereIn('student_id', $viewerStudentIds);
+        }
 
         if (! empty($params['search'])) {
             $search = $params['search'];
@@ -64,9 +76,47 @@ class InvoiceService
         return $query->with(self::RELATIONS)->paginate($this->resolvePerPage($params));
     }
 
+    /**
+     * @throws AuthorizationException when a student/parent caller requests
+     *                                an invoice that isn't theirs/their child's.
+     */
     public function find($id): Invoice
     {
-        return Invoice::with(self::RELATIONS)->findOrFail($id);
+        $invoice = Invoice::with(self::RELATIONS)->findOrFail($id);
+
+        $viewerStudentIds = $this->viewerStudentIds();
+        if ($viewerStudentIds !== null && ! in_array($invoice->student_id, $viewerStudentIds, true)) {
+            throw new AuthorizationException('Bạn không có quyền xem hóa đơn này.');
+        }
+
+        return $invoice;
+    }
+
+    /**
+     * Student/parent callers are restricted to their own/their children's
+     * invoices; returns null (unrestricted) for teacher/admin/staff callers —
+     * i.e. anyone not linked to a Student or Parent profile.
+     *
+     * @return int[]|null
+     */
+    private function viewerStudentIds(): ?array
+    {
+        $userId = Auth::guard('api')->id();
+        if (! $userId) {
+            return null;
+        }
+
+        $studentId = Student::where('user_id', $userId)->value('id');
+        if ($studentId) {
+            return [$studentId];
+        }
+
+        $parent = ParentModel::where('user_id', $userId)->first();
+        if ($parent) {
+            return $parent->students()->pluck('edu_students.id')->all();
+        }
+
+        return null;
     }
 
     /**
@@ -281,17 +331,27 @@ class InvoiceService
 
     /**
      * A student with an overdue, unpaid receivable invoice can't stay "active"
-     * (đang học) — flips them to "debt" (nợ học phí), and back once cleared.
-     * Only touches students currently active or in debt: an explicitly
-     * suspended/graduated/dropped student's status means something else and
-     * is left alone. Called after a payment; `SyncStudentDebtStatus` (daily
-     * command) catches invoices that only just became overdue by elapsed time.
+     * (đang học) — flips them to the business's configured
+     * `InvoiceConfig::unpaid_student_status` (default "debt"/nợ học phí), and
+     * back once cleared (note-analysis.md §6 "Học viên chưa thanh toán hóa
+     * đơn phải chuyển sang trạng thái khác 'đang học'"). Only touches
+     * students currently active or already in that target status: an
+     * explicitly suspended-for-other-reasons/graduated/dropped student's
+     * status means something else and is left alone. Called after a payment;
+     * `SyncStudentDebtStatus` (daily command) catches invoices that only just
+     * became overdue by elapsed time.
      */
     public function syncStudentDebtStatus(int $studentId): void
     {
         $student = Student::find($studentId);
 
-        if (! $student || ! in_array($student->status, [Student::STATUS_ACTIVE, Student::STATUS_DEBT], true)) {
+        if (! $student) {
+            return;
+        }
+
+        $target = $this->unpaidStudentStatus((int) $student->business_id);
+
+        if (! in_array($student->status, [Student::STATUS_ACTIVE, $target], true)) {
             return;
         }
 
@@ -302,11 +362,111 @@ class InvoiceService
             ->whereDate('due_date', '<', now())
             ->exists();
 
-        $target = $hasOverdueDebt ? Student::STATUS_DEBT : Student::STATUS_ACTIVE;
+        $newStatus = $hasOverdueDebt ? $target : Student::STATUS_ACTIVE;
 
-        if ($student->status !== $target) {
-            $student->update(['status' => $target]);
+        if ($student->status !== $newStatus) {
+            $student->update(['status' => $newStatus]);
         }
+    }
+
+    /**
+     * The business's configured target status for unpaid students, defaulting
+     * to "debt" when unset or set to something no longer a valid Student
+     * status.
+     */
+    private function unpaidStudentStatus(?int $businessId): string
+    {
+        $configured = $businessId
+            ? InvoiceConfig::where('business_id', $businessId)->value('unpaid_student_status')
+            : null;
+
+        return in_array($configured, [InvoiceConfig::STUDENT_STATUS_DEBT, InvoiceConfig::STUDENT_STATUS_SUSPENDED], true)
+            ? $configured
+            : Student::STATUS_DEBT;
+    }
+
+    /**
+     * Unpaid/overdue tuition summary for the receivable ("đóng học phí")
+     * screen (teacher-app-078). Scoped like `paginate()`.
+     *
+     * @return array{unpaid: int, overdue: int, total_due: float}
+     */
+    public function summary(array $params = []): array
+    {
+        $query = Invoice::where('invoice_type', Invoice::TYPE_RECEIVABLE)
+            ->whereIn('status', [Invoice::STATUS_PENDING, Invoice::STATUS_PARTIAL]);
+
+        $viewerStudentIds = $this->viewerStudentIds();
+        if ($viewerStudentIds !== null) {
+            $query->whereIn('student_id', $viewerStudentIds);
+        }
+
+        foreach (['business_id', 'branch_id', 'student_id'] as $filter) {
+            if (! empty($params[$filter])) {
+                $query->where($filter, $params[$filter]);
+            }
+        }
+
+        $unpaid = (clone $query)->count();
+        $overdue = (clone $query)->whereDate('due_date', '<', now())->count();
+        $totalDue = (clone $query)->sum('balance_amount');
+
+        return ['unpaid' => $unpaid, 'overdue' => $overdue, 'total_due' => (float) $totalDue];
+    }
+
+    /**
+     * VietQR quick-link payment QR for one invoice, built from the business's
+     * default `BusinessBankAccount` (teacher-app-078 §6.2). No new package
+     * needed — VietQR.io serves the QR as a static image URL.
+     *
+     * @throws \RuntimeException
+     */
+    public function qr($id): array
+    {
+        $invoice = $this->find($id);
+        $account = app(BusinessBankAccountService::class)->findDefault((int) $invoice->business_id);
+
+        if (! $account) {
+            throw new \RuntimeException('Chưa cấu hình tài khoản ngân hàng nhận thanh toán.');
+        }
+
+        $content = sprintf('%s %s', $invoice->code, $invoice->student?->name ?? '');
+
+        return [
+            'qr_image' => sprintf(
+                'https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s',
+                $account->bank_code,
+                $account->account_number,
+                (int) round((float) $invoice->balance_amount),
+                rawurlencode(trim($content)),
+            ),
+            'bank_account' => [
+                'bank' => $account->bank_name,
+                'account_no' => $account->account_number,
+                'account_name' => $account->account_holder,
+            ],
+            'amount' => (float) $invoice->balance_amount,
+            'content' => trim($content),
+        ];
+    }
+
+    /**
+     * Customer self-report ("Xác nhận đã chuyển khoản") — logs the claim for
+     * admin reconciliation without touching `paid_amount`/`status`; an admin
+     * still confirms the actual receipt via `recordPayment()`
+     * (`/invoice/payment/{id}`, teacher-app-078's "mark-paid").
+     *
+     * @throws \RuntimeException
+     */
+    public function confirmPayment($id, array $data): array
+    {
+        $invoice = $this->find($id);
+
+        $this->guardPayable($invoice);
+
+        $this->log($invoice, 'payment_reported', $invoice->status, $invoice->status, null, $data['note'] ?? ('Báo đã chuyển khoản: '.($data['method'] ?? '')));
+
+        return ['id' => $invoice->id, 'status' => 'pending_review'];
     }
 
     /**

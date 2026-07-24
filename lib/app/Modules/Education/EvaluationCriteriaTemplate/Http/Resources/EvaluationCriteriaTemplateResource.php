@@ -14,6 +14,8 @@ class EvaluationCriteriaTemplateResource extends JsonResource
             'evaluation_type' => $this->evaluation_type,
             'name' => $this->name,
             'criteria' => $this->criteria,
+            'criteria_count' => count($this->criteria ?? []),
+            'criteria_descriptions' => $this->criteria_descriptions,
             'is_shared' => (bool) $this->is_shared,
             'status' => $this->status,
             'created_by' => $this->created_by,

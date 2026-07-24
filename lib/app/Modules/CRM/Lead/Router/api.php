@@ -19,6 +19,7 @@ Route::prefix('lead')->middleware('auth.tera')->group(function () {
 
     Route::patch('/status/{id}', [LeadController::class, 'updateStatus'])->middleware('permission:lead.update');
     Route::post('/convert/{id}', [LeadController::class, 'convert'])->middleware('permission:lead.update');
+    Route::post('/history/{id}', [LeadController::class, 'addHistory'])->middleware('permission:lead.update');
 
     // Guardians nested under a lead (lead.md §8).
     Route::get('/{leadId}/guardian/list', [LeadGuardianController::class, 'list'])->middleware('permission:lead.view');

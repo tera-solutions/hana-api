@@ -57,11 +57,25 @@ class PayrollController extends Controller
         $result = $action->handle($id);
         $service->assertOwnPayroll($result['payroll']->teacher_id);
 
+        $wallet = $service->walletFor($result['payroll']->teacher_id);
+
         return $this->respondSuccess([
             'payroll' => new PayrollResource($result['payroll']),
             'teacher' => $result['teacher'],
             'class_income' => $result['class_income'],
+            'wallet_id' => $wallet?->id,
+            'balance' => $wallet?->spendableBalance(),
         ]);
+    }
+
+    /**
+     * Payroll dashboard summary
+     *
+     * @response 200 {"success": true, "msg": "Thao tác thành công", "data": {"teachers": 12, "total_balance": 48500000, "pending": 3}, "code": 200, "errors": null}
+     */
+    public function summary(PayrollService $service)
+    {
+        return $this->respondSuccess($service->summary());
     }
 
     /**

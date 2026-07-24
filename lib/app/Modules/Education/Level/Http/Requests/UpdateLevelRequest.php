@@ -18,7 +18,7 @@ class UpdateLevelRequest extends FormRequest
 
         return [
             'level_code' => ['sometimes', 'string', 'max:255', Rule::unique('edu_levels', 'level_code')->ignore($id)],
-            'level_name' => ['sometimes', 'string', 'max:255'],
+            'level_name' => ['sometimes', 'string', 'max:255', Rule::unique('edu_levels', 'level_name')->ignore($id)],
             'course_id' => ['sometimes', 'integer', 'exists:edu_courses,id'],
             'level_order' => ['sometimes', 'integer', 'min:1'],
             'cefr_level' => ['nullable', 'string', 'max:50'],
@@ -31,6 +31,7 @@ class UpdateLevelRequest extends FormRequest
     {
         return [
             'level_code.unique' => 'Mã cấp độ đã tồn tại.',
+            'level_name.unique' => 'Tên cấp độ đã tồn tại.',
             'course_id.exists' => 'Khóa học không tồn tại.',
         ];
     }

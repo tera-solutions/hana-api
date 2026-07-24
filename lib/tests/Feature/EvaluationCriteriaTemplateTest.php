@@ -134,6 +134,40 @@ class EvaluationCriteriaTemplateTest extends TestCase
             ->assertJsonPath('data.name', 'Admin edited');
     }
 
+    public function test_create_persists_criteria_descriptions(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+
+        $id = $this->postJson('/v1/edu/evaluation-criteria-template/create', $this->payload([
+            'criteria_descriptions' => [
+                'expertise' => [
+                    ['level' => 1, 'label' => 'Yếu'],
+                    ['level' => 5, 'label' => 'Xuất sắc'],
+                ],
+            ],
+        ]))
+            ->assertStatus(200)
+            ->assertJsonPath('data.criteria_count', 3)
+            ->assertJsonPath('data.criteria_descriptions.expertise.1.level', 5)
+            ->assertJsonPath('data.criteria_descriptions.expertise.1.label', 'Xuất sắc')
+            ->json('data.id');
+
+        $this->getJson("/v1/edu/evaluation-criteria-template/detail/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.criteria_descriptions.expertise.0.label', 'Yếu');
+    }
+
+    public function test_criteria_description_level_must_be_within_scale(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+
+        $this->postJson('/v1/edu/evaluation-criteria-template/create', $this->payload([
+            'criteria_descriptions' => ['expertise' => [['level' => 9, 'label' => 'Invalid']]],
+        ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('criteria_descriptions.expertise.0.level');
+    }
+
     public function test_suspend_and_restore(): void
     {
         $this->actingAsAdmin($this->businessId);

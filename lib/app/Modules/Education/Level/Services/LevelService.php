@@ -4,6 +4,7 @@ namespace App\Modules\Education\Level\Services;
 
 use App\Modules\Education\Level\Models\Level;
 use App\Modules\Education\StudentLevel\Models\StudentLevel;
+use Illuminate\Support\Facades\DB;
 use Package\Database\Concerns\HandlesEntityQueries;
 
 class LevelService
@@ -108,5 +109,30 @@ class LevelService
         $level->update(['status' => Level::STATUS_ACTIVE]);
 
         return $this->find($level->id);
+    }
+
+    /**
+     * Drag-and-drop reorder: assigns `level_order` (1-based) from the given
+     * id sequence. All ids must belong to the same course.
+     *
+     * @throws \RuntimeException
+     */
+    public function reorder(array $orderedIds): void
+    {
+        $levels = Level::whereIn('id', $orderedIds)->get(['id', 'course_id']);
+
+        if ($levels->count() !== count($orderedIds)) {
+            throw new \RuntimeException('Một hoặc nhiều cấp độ không tồn tại.');
+        }
+
+        if ($levels->pluck('course_id')->unique()->count() > 1) {
+            throw new \RuntimeException('Chỉ có thể sắp xếp các cấp độ trong cùng một khóa học.');
+        }
+
+        DB::transaction(function () use ($orderedIds) {
+            foreach ($orderedIds as $index => $id) {
+                Level::where('id', $id)->update(['level_order' => $index + 1]);
+            }
+        });
     }
 }

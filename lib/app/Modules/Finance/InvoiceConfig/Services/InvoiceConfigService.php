@@ -26,13 +26,37 @@ class InvoiceConfigService
 
     public function update(int $businessId, array $data): InvoiceConfig
     {
+        $reminder = $data['reminder'] ?? [];
+
         $config = InvoiceConfig::updateOrCreate(['business_id' => $businessId], [
             'auto_generate' => $data['auto_generate'],
             'billing_day' => $data['billing_day'],
             'due_days' => $data['due_days'],
+            'late_fee_enabled' => $data['late_fee_enabled'] ?? false,
+            'late_fee_percent' => $data['late_fee_percent'] ?? null,
+            'unpaid_student_status' => $data['unpaid_student_status'] ?? null,
+            'reminder_before_due_days' => $reminder['before_due_days'] ?? null,
+            'reminder_on_overdue' => $reminder['on_overdue'] ?? false,
+            'reminder_channels' => $reminder['channels'] ?? [],
         ]);
 
         return $config->fresh();
+    }
+
+    /**
+     * Force-run recurring billing for one business today, regardless of
+     * whether its `billing_day` matches — the FE's "chạy thử ngay" button.
+     *
+     * @return array{invoices_created: int, period: string}
+     */
+    public function generateNow(InvoiceService $invoices, int $businessId): array
+    {
+        $config = $this->get($businessId);
+        $today = now();
+
+        $count = $this->generateForBusiness($invoices, $config, $today);
+
+        return ['invoices_created' => $count, 'period' => $today->format('m/Y')];
     }
 
     /**

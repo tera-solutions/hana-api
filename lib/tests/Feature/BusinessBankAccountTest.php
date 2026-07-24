@@ -126,6 +126,76 @@ class BusinessBankAccountTest extends TestCase
             ->assertJsonPath('data.account_holder', 'HANA ENGLISH JSC');
     }
 
+    public function test_set_default_clears_other_defaults(): void
+    {
+        $this->actingAsAdmin();
+
+        $firstId = $this->postJson('/v1/fin/business-bank-account/create', $this->payload(['is_default' => true]))
+            ->json('data.id');
+        $secondId = $this->postJson('/v1/fin/business-bank-account/create', $this->payload([
+            'bank_name' => 'Vietcombank',
+            'bank_code' => '970436',
+        ]))->json('data.id');
+
+        $this->patchJson("/v1/fin/business-bank-account/set-default/{$secondId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.is_default', true);
+
+        $this->assertDatabaseHas('fin_business_bank_accounts', ['id' => $firstId, 'is_default' => false]);
+        $this->assertDatabaseHas('fin_business_bank_accounts', ['id' => $secondId, 'is_default' => true]);
+    }
+
+    public function test_cannot_set_default_on_inactive_account(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/fin/business-bank-account/create', $this->payload())->json('data.id');
+        $this->postJson("/v1/fin/business-bank-account/suspend/{$id}");
+
+        $this->patchJson("/v1/fin/business-bank-account/set-default/{$id}")
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_cannot_suspend_sole_default_account_while_others_are_active(): void
+    {
+        $this->actingAsAdmin();
+
+        $defaultId = $this->postJson('/v1/fin/business-bank-account/create', $this->payload(['is_default' => true]))
+            ->json('data.id');
+        $this->postJson('/v1/fin/business-bank-account/create', $this->payload([
+            'bank_name' => 'Vietcombank',
+            'bank_code' => '970436',
+        ]));
+
+        $this->postJson("/v1/fin/business-bank-account/suspend/{$defaultId}")
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('fin_business_bank_accounts', ['id' => $defaultId, 'status' => 'active']);
+    }
+
+    public function test_can_suspend_default_account_when_it_is_the_only_one(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/fin/business-bank-account/create', $this->payload(['is_default' => true]))
+            ->json('data.id');
+
+        $this->postJson("/v1/fin/business-bank-account/suspend/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'inactive');
+    }
+
+    public function test_qr_preview_returns_image_url(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/fin/business-bank-account/create', $this->payload())->json('data.id');
+
+        $this->getJson("/v1/fin/business-bank-account/qr/{$id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.qr_image', fn ($url) => str_contains($url, '970422') && str_contains($url, '0123456789'));
+    }
+
     public function test_stamps_audit_columns(): void
     {
         $admin = $this->actingAsAdmin();

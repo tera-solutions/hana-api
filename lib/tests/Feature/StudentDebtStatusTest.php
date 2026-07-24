@@ -136,4 +136,62 @@ class StudentDebtStatusTest extends TestCase
 
         $this->assertDatabaseHas('edu_students', ['id' => $studentId, 'status' => 'active']);
     }
+
+    private function configureUnpaidStatus(string $status): void
+    {
+        DB::table('fin_invoice_configs')->insert([
+            'business_id' => $this->businessId,
+            'auto_generate' => false,
+            'billing_day' => 1,
+            'due_days' => 7,
+            'unpaid_student_status' => $status,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_command_flips_to_configured_suspended_status_instead_of_debt(): void
+    {
+        $this->configureUnpaidStatus('suspended');
+
+        $studentId = $this->makeStudentId('active');
+        $this->makeOverdueInvoice($studentId);
+
+        $this->artisan('students:sync-debt-status')->assertExitCode(0);
+
+        $this->assertDatabaseHas('edu_students', ['id' => $studentId, 'status' => 'suspended']);
+    }
+
+    public function test_configured_suspended_target_reverts_to_active_once_paid(): void
+    {
+        $this->actingAsAdmin($this->businessId);
+        $this->configureUnpaidStatus('suspended');
+
+        $studentId = $this->makeStudentId('active');
+        $invoiceId = $this->makeOverdueInvoice($studentId);
+
+        $this->artisan('students:sync-debt-status');
+        $this->assertDatabaseHas('edu_students', ['id' => $studentId, 'status' => 'suspended']);
+
+        $this->postJson("/v1/fin/invoice/payment/{$invoiceId}", ['amount' => 1000000, 'method' => 'cash'])
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'paid');
+
+        $this->assertDatabaseHas('edu_students', ['id' => $studentId, 'status' => 'active']);
+    }
+
+    public function test_configured_suspended_target_never_touches_student_in_debt_status(): void
+    {
+        // A "debt" status here means something else (no config for this
+        // business ever set it that way) — with unpaid_student_status =
+        // suspended, "debt" isn't in the managed [active, suspended] pair.
+        $this->configureUnpaidStatus('suspended');
+
+        $studentId = $this->makeStudentId('debt');
+        $this->makeOverdueInvoice($studentId);
+
+        $this->artisan('students:sync-debt-status');
+
+        $this->assertDatabaseHas('edu_students', ['id' => $studentId, 'status' => 'debt']);
+    }
 }

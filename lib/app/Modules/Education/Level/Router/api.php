@@ -14,4 +14,6 @@ Route::prefix('level')->middleware('auth.tera')->group(function () {
     Route::post('/suspend/{id}', [LevelController::class, 'suspend'])->middleware('permission:level.suspend');
     Route::post('/restore/{id}', [LevelController::class, 'restore'])->middleware('permission:level.restore');
 
+    Route::post('/reorder', [LevelController::class, 'reorder'])->middleware('permission:level.update');
+
 });

@@ -2,7 +2,9 @@
 
 namespace App\Modules\Education\Certificate\Models;
 
+use App\Modules\Education\CertificateTemplate\Models\CertificateTemplate;
 use App\Modules\Education\ClassRoom\Models\ClassRoom;
+use App\Modules\Education\Course\Models\Course;
 use App\Modules\Education\Student\Models\Student;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,5 +38,15 @@ class Certificate extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(CertificateTemplate::class, 'template_id');
     }
 }
