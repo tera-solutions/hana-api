@@ -142,4 +142,56 @@ class LevelTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'active');
     }
+
+    public function test_duplicate_level_name_is_rejected(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/edu/level/create', $this->payload())->assertStatus(200);
+
+        $this->postJson('/v1/edu/level/create', $this->payload(['level_code' => 'OTHER-CODE']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('level_name');
+    }
+
+    public function test_reorder_updates_level_order(): void
+    {
+        $this->actingAsAdmin();
+
+        $id1 = $this->postJson('/v1/edu/level/create', $this->payload(['level_code' => 'L1', 'level_name' => 'One', 'level_order' => 1]))->json('data.id');
+        $id2 = $this->postJson('/v1/edu/level/create', $this->payload(['level_code' => 'L2', 'level_name' => 'Two', 'level_order' => 2]))->json('data.id');
+        $id3 = $this->postJson('/v1/edu/level/create', $this->payload(['level_code' => 'L3', 'level_name' => 'Three', 'level_order' => 3]))->json('data.id');
+
+        $this->postJson('/v1/edu/level/reorder', ['order' => [$id2, $id1, $id3]])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('edu_levels', ['id' => $id2, 'level_order' => 1]);
+        $this->assertDatabaseHas('edu_levels', ['id' => $id1, 'level_order' => 2]);
+        $this->assertDatabaseHas('edu_levels', ['id' => $id3, 'level_order' => 3]);
+    }
+
+    public function test_reorder_rejects_levels_from_different_courses(): void
+    {
+        $this->actingAsAdmin();
+
+        $id1 = $this->postJson('/v1/edu/level/create', $this->payload())->json('data.id');
+
+        $otherCourseId = $this->makeCourseId();
+        $id2 = $this->postJson('/v1/edu/level/create', $this->payload([
+            'level_code' => 'OTHER', 'level_name' => 'Other', 'course_id' => $otherCourseId,
+        ]))->json('data.id');
+
+        $this->postJson('/v1/edu/level/reorder', ['order' => [$id1, $id2]])
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_reorder_rejects_unknown_id(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/v1/edu/level/reorder', ['order' => [999999]])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('order.0');
+    }
 }

@@ -39,6 +39,19 @@ class BusinessBankAccountService
         return BusinessBankAccount::findOrFail($id);
     }
 
+    /**
+     * The account used to build invoice payment QR codes — falls back to the
+     * business's oldest active account when none is marked default.
+     */
+    public function findDefault(int $businessId): ?BusinessBankAccount
+    {
+        return BusinessBankAccount::where('business_id', $businessId)
+            ->where('status', BusinessBankAccount::STATUS_ACTIVE)
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->first();
+    }
+
     public function create(array $data): BusinessBankAccount
     {
         return DB::transaction(function () use ($data) {
@@ -83,9 +96,58 @@ class BusinessBankAccountService
             throw new \RuntimeException('Tài khoản đang ở trạng thái ngừng.');
         }
 
+        if ($account->is_default && $this->hasOtherActiveAccounts($account)) {
+            throw new \RuntimeException('Vui lòng đặt tài khoản khác làm mặc định trước khi ngừng sử dụng tài khoản này.');
+        }
+
         $account->update(['status' => BusinessBankAccount::STATUS_INACTIVE, 'is_default' => false]);
 
         return $this->find($id);
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    public function setDefault($id): BusinessBankAccount
+    {
+        $account = $this->find($id);
+
+        if ($account->status !== BusinessBankAccount::STATUS_ACTIVE) {
+            throw new \RuntimeException('Chỉ có thể đặt tài khoản đang hoạt động làm mặc định.');
+        }
+
+        DB::transaction(function () use ($account) {
+            $account->update(['is_default' => true]);
+            $this->clearOtherDefaults($account);
+        });
+
+        return $this->find($id);
+    }
+
+    /**
+     * Static (no amount) VietQR quick-link image URL for printing/pinning at
+     * the counter — see `Invoice/Services/InvoiceService::qrForBusinessAccount()`
+     * for the amount-bearing variant used on an actual invoice.
+     */
+    public function qr($id): array
+    {
+        $account = $this->find($id);
+
+        return [
+            'qr_image' => sprintf(
+                'https://img.vietqr.io/image/%s-%s-compact2.png',
+                $account->bank_code,
+                $account->account_number,
+            ),
+        ];
+    }
+
+    private function hasOtherActiveAccounts(BusinessBankAccount $account): bool
+    {
+        return BusinessBankAccount::where('business_id', $account->business_id)
+            ->where('id', '<>', $account->id)
+            ->where('status', BusinessBankAccount::STATUS_ACTIVE)
+            ->exists();
     }
 
     /**

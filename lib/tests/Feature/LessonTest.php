@@ -125,6 +125,44 @@ class LessonTest extends TestCase
         ], $overrides));
     }
 
+    /** A published lesson plan with N template lessons, linked to $classId (edu_class_lesson_plans). */
+    private function makePublishedPlanLinkedToClass(int $classId, int $lessons = 2): int
+    {
+        $planId = DB::table('edu_lesson_plans')->insertGetId([
+            'plan_code' => 'P_'.strtoupper(uniqid()),
+            'plan_name' => 'Plan '.uniqid(),
+            'business_id' => $this->businessId,
+            'course_id' => $this->courseId,
+            'version' => 1,
+            'total_lessons' => $lessons,
+            'status' => 'published',
+            'published_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        for ($i = 1; $i <= $lessons; $i++) {
+            DB::table('edu_lesson_plan_lessons')->insert([
+                'lesson_plan_id' => $planId,
+                'business_id' => $this->businessId,
+                'lesson_no' => $i,
+                'lesson_title' => "Lesson {$i}",
+                'objective' => "Objective {$i}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        DB::table('edu_class_lesson_plans')->insert([
+            'class_room_id' => $classId,
+            'lesson_plan_id' => $planId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $planId;
+    }
+
     public function test_requires_authentication(): void
     {
         $this->getJson('/v1/edu/lesson/list')->assertJsonPath('code', 401);
@@ -183,6 +221,140 @@ class LessonTest extends TestCase
         DB::table('edu_lessons')->where('id', $id)->update(['status' => 'completed']);
 
         $this->putJson("/v1/edu/lesson/update/{$id}", ['lesson_note' => 'x'])
+            ->assertStatus(200)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_change_plan_switches_content_and_activities_and_logs_audit(): void
+    {
+        $this->actingAsAdmin();
+
+        $classId = $this->makeClassId();
+        $planId = $this->makePublishedPlanLinkedToClass($classId, 2);
+        $secondTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $planId)->where('lesson_no', 2)->value('id');
+
+        DB::table('edu_lesson_plan_lesson_activities')->insert([
+            'lesson_plan_lesson_id' => $secondTemplateId,
+            'business_id' => $this->businessId,
+            'sort_order' => 1,
+            'title' => 'Warm up',
+            'duration' => 10,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $id = $this->createLesson(['class_room_id' => $classId]);
+        DB::table('edu_lesson_activities')->insert([
+            'lesson_id' => $id,
+            'sort_order' => 1,
+            'title' => 'Old activity',
+            'status' => 'completed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $secondTemplateId,
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.lesson_plan_id', $planId)
+            ->assertJsonPath('data.lesson_title', 'Lesson 2');
+
+        $this->assertDatabaseHas('edu_lessons', [
+            'id' => $id,
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $secondTemplateId,
+            'objective' => 'Objective 2',
+        ]);
+        $this->assertDatabaseMissing('edu_lesson_activities', ['lesson_id' => $id, 'title' => 'Old activity']);
+        $this->assertDatabaseHas('edu_lesson_activities', ['lesson_id' => $id, 'title' => 'Warm up', 'status' => 'pending']);
+        $this->assertDatabaseHas('edu_lesson_histories', ['lesson_id' => $id, 'action' => 'change_plan']);
+    }
+
+    public function test_change_plan_without_explicit_lesson_picks_next_unused(): void
+    {
+        $this->actingAsAdmin();
+
+        $classId = $this->makeClassId();
+        $planId = $this->makePublishedPlanLinkedToClass($classId, 2);
+        $id = $this->createLesson(['class_room_id' => $classId]);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", ['lesson_plan_id' => $planId])
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.lesson_title', 'Lesson 1');
+    }
+
+    public function test_change_plan_rejects_lesson_already_used_by_another_lesson(): void
+    {
+        $this->actingAsAdmin();
+
+        $classId = $this->makeClassId();
+        $planId = $this->makePublishedPlanLinkedToClass($classId, 2);
+        $firstTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $planId)->where('lesson_no', 1)->value('id');
+
+        $this->createLesson([
+            'class_room_id' => $classId,
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ]);
+        $id = $this->createLesson(['class_room_id' => $classId]);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Bài học này đã được sử dụng cho một buổi học khác.');
+    }
+
+    public function test_change_plan_allows_re_picking_lessons_own_current_template(): void
+    {
+        $this->actingAsAdmin();
+
+        $classId = $this->makeClassId();
+        $planId = $this->makePublishedPlanLinkedToClass($classId, 2);
+        $firstTemplateId = DB::table('edu_lesson_plan_lessons')
+            ->where('lesson_plan_id', $planId)->where('lesson_no', 1)->value('id');
+
+        $id = $this->createLesson([
+            'class_room_id' => $classId,
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ]);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", [
+            'lesson_plan_id' => $planId,
+            'lesson_plan_lesson_id' => $firstTemplateId,
+        ])->assertJsonPath('success', true);
+    }
+
+    public function test_change_plan_rejects_plan_not_linked_to_class(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->createLesson();
+        $unlinkedPlanId = $this->makePublishedPlanLinkedToClass($this->makeClassId(), 1);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", ['lesson_plan_id' => $unlinkedPlanId])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('msg', 'Giáo án này chưa được gắn với lớp học.');
+    }
+
+    public function test_change_plan_rejected_on_completed_lesson(): void
+    {
+        $this->actingAsAdmin();
+
+        $classId = $this->makeClassId();
+        $planId = $this->makePublishedPlanLinkedToClass($classId, 1);
+        $id = $this->createLesson(['class_room_id' => $classId, 'status' => 'completed']);
+
+        $this->postJson("/v1/edu/lesson/change-plan/{$id}", ['lesson_plan_id' => $planId])
             ->assertStatus(200)
             ->assertJsonPath('success', false);
     }

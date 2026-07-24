@@ -16,7 +16,7 @@ class CreateLevelRequest extends FormRequest
     {
         return [
             'level_code' => ['required', 'string', 'max:255', 'unique:edu_levels,level_code'],
-            'level_name' => ['required', 'string', 'max:255'],
+            'level_name' => ['required', 'string', 'max:255', 'unique:edu_levels,level_name'],
             'course_id' => ['required', 'integer', 'exists:edu_courses,id'],
             'level_order' => ['required', 'integer', 'min:1'],
             'cefr_level' => ['nullable', 'string', 'max:50'],
@@ -31,6 +31,7 @@ class CreateLevelRequest extends FormRequest
             'level_code.required' => 'Mã cấp độ là bắt buộc.',
             'level_code.unique' => 'Mã cấp độ đã tồn tại.',
             'level_name.required' => 'Tên cấp độ là bắt buộc.',
+            'level_name.unique' => 'Tên cấp độ đã tồn tại.',
             'course_id.required' => 'Khóa học là bắt buộc.',
             'course_id.exists' => 'Khóa học không tồn tại.',
             'level_order.required' => 'Thứ tự cấp độ là bắt buộc.',

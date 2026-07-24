@@ -5,14 +5,18 @@ namespace App\Modules\Finance\Invoice\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Finance\Invoice\Actions\ApproveInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\CancelInvoiceAction;
+use App\Modules\Finance\Invoice\Actions\ConfirmInvoicePaymentAction;
 use App\Modules\Finance\Invoice\Actions\CreateInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\DenyInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\DownloadInvoicePdfAction;
 use App\Modules\Finance\Invoice\Actions\GetInvoiceAction;
+use App\Modules\Finance\Invoice\Actions\GetInvoiceQrAction;
 use App\Modules\Finance\Invoice\Actions\ListInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\RecordPaymentAction;
 use App\Modules\Finance\Invoice\Actions\RefundInvoiceAction;
+use App\Modules\Finance\Invoice\Actions\TuitionSummaryInvoiceAction;
 use App\Modules\Finance\Invoice\Actions\UpdateInvoiceAction;
+use App\Modules\Finance\Invoice\Http\Requests\ConfirmInvoicePaymentRequest;
 use App\Modules\Finance\Invoice\Http\Requests\CreateInvoiceRequest;
 use App\Modules\Finance\Invoice\Http\Requests\InvoiceReasonRequest;
 use App\Modules\Finance\Invoice\Http\Requests\RecordPaymentRequest;
@@ -216,5 +220,43 @@ class InvoiceController extends Controller
         }
 
         return $this->respondSuccess(new InvoiceResource($invoice), 'Ghi nhận thanh toán thành công.');
+    }
+
+    /**
+     * Tuition summary
+     *
+     * Unpaid/overdue/total-due counts for the "Đóng học phí" screen.
+     *
+     * @response 200 {"success": true, "msg": "Thao tác thành công", "data": {"unpaid": 5, "overdue": 2, "total_due": 12400000}, "code": 200, "errors": null}
+     */
+    public function tuitionSummary(Request $request, TuitionSummaryInvoiceAction $action)
+    {
+        return $this->respondSuccess($action->handle($request->all()));
+    }
+
+    /**
+     * Invoice payment QR (VietQR)
+     *
+     * @urlParam id integer required The invoice ID. Example: 1
+     */
+    public function qr($id, GetInvoiceQrAction $action)
+    {
+        return $this->tryRespond(fn () => $action->handle($id), 'Thao tác thành công');
+    }
+
+    /**
+     * Confirm payment (customer self-report)
+     *
+     * Logs a "đã chuyển khoản" claim for admin reconciliation — does not mark
+     * the invoice paid; an admin still confirms via `pay()`.
+     *
+     * @urlParam id integer required The invoice ID. Example: 1
+     */
+    public function confirmPayment(ConfirmInvoicePaymentRequest $request, $id, ConfirmInvoicePaymentAction $action)
+    {
+        return $this->tryRespond(
+            fn () => $action->handle($id, $request->validated()),
+            'Đã gửi yêu cầu đối soát thanh toán.',
+        );
     }
 }

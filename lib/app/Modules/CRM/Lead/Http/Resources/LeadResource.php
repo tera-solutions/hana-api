@@ -21,6 +21,7 @@ class LeadResource extends JsonResource
             'source' => $this->source,
             'status' => $this->status,
             'note' => $this->note,
+            'next_appointment' => $this->next_appointment,
 
             'previous_status' => $this->previous_status,
             'suspended_at' => $this->suspended_at,

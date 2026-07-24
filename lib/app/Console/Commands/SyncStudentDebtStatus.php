@@ -11,12 +11,17 @@ use Illuminate\Console\Command;
  * Catches invoices that only just became overdue with the passage of time
  * (InvoiceService::syncStudentDebtStatus runs synchronously after a payment,
  * but nothing pushes a status change purely because a due_date elapsed).
+ *
+ * The target status is per-business configurable (InvoiceConfig::
+ * unpaid_student_status, default "debt") — so this also re-checks students
+ * currently "suspended", not just "debt", since either may be the configured
+ * target (see InvoiceService::syncStudentDebtStatus()).
  */
 class SyncStudentDebtStatus extends Command
 {
     protected $signature = 'students:sync-debt-status';
 
-    protected $description = "Flip students to/from 'debt' status based on overdue, unpaid receivable invoices.";
+    protected $description = "Flip students to/from their business's configured unpaid-invoice status (debt or suspended).";
 
     public function handle(InvoiceService $invoices): int
     {
@@ -28,18 +33,18 @@ class SyncStudentDebtStatus extends Command
             ->distinct()
             ->pluck('student_id');
 
-        // Also re-check students currently in debt whose invoices may have
-        // since been cancelled/refunded (not just paid) — recordPayment()
-        // already handles the paid path, this covers the rest.
-        $debtStudentIds = Student::where('status', Student::STATUS_DEBT)->pluck('id');
+        // Also re-check students currently in "debt"/"suspended" whose
+        // invoices may have since been cancelled/refunded (not just paid) —
+        // recordPayment() already handles the paid path, this covers the rest.
+        $flaggedStudentIds = Student::whereIn('status', [Student::STATUS_DEBT, Student::STATUS_SUSPENDED])->pluck('id');
 
-        $allIds = $studentIds->merge($debtStudentIds)->unique();
+        $allIds = $studentIds->merge($flaggedStudentIds)->unique();
 
         foreach ($allIds as $studentId) {
             $invoices->syncStudentDebtStatus((int) $studentId);
         }
 
-        $this->info("Checked {$allIds->count()} student(s) for debt status.");
+        $this->info("Checked {$allIds->count()} student(s) for unpaid-invoice status.");
 
         return self::SUCCESS;
     }

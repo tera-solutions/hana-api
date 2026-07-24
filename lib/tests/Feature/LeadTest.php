@@ -381,6 +381,42 @@ class LeadTest extends TestCase
         $this->assertDatabaseHas('crm_leads', ['id' => $id, 'status' => 'pending']);
     }
 
+    public function test_add_history_records_manual_care_log_and_next_appointment(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $this->postJson("/v1/crm/lead/history/{$id}", [
+            'type' => 'call',
+            'content' => 'Đã gọi tư vấn, quan tâm khóa Starters',
+            'next_appointment' => '2026-07-22T14:00:00Z',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('data.action', 'call')
+            ->assertJsonPath('data.note', 'Đã gọi tư vấn, quan tâm khóa Starters');
+
+        $this->assertDatabaseHas('crm_lead_histories', [
+            'lead_id' => $id,
+            'action' => 'call',
+            'note' => 'Đã gọi tư vấn, quan tâm khóa Starters',
+        ]);
+
+        $this->getJson("/v1/crm/lead/detail/{$id}")
+            ->assertJsonPath('data.lead.next_appointment', '2026-07-22T07:00:00.000000Z')
+            ->assertJsonPath('data.histories.0.action', 'call');
+    }
+
+    public function test_add_history_validates_type_and_content(): void
+    {
+        $this->actingAsAdmin();
+
+        $id = $this->postJson('/v1/crm/lead/create', $this->payload())->json('data.id');
+
+        $this->postJson("/v1/crm/lead/history/{$id}", ['type' => 'bogus', 'content' => ''])
+            ->assertJsonValidationErrors(['type', 'content']);
+    }
+
     public function test_stamps_audit_columns(): void
     {
         $admin = $this->actingAsAdmin();

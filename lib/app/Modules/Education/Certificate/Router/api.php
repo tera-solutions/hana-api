@@ -7,9 +7,18 @@ use Illuminate\Support\Facades\Route;
 Route::get('/certificate/verify/{token}', [CertificateController::class, 'verify']);
 
 Route::prefix('certificate')->middleware('auth.tera')->group(function () {
+    Route::get('/list', [CertificateController::class, 'list'])
+        ->middleware('permission:certificate.list');
+    Route::get('/eligible-students', [CertificateController::class, 'eligibleStudents'])
+        ->middleware('permission:certificate.view');
+    Route::get('/download/{id}', [CertificateController::class, 'download'])
+        ->middleware('permission:certificate.view')->whereNumber('id');
+    Route::post('/issue-bulk', [CertificateController::class, 'issueBulk'])
+        ->middleware('permission:certificate.issue');
+
     Route::get('/{classId}/eligibility', [CertificateController::class, 'eligibility'])
         ->middleware('permission:certificate.view')->whereNumber('classId');
-    Route::get('/{classId}/list', [CertificateController::class, 'list'])
+    Route::get('/{classId}/list', [CertificateController::class, 'listByClass'])
         ->middleware('permission:certificate.view')->whereNumber('classId');
     Route::get('/student/{studentId}/list', [CertificateController::class, 'listByStudent'])
         ->middleware('permission:certificate.view')->whereNumber('studentId');

@@ -76,8 +76,8 @@ class ScoreService
                 'student_id' => $enrollment->student_id,
                 'student' => $enrollment->student ? [
                     'id' => $enrollment->student->id,
-                    'student_code' => $enrollment->student->student_code,
-                    'full_name' => $enrollment->student->full_name,
+                    'student_code' => $enrollment->student->code,
+                    'full_name' => $enrollment->student->name,
                 ] : null,
                 'components' => $studentGrades
                     ->where('type', '!=', Grade::TYPE_FINAL)

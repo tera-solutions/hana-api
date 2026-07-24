@@ -3,6 +3,7 @@
 namespace App\Modules\CRM\Lead\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\CRM\Lead\Actions\AddLeadHistoryAction;
 use App\Modules\CRM\Lead\Actions\ConvertLeadAction;
 use App\Modules\CRM\Lead\Actions\CreateLeadAction;
 use App\Modules\CRM\Lead\Actions\GetLeadAction;
@@ -11,6 +12,7 @@ use App\Modules\CRM\Lead\Actions\RestoreLeadAction;
 use App\Modules\CRM\Lead\Actions\SuspendLeadAction;
 use App\Modules\CRM\Lead\Actions\UpdateLeadAction;
 use App\Modules\CRM\Lead\Actions\UpdateLeadStatusAction;
+use App\Modules\CRM\Lead\Http\Requests\AddLeadHistoryRequest;
 use App\Modules\CRM\Lead\Http\Requests\ConvertLeadRequest;
 use App\Modules\CRM\Lead\Http\Requests\CreateLeadRequest;
 use App\Modules\CRM\Lead\Http\Requests\SuspendLeadRequest;
@@ -323,5 +325,33 @@ class LeadController extends Controller
             'lead_id' => $result['lead']->id,
             'student_id' => $result['student_id'],
         ], 'Chuyển đổi thành học viên thành công.');
+    }
+
+    /**
+     * Add a manual care log (note / call / appointment)
+     *
+     * Distinct from the automatic history entries written on create/update/
+     * status-change/suspend/restore/convert. Also updates the lead's
+     * `next_appointment` when one is supplied.
+     *
+     * @urlParam id integer required The lead ID. Example: 1
+     *
+     * @response 201 {
+     *   "success": true,
+     *   "msg": "Đã thêm ghi chú.",
+     *   "data": {
+     *     "id": 11, "lead_id": 1, "action": "call",
+     *     "note": "Gọi tư vấn, quan tâm khóa Starters",
+     *     "created_by": 1, "created_at": "2026-07-20T09:00:00.000000Z"
+     *   },
+     *   "code": 200,
+     *   "errors": null
+     * }
+     */
+    public function addHistory($id, AddLeadHistoryRequest $request, AddLeadHistoryAction $action)
+    {
+        $history = $action->handle($id, $request->validated());
+
+        return $this->respondSuccess($history, 'Đã thêm ghi chú.');
     }
 }

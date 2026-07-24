@@ -27,7 +27,21 @@ class InvoiceConfig extends Model
         'auto_generate' => 'boolean',
         'billing_day' => 'integer',
         'due_days' => 'integer',
+        'late_fee_enabled' => 'boolean',
+        'late_fee_percent' => 'decimal:2',
+        'reminder_before_due_days' => 'integer',
+        'reminder_on_overdue' => 'boolean',
+        'reminder_channels' => 'array',
     ];
+
+    // Which Student::STATUS_* a student is moved to when they have an
+    // overdue, unpaid receivable invoice — consumed by
+    // InvoiceService::syncStudentDebtStatus(). Must be one of Student's own
+    // status values (not InvoiceConfig-local strings) since that's what
+    // actually gets written to edu_students.status.
+    public const STUDENT_STATUS_DEBT = 'debt';
+
+    public const STUDENT_STATUS_SUSPENDED = 'suspended';
 
     public function business(): BelongsTo
     {

@@ -222,6 +222,28 @@ class LeadService
     }
 
     /**
+     * Manually log a care interaction (note/call/appointment) — separate from
+     * the automatic entries this service writes on create/update/etc. Also
+     * updates the lead's `next_appointment` when one is supplied.
+     */
+    public function addHistory($id, array $data): LeadHistory
+    {
+        $lead = $this->find($id);
+
+        if (array_key_exists('next_appointment', $data)) {
+            $lead->update(['next_appointment' => $data['next_appointment']]);
+        }
+
+        return LeadHistory::create([
+            'business_id' => $lead->business_id,
+            'lead_id' => $lead->id,
+            'action' => $data['type'],
+            'note' => $data['content'],
+            'created_by' => Auth::guard('api')->id() ?? Auth::id(),
+        ]);
+    }
+
+    /**
      * Convert a lead into a student: creates the student record (reusing
      * StudentService so code generation / status / events stay consistent),
      * links it back to the lead, and moves the lead to "studying".

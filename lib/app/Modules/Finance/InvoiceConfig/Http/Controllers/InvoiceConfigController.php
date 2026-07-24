@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\InvoiceConfig\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Finance\Invoice\Services\InvoiceService;
 use App\Modules\Finance\InvoiceConfig\Http\Requests\UpdateInvoiceConfigRequest;
 use App\Modules\Finance\InvoiceConfig\Http\Resources\InvoiceConfigResource;
 use App\Modules\Finance\InvoiceConfig\Services\InvoiceConfigService;
@@ -43,5 +44,20 @@ class InvoiceConfigController extends Controller
             new InvoiceConfigResource($this->service->update($businessId, $request->validated())),
             'Cập nhật cấu hình hóa đơn thành công.',
         );
+    }
+
+    /**
+     * Generate now
+     *
+     * Force-runs recurring tuition billing for the caller's business today,
+     * regardless of the configured billing day.
+     *
+     * @response 200 {"success": true, "msg": "Đã tạo hóa đơn.", "data": {"invoices_created": 48, "period": "07/2026"}, "code": 200, "errors": null}
+     */
+    public function generateNow(Request $request, InvoiceService $invoices)
+    {
+        $businessId = TenantContext::businessId() ?? $request->integer('business_id');
+
+        return $this->respondSuccess($this->service->generateNow($invoices, $businessId), 'Đã tạo hóa đơn.');
     }
 }

@@ -120,7 +120,7 @@ class StudentLevelService
 
             $studentLevel->update(['level_id' => $target->id, 'assigned_at' => now(), 'assigned_by' => $this->actorId()]);
 
-            $this->logHistory($studentLevel, 'promote', $current?->id, $target->id, $data['reason'] ?? null, null, $data['exam_result_id'] ?? null);
+            $this->logHistory($studentLevel, 'promote', $current?->id, $target->id, $data['reason'] ?? null, null, $data['exam_result_id'] ?? null, $data['reason_type'] ?? null);
 
             return $studentLevel->fresh(['student', 'course', 'level']);
         });
@@ -142,7 +142,7 @@ class StudentLevelService
 
             $studentLevel->update(['level_id' => $target->id, 'assigned_at' => now(), 'assigned_by' => $this->actorId()]);
 
-            $this->logHistory($studentLevel, 'adjust', $fromLevelId, $target->id, $data['reason']);
+            $this->logHistory($studentLevel, 'adjust', $fromLevelId, $target->id, $data['reason'], null, $data['exam_result_id'] ?? null, $data['reason_type'] ?? null);
 
             return $studentLevel->fresh(['student', 'course', 'level']);
         });
@@ -228,7 +228,7 @@ class StudentLevelService
         ];
     }
 
-    private function logHistory(StudentLevel $studentLevel, string $action, ?int $fromLevelId, int $toLevelId, ?string $reason, $score = null, ?int $examResultId = null): void
+    private function logHistory(StudentLevel $studentLevel, string $action, ?int $fromLevelId, int $toLevelId, ?string $reason, $score = null, ?int $examResultId = null, ?string $reasonType = null): void
     {
         StudentLevelHistory::create([
             'student_level_id' => $studentLevel->id,
@@ -239,6 +239,7 @@ class StudentLevelService
             'source' => $action,
             'action' => $action,
             'reason' => $reason,
+            'reason_type' => $reasonType,
             'score' => $score,
             'exam_result_id' => $examResultId,
             'created_by' => $this->actorId(),

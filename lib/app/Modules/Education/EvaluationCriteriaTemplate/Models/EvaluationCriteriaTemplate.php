@@ -29,6 +29,7 @@ class EvaluationCriteriaTemplate extends Model
 
     protected $casts = [
         'criteria' => 'array',
+        'criteria_descriptions' => 'array',
         'is_shared' => 'boolean',
     ];
 

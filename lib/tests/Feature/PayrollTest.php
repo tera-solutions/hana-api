@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\SeedsAuthContext;
 use Tests\TestCase;
@@ -432,6 +433,46 @@ class PayrollTest extends TestCase
         $this->postJson("/v1/hr/payroll/pay/{$payrollId}")
             ->assertJsonPath('success', false)
             ->assertJsonPath('msg', 'Bảng lương này đã được trả.');
+    }
+
+    public function test_summary_counts_teachers_balance_and_pending(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher(100000);
+        $classId = $this->makeClassId();
+        $s1 = $this->makeSessionId($classId, $teacherId, '2026-07-05', '19:00:00', '20:00:00'); // 1h
+        $this->makeAttendance($s1);
+
+        $this->travelTo(Carbon::parse('2026-07-15'));
+
+        $this->actingAsAdmin($this->businessId);
+
+        // Auto-generates July payroll for the teacher (status draft => "pending" this period).
+        $this->getJson('/v1/hr/payroll/list?teacher_id='.$teacherId);
+
+        $this->getJson('/v1/hr/payroll/summary')
+            ->assertStatus(200)
+            ->assertJsonPath('data.teachers', 1)
+            ->assertJsonPath('data.pending', 1);
+    }
+
+    public function test_detail_includes_teacher_wallet_balance(): void
+    {
+        [, $teacherId] = $this->actingAsTeacher();
+        $payrollId = DB::table('hr_payrolls')->insertGetId([
+            'teacher_id' => $teacherId, 'business_id' => $this->businessId, 'month' => 7, 'year' => 2026,
+            'total_hours' => 10, 'base_salary' => 1000000, 'bonus' => 0, 'penalty' => 0, 'total_salary' => 1000000,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAsAdmin($this->businessId);
+        $this->postJson("/v1/hr/payroll/pay/{$payrollId}")->assertStatus(200);
+
+        $wallet = DB::table('fin_wallets')->where('owner_type', 'teacher')->where('owner_id', $teacherId)->first();
+
+        $this->getJson("/v1/hr/payroll/detail/{$payrollId}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.wallet_id', $wallet->id)
+            ->assertJsonPath('data.balance', fn ($value) => (float) $value === 1000000.0);
     }
 
     public function test_non_admin_cannot_pay_own_payroll_even_if_granted_permission(): void

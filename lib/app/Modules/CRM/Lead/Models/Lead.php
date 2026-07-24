@@ -34,6 +34,7 @@ class Lead extends Model
     protected $casts = [
         'dob' => 'date',
         'suspended_at' => 'datetime',
+        'next_appointment' => 'datetime',
     ];
 
     public const STATUS_PENDING = LeadStatus::Pending->value;

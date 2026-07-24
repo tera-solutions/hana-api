@@ -91,10 +91,16 @@ class LessonService
      * have several plans to choose from (or the session may need none at all,
      * e.g. an exam day).
      *
+     * @param  int|null  $lessonPlanLessonId  Explicit template (bài học) to use —
+     *                                        when given, overrides the "next unused"
+     *                                        pick below. Must belong to $lessonPlanId
+     *                                        and not already be consumed by another Lesson.
+     *
      * @throws \RuntimeException when the plan isn't linked to the class, isn't
-     *                           published, or has no template left to consume.
+     *                           published, has no template left to consume, or
+     *                           the requested template is invalid/already used.
      */
-    public function createFromSessionWithPlan(ClassSession $session, int $lessonPlanId): Lesson
+    public function createFromSessionWithPlan(ClassSession $session, int $lessonPlanId, ?int $lessonPlanLessonId = null): Lesson
     {
         $class = ClassRoom::findOrFail($session->class_id);
 
@@ -113,10 +119,20 @@ class LessonService
             ->whereNotNull('lesson_plan_lesson_id')
             ->pluck('lesson_plan_lesson_id');
 
-        $template = $plan->lessons
-            ->whereNotIn('id', $usedTemplateIds)
-            ->sortBy('lesson_no')
-            ->first();
+        if ($lessonPlanLessonId) {
+            $template = $plan->lessons->firstWhere('id', $lessonPlanLessonId);
+            if (! $template) {
+                throw new \RuntimeException('Bài học này không thuộc giáo án đã chọn.');
+            }
+            if ($usedTemplateIds->contains($lessonPlanLessonId)) {
+                throw new \RuntimeException('Bài học này đã được sử dụng cho một buổi học khác.');
+            }
+        } else {
+            $template = $plan->lessons
+                ->whereNotIn('id', $usedTemplateIds)
+                ->sortBy('lesson_no')
+                ->first();
+        }
 
         if (! $template) {
             throw new \RuntimeException('Giáo án đã hết buổi học để sử dụng.');
@@ -155,6 +171,101 @@ class LessonService
         }
 
         return $lesson;
+    }
+
+    /**
+     * Change which lesson plan / template this Lesson follows, after it's
+     * already been materialized (SessionRuntime "Đổi giáo án / bài học") —
+     * reuses the same plan/template validation as createFromSessionWithPlan(),
+     * then re-snapshots the curriculum fields and replaces the activities
+     * wholesale, since there's no stable identity to merge old activity
+     * progress against a different template's activities.
+     *
+     * @param  int|null  $lessonPlanLessonId  Explicit template to use; falls
+     *                                        back to the plan's next unused
+     *                                        template (by lesson_no) when omitted.
+     *
+     * @throws \RuntimeException when the lesson is completed/locked, the plan
+     *                           isn't linked to the class, isn't published, has
+     *                           no template left, or the requested template is
+     *                           invalid/already used by another Lesson.
+     */
+    public function changePlan($id, array $data): Lesson
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $lesson = Lesson::findOrFail($id);
+
+            $this->authorizeLesson($lesson);
+            $this->assertMutable($lesson);
+
+            $class = ClassRoom::findOrFail($lesson->class_room_id);
+            $planId = (int) $data['lesson_plan_id'];
+
+            if (! $class->lessonPlans()->where('edu_lesson_plans.id', $planId)->exists()) {
+                throw new \RuntimeException('Giáo án này chưa được gắn với lớp học.');
+            }
+
+            $plan = LessonPlan::with('lessons.activities')->find($planId);
+            if (! $plan || $plan->status !== LessonPlan::STATUS_PUBLISHED) {
+                throw new \RuntimeException('Giáo án chưa được xuất bản.');
+            }
+
+            // Templates already spent by OTHER lessons — this lesson's own
+            // current template must stay pickable when re-choosing the same plan.
+            $usedTemplateIds = Lesson::where('lesson_plan_id', $plan->id)
+                ->where('id', '!=', $lesson->id)
+                ->whereNotNull('lesson_plan_lesson_id')
+                ->pluck('lesson_plan_lesson_id');
+
+            $lessonPlanLessonId = $data['lesson_plan_lesson_id'] ?? null;
+
+            if ($lessonPlanLessonId) {
+                $template = $plan->lessons->firstWhere('id', $lessonPlanLessonId);
+                if (! $template) {
+                    throw new \RuntimeException('Bài học này không thuộc giáo án đã chọn.');
+                }
+                if ($usedTemplateIds->contains($lessonPlanLessonId)) {
+                    throw new \RuntimeException('Bài học này đã được sử dụng cho một buổi học khác.');
+                }
+            } else {
+                $template = $plan->lessons
+                    ->whereNotIn('id', $usedTemplateIds)
+                    ->sortBy('lesson_no')
+                    ->first();
+            }
+
+            if (! $template) {
+                throw new \RuntimeException('Giáo án đã hết buổi học để sử dụng.');
+            }
+
+            $oldPlanName = $lesson->lessonPlan?->plan_name ?? "#{$lesson->lesson_plan_id}";
+
+            $lesson->update([
+                'lesson_plan_id' => $plan->id,
+                'lesson_plan_lesson_id' => $template->id,
+                'lesson_title' => $template->lesson_title,
+                'objective' => $template->objective,
+                'vocabulary' => $template->vocabulary,
+                'grammar' => $template->grammar,
+                'homework' => $template->homework,
+            ]);
+
+            $lesson->activities()->delete();
+            foreach ($template->activities as $activity) {
+                $lesson->activities()->create([
+                    'sort_order' => $activity->sort_order,
+                    'avatar' => $activity->avatar,
+                    'title' => $activity->title,
+                    'description' => $activity->description,
+                    'duration' => $activity->duration,
+                    'status' => LessonActivity::STATUS_PENDING,
+                ]);
+            }
+
+            $this->log($lesson, 'change_plan', $oldPlanName, $plan->plan_name);
+
+            return $this->find($lesson->id);
+        });
     }
 
     /**

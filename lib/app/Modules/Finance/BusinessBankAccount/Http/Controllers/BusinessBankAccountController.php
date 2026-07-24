@@ -5,8 +5,10 @@ namespace App\Modules\Finance\BusinessBankAccount\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Finance\BusinessBankAccount\Actions\CreateBusinessBankAccountAction;
 use App\Modules\Finance\BusinessBankAccount\Actions\GetBusinessBankAccountAction;
+use App\Modules\Finance\BusinessBankAccount\Actions\GetBusinessBankAccountQrAction;
 use App\Modules\Finance\BusinessBankAccount\Actions\ListBusinessBankAccountAction;
 use App\Modules\Finance\BusinessBankAccount\Actions\RestoreBusinessBankAccountAction;
+use App\Modules\Finance\BusinessBankAccount\Actions\SetDefaultBusinessBankAccountAction;
 use App\Modules\Finance\BusinessBankAccount\Actions\SuspendBusinessBankAccountAction;
 use App\Modules\Finance\BusinessBankAccount\Actions\UpdateBusinessBankAccountAction;
 use App\Modules\Finance\BusinessBankAccount\Http\Requests\CreateBusinessBankAccountRequest;
@@ -101,5 +103,31 @@ class BusinessBankAccountController extends Controller
         }
 
         return $this->respondSuccess(new BusinessBankAccountResource($account), 'Khôi phục tài khoản thành công.');
+    }
+
+    /**
+     * Set as default
+     *
+     * @urlParam id integer required The account ID. Example: 1
+     */
+    public function setDefault($id, SetDefaultBusinessBankAccountAction $action)
+    {
+        try {
+            $account = $action->handle($id);
+        } catch (\RuntimeException $e) {
+            return $this->respondWithError($e->getMessage());
+        }
+
+        return $this->respondSuccess(new BusinessBankAccountResource($account), 'Đặt tài khoản mặc định thành công.');
+    }
+
+    /**
+     * QR preview (static, no amount)
+     *
+     * @urlParam id integer required The account ID. Example: 1
+     */
+    public function qr($id, GetBusinessBankAccountQrAction $action)
+    {
+        return $this->respondSuccess($action->handle($id));
     }
 }

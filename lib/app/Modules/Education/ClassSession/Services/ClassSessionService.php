@@ -196,7 +196,11 @@ class ClassSessionService
             // and it doesn't. Sessions with no plan (exam day, etc.) just start
             // bare.
             if (! empty($data['lesson_plan_id']) && ! Lesson::where('session_id', $session->id)->exists()) {
-                $this->lessons->createFromSessionWithPlan($session, (int) $data['lesson_plan_id']);
+                $this->lessons->createFromSessionWithPlan(
+                    $session,
+                    (int) $data['lesson_plan_id'],
+                    isset($data['lesson_plan_lesson_id']) ? (int) $data['lesson_plan_lesson_id'] : null,
+                );
             }
 
             $session->update([

@@ -10,6 +10,7 @@ Route::prefix('lesson')->middleware('auth.tera')->group(function () {
     Route::get('/detail/{id}', [LessonController::class, 'detail'])->middleware('permission:lesson.view');
 
     Route::put('/update/{id}', [LessonController::class, 'update'])->middleware('permission:lesson.update');
+    Route::post('/change-plan/{id}', [LessonController::class, 'changePlan'])->middleware('permission:lesson.update');
     Route::post('/reschedule/{id}', [LessonController::class, 'reschedule'])->middleware('permission:lesson.reschedule');
     Route::post('/cancel/{id}', [LessonController::class, 'cancel'])->middleware('permission:lesson.cancel');
 
